@@ -74,7 +74,14 @@ export const fixtureContent: GameContent = {
       lateFee: 50,
       collectionsAfter: 2,
       collectionsFee: 200,
-      credit: { onTime: 1, missed: -10, collections: -50, missedRent: -20, eviction: -30 },
+      credit: {
+        onTime: 1,
+        onTimeRent: 1,
+        missed: -10,
+        collections: -50,
+        missedRent: -20,
+        eviction: -30,
+      },
     },
     market: {
       assets: [{ id: 'fund', crashChanceBp: 0, crashBp: 0 }],

@@ -88,6 +88,15 @@ describe('jobs (FR-40, FR-43)', () => {
     expect(reason(atWork(), perform('work-c'))).toBe('BAD_DURATION');
   });
 
+  it("keeps counting this week's hours after a job change", () => {
+    const worked = edit(start(), (p) => {
+      p.job = { ...newJobState(fixtureContent, 'manager'), minutesThisWeek: 300 };
+      p.location = 'd';
+    });
+    const hired = play(worked, perform('apply', { target: 'clerk' }));
+    expect(player(hired.state).job?.minutesThisWeek).toBe(300);
+  });
+
   it('caps the hours a job allows each week', () => {
     const { state } = play(atWork(), work(240), work(120));
     expect(reason(state, work(60))).toBe('HOURS_CAP');

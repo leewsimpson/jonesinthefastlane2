@@ -1,5 +1,6 @@
 /** Commands, plans and previews (engine-design §8). */
 import type { ModifierTarget, StatKey } from '@fastlane/content/keys';
+import type { Place } from '../money/ledger.ts';
 import type { DomainEvent } from './events.ts';
 import type { GameState } from './state.ts';
 
@@ -98,6 +99,19 @@ export interface Plan {
   modifiers: AppliedModifier[];
   /** Random stat changes, already scaled by `modifiers`. Rolled inside the range shown. */
   outcomes: OutcomeRange[];
+  /**
+   * Money moving between the player's own places or onto a debt: savings, investments, the lease deposit, card and
+   * student debt (engine-design §10.1). Cash in or out is already in `money` and the `cash` effect; this says where
+   * it goes or comes from, so a loan never hides in a preview (FR-03).
+   */
+  transfers: PlannedTransfer[];
+}
+
+/** One ledger move an action makes, shown before the player commits. */
+export interface PlannedTransfer {
+  from: Place;
+  to: Place;
+  amount: number;
 }
 
 /**

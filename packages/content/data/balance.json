@@ -73,7 +73,14 @@
     "lateFee": 3500,
     "collectionsAfter": 3,
     "collectionsFee": 5000,
-    "credit": { "onTime": 2, "missed": -20, "collections": -60, "missedRent": -25, "eviction": -40 }
+    "credit": {
+      "onTime": 2,
+      "onTimeRent": 1,
+      "missed": -20,
+      "collections": -60,
+      "missedRent": -25,
+      "eviction": -40
+    }
   },
   "market": {
     "assets": [

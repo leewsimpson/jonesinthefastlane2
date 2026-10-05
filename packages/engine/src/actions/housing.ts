@@ -17,9 +17,14 @@ export const rentHome: ActionHandler = {
     if (player.housing.missedRent > 0 || player.debts.arrears.balance > 0) return fail('RENT_OWED');
     if (player.stats.creditScore < tier.minCreditScore) return fail('CREDIT_CHECK');
     const plan = planFromData(ctx, def, params);
-    plan.money += price(state.world, tier.deposit);
-    if (player.housing.deposit > 0)
-      plan.effects.unshift({ stat: 'cash', delta: player.housing.deposit });
+    // The old deposit comes back before the new one is paid, so only the difference has to be in cash.
+    const refund = player.housing.deposit;
+    const deposit = price(state.world, tier.deposit);
+    const net = deposit - refund;
+    if (net > 0) plan.money += net;
+    else if (net < 0) plan.effects.unshift({ stat: 'cash', delta: -net });
+    if (refund > 0) plan.transfers.push({ from: 'deposit', to: 'cash', amount: refund });
+    if (deposit > 0) plan.transfers.push({ from: 'cash', to: 'deposit', amount: deposit });
     return plan;
   },
   apply(ctx, def, plan, params) {
@@ -27,16 +32,15 @@ export const rentHome: ActionHandler = {
     const tier = content.city.housing.find((h) => h.id === params.target);
     if (!tier) throw new Error('unreachable: the plan checked the tier');
     const cause = actionCause(def);
-    const refund = player.housing.deposit;
-    const deposit = price(world, tier.deposit);
+    const net = price(world, tier.deposit) - player.housing.deposit;
     // The action's own time, fee and effects as usual; the deposits move between the player's own places.
     applyPlan(ctx, def, {
       ...plan,
-      money: plan.money - deposit,
-      effects: refund > 0 ? plan.effects.slice(1) : plan.effects,
+      money: plan.money - Math.max(0, net),
+      effects: net < 0 ? plan.effects.slice(1) : plan.effects,
     });
-    transfer(ctx, player, 'deposit', 'cash', refund, 'lease-deposit', cause);
-    transfer(ctx, player, 'cash', 'deposit', deposit, 'lease-deposit', cause);
+    for (const t of plan.transfers)
+      transfer(ctx, player, t.from, t.to, t.amount, 'lease-deposit', cause);
     const from = player.housing.tier;
     player.housing.tier = tier.id;
     player.housing.rent = price(world, tier.rent);

@@ -63,6 +63,7 @@ export function planFromData(ctx: PlanCtx, def: LocationAction, params: PerformP
     effects,
     modifiers,
     outcomes,
+    transfers: [],
   };
 }
 

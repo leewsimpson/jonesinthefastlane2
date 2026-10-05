@@ -22,7 +22,9 @@ export const enroll: ActionHandler = {
     if (player.enrollment) return fail('ALREADY_ENROLLED');
     if (def.loan && !course.loanEligible) return fail('NO_LOAN');
     const plan = planFromData(ctx, def, params);
-    if (!def.loan) plan.money += price(state.world, course.tuition);
+    const tuition = price(state.world, course.tuition);
+    if (def.loan) plan.transfers.push({ from: 'debt:student', to: 'outside', amount: tuition });
+    else plan.money += tuition;
     return plan;
   },
   apply(ctx, def, plan, params) {
@@ -30,10 +32,8 @@ export const enroll: ActionHandler = {
     if (!course) throw new Error('unreachable: the plan checked the course');
     applyPlan(ctx, def, plan, { spend: 'tuition' });
     const loan = def.loan === true;
-    if (loan) {
-      const tuition = price(ctx.world, course.tuition);
-      transfer(ctx, ctx.player, 'debt:student', 'outside', tuition, 'tuition', actionCause(def));
-    }
+    for (const t of plan.transfers)
+      transfer(ctx, ctx.player, t.from, t.to, t.amount, 'tuition', actionCause(def));
     ctx.player.enrollment = { course: course.id, minutes: 0 };
     ctx.emit({ type: 'enrolled', player: ctx.player.id, course: course.id, loan });
   },

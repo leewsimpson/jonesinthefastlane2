@@ -1,8 +1,10 @@
 /** NeoBank (FR-53, FR-54): move money between cash, savings, investments and debts. */
 import type { GameContent, LocationAction } from '@fastlane/content';
 import { DEBT_KINDS, type DebtKind } from '@fastlane/content/keys';
+import type { PlayerCtx } from '../core/context.ts';
 import { transfer } from '../money/ledger.ts';
-import type { PerformParams } from '../types/actions.ts';
+import type { PerformParams, Plan } from '../types/actions.ts';
+import type { FlowReason } from '../types/events.ts';
 import type { PlayerState } from '../types/state.ts';
 import { type ActionHandler, actionCause, applyPlan, fail, planFromData } from './common.ts';
 
@@ -25,6 +27,12 @@ export function cardLimit(content: GameContent, creditScore: number): number {
   return limit;
 }
 
+/** The plan's own ledger moves, after its time, fee and effects. */
+function applyTransfers(ctx: PlayerCtx, def: LocationAction, plan: Plan, reason: FlowReason) {
+  for (const t of plan.transfers)
+    transfer(ctx, ctx.player, t.from, t.to, t.amount, reason, actionCause(def));
+}
+
 /** Cash into savings or an investment. */
 export const deposit: ActionHandler = {
   options: (ctx, def) =>
@@ -32,13 +40,14 @@ export const deposit: ActionHandler = {
   plan(ctx, def, params) {
     if (!isHolding(ctx.player, params.target)) return fail('BAD_TARGET');
     const plan = planFromData(ctx, def, params);
-    plan.money += params.amount ?? 0;
+    const amount = params.amount ?? 0;
+    plan.money += amount;
+    plan.transfers.push({ from: 'cash', to: `hold:${params.target}`, amount });
     return plan;
   },
   apply(ctx, def, plan, params) {
-    const amount = params.amount ?? 0;
-    applyPlan(ctx, def, { ...plan, money: plan.money - amount });
-    transfer(ctx, ctx.player, 'cash', `hold:${params.target}`, amount, 'save', actionCause(def));
+    applyPlan(ctx, def, { ...plan, money: plan.money - (params.amount ?? 0) });
+    applyTransfers(ctx, def, plan, 'save');
   },
 };
 
@@ -52,20 +61,12 @@ export const withdraw: ActionHandler = {
     if (amount > (ctx.player.holdings[params.target] ?? 0)) return fail('BAD_AMOUNT');
     const plan = planFromData(ctx, def, params);
     plan.effects.unshift({ stat: 'cash', delta: amount });
+    plan.transfers.push({ from: `hold:${params.target}`, to: 'cash', amount });
     return plan;
   },
-  apply(ctx, def, plan, params) {
-    const amount = params.amount ?? 0;
-    applyPlan(ctx, def, { ...plan, effects: plan.effects.filter((e) => e.stat !== 'cash') });
-    transfer(
-      ctx,
-      ctx.player,
-      `hold:${params.target}`,
-      'cash',
-      amount,
-      'withdraw',
-      actionCause(def),
-    );
+  apply(ctx, def, plan) {
+    applyPlan(ctx, def, { ...plan, effects: plan.effects.slice(1) });
+    applyTransfers(ctx, def, plan, 'withdraw');
   },
 };
 
@@ -79,11 +80,12 @@ export const borrow: ActionHandler = {
       return fail('OVER_LIMIT');
     const plan = planFromData(ctx, def, params);
     plan.effects.unshift({ stat: 'cash', delta: amount });
+    plan.transfers.push({ from: 'debt:card', to: 'cash', amount });
     return plan;
   },
-  apply(ctx, def, plan, params) {
-    applyPlan(ctx, def, { ...plan, effects: plan.effects.filter((e) => e.stat !== 'cash') });
-    transfer(ctx, ctx.player, 'debt:card', 'cash', params.amount ?? 0, 'borrow', actionCause(def));
+  apply(ctx, def, plan) {
+    applyPlan(ctx, def, { ...plan, effects: plan.effects.slice(1) });
+    applyTransfers(ctx, def, plan, 'borrow');
   },
 };
 
@@ -99,20 +101,13 @@ export const repay: ActionHandler = {
     if (owed === 0) return fail('NO_DEBT');
     if ((params.amount ?? 0) > owed) return fail('BAD_AMOUNT');
     const plan = planFromData(ctx, def, params);
-    plan.money += params.amount ?? 0;
+    const amount = params.amount ?? 0;
+    plan.money += amount;
+    plan.transfers.push({ from: 'cash', to: `debt:${params.target}`, amount });
     return plan;
   },
   apply(ctx, def, plan, params) {
-    const amount = params.amount ?? 0;
-    applyPlan(ctx, def, { ...plan, money: plan.money - amount });
-    transfer(
-      ctx,
-      ctx.player,
-      'cash',
-      `debt:${params.target as DebtKind}`,
-      amount,
-      'repay',
-      actionCause(def),
-    );
+    applyPlan(ctx, def, { ...plan, money: plan.money - (params.amount ?? 0) });
+    applyTransfers(ctx, def, plan, 'repay');
   },
 };

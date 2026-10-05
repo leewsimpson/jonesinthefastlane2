@@ -66,7 +66,10 @@ export const gig: ActionHandler = {
   },
 };
 
-/** JobLink (FR-40): apply for an open job you qualify for. Hiring is immediate; your old job ends. */
+/**
+ * JobLink (FR-40): apply for an open job you qualify for. Hiring is immediate; your old job ends. The weekly hours
+ * cap counts hours from both.
+ */
 export const applyJob: ActionHandler = {
   options: (ctx) => ctx.content.city.jobs.map((j) => ({ target: j.id })),
   plan(ctx, def, params) {
@@ -83,7 +86,9 @@ export const applyJob: ActionHandler = {
     applyPlan(ctx, def, plan);
     const id = params.target;
     if (!id) throw new Error('unreachable: the plan checked the target');
-    ctx.player.job = newJobState(ctx.content, id);
+    // Hours worked this week carry over, so changing jobs can't reset the weekly cap.
+    const worked = ctx.player.job?.minutesThisWeek ?? 0;
+    ctx.player.job = { ...newJobState(ctx.content, id), minutesThisWeek: worked };
     ctx.emit({ type: 'jobChanged', player: ctx.player.id, change: 'hired', job: id });
   },
 };

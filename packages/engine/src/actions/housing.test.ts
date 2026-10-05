@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { edit, endWeek, eventsOf, harness, perform, player } from '../__fixtures__/play.ts';
 
-const { start, play, reason } = harness();
+const { engine, start, play, reason } = harness();
 const atLeaseLord = () =>
   edit(start(), (p) => {
     p.location = 'e';
@@ -70,6 +70,35 @@ describe('housing (FR-51, FR-14)', () => {
     const back = play(leased, lease('couch')).state;
     expect(player(back).stats.cash).toBe(2000);
     expect(player(back).housing).toMatchObject({ tier: 'couch', deposit: 0, rent: 0 });
+  });
+
+  it('counts the old deposit toward the new one, and shows both moves (FR-03)', () => {
+    const leased = play(atLeaseLord(), lease('flat')).state;
+    // The loft's 1800 deposit less the flat's 600 refund: 1200 has to be in cash.
+    const short = edit(leased, (p) => {
+      p.stats.creditScore = 750;
+      p.stats.cash = 1200;
+    });
+    const preview = engine.preview(short, lease('loft'));
+    expect(preview).toMatchObject({
+      available: true,
+      plan: {
+        money: 1200,
+        transfers: [
+          { from: 'deposit', to: 'cash', amount: 600 },
+          { from: 'cash', to: 'deposit', amount: 1800 },
+        ],
+      },
+    });
+    const moved = play(short, lease('loft')).state;
+    expect(player(moved).stats.cash).toBe(0);
+    expect(player(moved).housing).toMatchObject({ tier: 'loft', deposit: 1800 });
+    expect(
+      reason(
+        edit(short, (p) => (p.stats.cash = 1199)),
+        lease('loft'),
+      ),
+    ).toBe('NOT_ENOUGH_MONEY');
   });
 
   it('gates actions on housing tier, such as hosting friends (§16)', () => {

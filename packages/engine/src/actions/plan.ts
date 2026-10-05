@@ -23,7 +23,14 @@ export function restBonusEnergy(content: GameContent, minutes: number): number {
   return Math.floor((minutes * content.balance.restBonusEnergyPerHour) / 60);
 }
 
-const emptyPlan = (): Plan => ({ time: 0, money: 0, effects: [], modifiers: [], outcomes: [] });
+export const emptyPlan = (): Plan => ({
+  time: 0,
+  money: 0,
+  effects: [],
+  modifiers: [],
+  outcomes: [],
+  transfers: [],
+});
 
 /** What `action` would do for the active player, without changing state or using RNG. */
 export function previewAction(
@@ -66,6 +73,7 @@ export function previewAction(
         effects: trip.energy > 0 ? [{ stat: 'energy', delta: -trip.energy }] : [],
         modifiers,
         outcomes: [],
+        transfers: [],
       };
       if (mode.requiresItem && !player.items.includes(mode.requiresItem))
         return unavailable('NEEDS_ITEM', plan);

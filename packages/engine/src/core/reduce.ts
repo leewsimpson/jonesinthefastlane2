@@ -1,6 +1,6 @@
 /** The engine: dispatch, validation and the advance loop (engine-design §3, §7). */
 import type { GameContent } from '@fastlane/content';
-import { DEBT_KINDS, SAVINGS_ID } from '@fastlane/content/keys';
+import { DEBT_KINDS, DIFFICULTIES, GOAL_KEYS, SAVINGS_ID } from '@fastlane/content/keys';
 import { HANDLERS } from '../actions/handlers.ts';
 import { listActions, paramsOf, playerById, previewAction } from '../actions/plan.ts';
 import { type AiPolicy, randomPolicy } from '../ai/random.ts';
@@ -44,19 +44,34 @@ export const DEFAULT_CONFIG = {
   difficulty: 'standard',
 } as const satisfies Partial<GameConfig>;
 
-/** Setup config → full config: `difficulty` picks preset targets; `goals` alone means custom targets (FR-10). */
+/**
+ * Setup config → full config: `difficulty` picks preset targets; `goals` alone means custom targets (FR-10). Throws
+ * on a setup no game can run with, such as a zero target, which would make progress divide by zero.
+ */
 export function resolveConfig(content: GameContent, setup: GameSetup): GameConfig {
   const given = setup.config ?? {};
   const difficulty = given.difficulty ?? (given.goals ? 'custom' : DEFAULT_CONFIG.difficulty);
+  if (difficulty !== 'custom' && !DIFFICULTIES.includes(difficulty))
+    throw new Error(`unknown difficulty ${difficulty}`);
   const goals = difficulty === 'custom' ? given.goals : content.balance.goals.presets[difficulty];
   if (!goals) throw new Error('custom difficulty needs goal targets');
-  return {
+  for (const key of GOAL_KEYS)
+    if (!isPositiveInt(goals[key]))
+      throw new Error(`goal target ${key} must be a positive integer`);
+  const config: GameConfig = {
     weekLimit: given.weekLimit ?? DEFAULT_CONFIG.weekLimit,
     turnLengthWeeks: given.turnLengthWeeks ?? DEFAULT_CONFIG.turnLengthWeeks,
     difficulty,
     goals: { ...goals },
   };
+  if (config.weekLimit !== null && !isPositiveInt(config.weekLimit))
+    throw new Error('the week limit must be a positive integer or null');
+  if (!isPositiveInt(config.turnLengthWeeks))
+    throw new Error('turnLengthWeeks must be a positive integer');
+  return config;
 }
+
+const isPositiveInt = (n: unknown): boolean => Number.isInteger(n) && (n as number) > 0;
 
 export interface Engine {
   readonly content: GameContent;

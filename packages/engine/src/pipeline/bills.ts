@@ -34,7 +34,10 @@ function payRent(ctx: PlayerCtx): void {
       evict(ctx);
       return;
     }
-  } else housing.missedRent = 0;
+  } else {
+    housing.missedRent = 0;
+    changeStat(ctx, player, 'creditScore', content.balance.finance.credit.onTimeRent, cause);
+  }
 
   housing.leaseWeeksLeft -= config.turnLengthWeeks;
   if (housing.leaseWeeksLeft <= 0) renewLease(ctx);

@@ -66,6 +66,26 @@ describe('newGame', () => {
     expect(() => engine.newGame({ seed: 's', players: [jones] })).toThrow(/week limit/);
   });
 
+  it('rejects setups no game can run with', () => {
+    const one = [human('Ada')];
+    expect(() =>
+      engine.newGame({
+        seed: 's',
+        players: one,
+        config: { goals: { wealth: 0, wellbeing: 1, skills: 1, career: 1 } },
+      }),
+    ).toThrow(/wealth/);
+    expect(() =>
+      engine.newGame({ seed: 's', players: one, config: { difficulty: 'easy' as 'chill' } }),
+    ).toThrow(/unknown difficulty/);
+    expect(() => engine.newGame({ seed: 's', players: one, config: { weekLimit: 0 } })).toThrow(
+      /week limit/,
+    );
+    expect(() =>
+      engine.newGame({ seed: 's', players: one, config: { turnLengthWeeks: 1.5 } }),
+    ).toThrow(/turnLengthWeeks/);
+  });
+
   it('plays an AI that goes first before handing over', () => {
     const jones = { name: 'Jones', controller: 'ai' as const };
     const { state, events } = engine.newGame({ seed: 's', players: [jones, human('Ada')] });

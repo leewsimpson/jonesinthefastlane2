@@ -38,7 +38,11 @@ const Cents = z.number().int().nonnegative();
 /** Integer basis points; 10 000 is 100% (engine-design §5). */
 const Bp = z.number().int();
 const Chance = Bp.min(0).max(10_000);
-const BpRange = z.object({ min: Bp, max: Bp }).refine((r) => r.min <= r.max, 'min must be ≤ max');
+/** A change in basis points; nothing can lose more than all of itself. */
+const BpChange = Bp.min(-10_000);
+const BpRange = z
+  .object({ min: BpChange, max: BpChange })
+  .refine((r) => r.min <= r.max, 'min must be ≤ max');
 const IntRange = z
   .object({ min: z.number().int(), max: z.number().int() })
   .refine((r) => r.min <= r.max, 'min must be ≤ max');
@@ -184,7 +188,10 @@ export const BalanceSchema = z
       collectionsFee: Cents,
       /** Credit score changes. */
       credit: z.object({
+        /** Per debt payment made in full. */
         onTime: z.number().int(),
+        /** Per week of rent paid in full, so a debt-free renter can build credit too. */
+        onTimeRent: z.number().int(),
         missed: z.number().int(),
         collections: z.number().int(),
         missedRent: z.number().int(),
@@ -232,16 +239,18 @@ export const BalanceSchema = z
 export type Balance = z.infer<typeof BalanceSchema>;
 
 /** A travel mode (FR-02). Time, money and energy grow with the distance around the loop. */
-export const TransportModeSchema = z.object({
-  id: Id,
-  minutesBase: Minutes,
-  minutesPerStep: Minutes,
-  costBase: Cents,
-  costPerStep: Cents,
-  energyPerStep: z.number().int().nonnegative(),
-  /** Item the player must own to use this mode. */
-  requiresItem: Id.optional(),
-});
+export const TransportModeSchema = z
+  .object({
+    id: Id,
+    minutesBase: Minutes,
+    minutesPerStep: Minutes,
+    costBase: Cents,
+    costPerStep: Cents,
+    energyPerStep: z.number().int().nonnegative(),
+    /** Item the player must own to use this mode. */
+    requiresItem: Id.optional(),
+  })
+  .refine((m) => m.minutesBase + m.minutesPerStep > 0, 'a trip takes time');
 
 export type TransportMode = z.infer<typeof TransportModeSchema>;
 
@@ -289,8 +298,16 @@ export const LocationActionSchema = z.object({
   amounts: z.array(Cents.refine((c) => c > 0, 'must be positive')).optional(),
   /** Paid up front; the action is unavailable if the player can't afford it. Scaled by the price index. */
   cost: Cents,
-  /** Stat changes on completion. A positive `cash` effect is money earned. */
-  effects: z.partialRecord(StatKeySchema, EffectSchema),
+  /**
+   * Stat changes on completion. A `cash` effect is money earned and can't be negative: costs go in `cost`, which
+   * the preview checks against cash (engine-design §10).
+   */
+  effects: z
+    .partialRecord(StatKeySchema, EffectSchema)
+    .refine(
+      (e) => e.cash === undefined || (typeof e.cash === 'number' ? e.cash : e.cash.min) >= 0,
+      'a cash effect is earnings; put costs in `cost`',
+    ),
   /** Positive effects are scaled by modifiers on this target (e.g. low energy on `workOutput`). */
   outputTarget: z.enum(MODIFIER_TARGETS).optional(),
   /** Needs an owned item, or at least this housing tier. */
@@ -529,6 +546,15 @@ export function checkContent(content: GameContent): string[] {
   }
   if (!city.jobs.some((j) => isEntryJob(j)))
     problems.push('at least one job must need nothing and always be open (FR-14)');
+  // Every job can be worked at its employer with nothing extra, so an entry job really is a floor (FR-14).
+  const onSite = (j: Job) =>
+    actions.some(
+      (a) => a.kind === 'work-shift' && !a.requires && !a.remote && a.location === j.location,
+    );
+  for (const j of city.jobs)
+    if (!onSite(j)) problems.push(`job "${j.id}" has no work-shift action at its location`);
+  if (city.jobs.some((j) => j.remote) && !actions.some((a) => a.kind === 'work-shift' && a.remote))
+    problems.push('remote jobs need a remote work-shift action (FR-46)');
 
   for (const c of city.courses)
     if (!tracks.includes(c.track))

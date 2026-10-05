@@ -155,6 +155,18 @@ for (const [name, content] of contents) {
             expect(after).toBeGreaterThanOrEqual(bound(before[key] + lo));
             expect(after).toBeLessThanOrEqual(bound(before[key] + hi));
           }
+          // Savings, investments, the deposit and debts move exactly as the plan's transfers said.
+          const offCash = (from: string, to: string) =>
+            ![from, to].every((p) => p === 'cash' || p === 'outside');
+          const moved = result.events.flatMap((e) =>
+            e.type === 'moneyMoved' &&
+            e.player === playerId &&
+            e.cause.kind === 'action' &&
+            offCash(e.from, e.to)
+              ? [{ from: e.from, to: e.to, amount: e.amount }]
+              : [],
+          );
+          expect(moved).toEqual(plan.transfers.filter((t) => offCash(t.from, t.to)));
         }),
       );
     });

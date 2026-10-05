@@ -51,6 +51,20 @@ describe('content', () => {
     expect(BalanceSchema.safeParse({ ...balance, wardrobeTiers: ['casual'] }).success).toBe(false);
   });
 
+  it('rejects returns that lose more than everything and trips that take no time', () => {
+    const regimes = balance.market.regimes.map((r) => ({
+      ...r,
+      returnsBp: { ...r.returnsBp, 'index-fund': { min: -12_000, max: -11_000 } },
+    }));
+    const market = { ...balance.market, regimes };
+    expect(BalanceSchema.safeParse({ ...balance, market }).success).toBe(false);
+    const [mode] = defaultCity.board.transportModes;
+    if (!mode) throw new Error('no modes');
+    const instant = { ...mode, minutesBase: 0, minutesPerStep: 0 };
+    const board = { ...defaultCity.board, transportModes: [instant] };
+    expect(CitySchema.safeParse({ ...defaultCity, board }).success).toBe(false);
+  });
+
   it('rejects minutes that are not quarter-hours, fractional cents and bad effect ranges', () => {
     const action = {
       id: 'x',
@@ -65,6 +79,12 @@ describe('content', () => {
     expect(LocationActionSchema.safeParse({ ...action, minutes: 0 }).success).toBe(false);
     expect(LocationActionSchema.safeParse({ ...action, cost: 9.5 }).success).toBe(false);
     expect(LocationActionSchema.safeParse({ ...action, kind: 'teleport' }).success).toBe(false);
+    // A cash effect is earnings; a negative one would let an affordable action take cash below 0.
+    expect(LocationActionSchema.safeParse({ ...action, effects: { cash: -500 } }).success).toBe(
+      false,
+    );
+    const loss = { ...action, effects: { cash: { min: -100, max: 100 } } };
+    expect(LocationActionSchema.safeParse(loss).success).toBe(false);
     const inverted = { ...action, effects: { social: { min: 5, max: 1 } } };
     expect(LocationActionSchema.safeParse(inverted).success).toBe(false);
     expect(LocationActionSchema.safeParse({ ...action, id: 'Not Kebab' }).success).toBe(false);
@@ -77,12 +97,12 @@ describe('content', () => {
   });
 
   it('finds broken cross-references', () => {
-    const [first] = defaultCity.actions;
+    const [first, ...rest] = defaultCity.actions;
     if (!first) throw new Error('no actions');
-    expect(checkContent(withCity({ actions: [{ ...first, location: 'atlantis' }] }))).toEqual([
-      `action "${first.id}" is at unknown location "atlantis"`,
-    ]);
-    expect(checkContent(withCity({ actions: [first, first] }))).toEqual([
+    expect(
+      checkContent(withCity({ actions: [{ ...first, location: 'atlantis' }, ...rest] })),
+    ).toEqual([`action "${first.id}" is at unknown location "atlantis"`]);
+    expect(checkContent(withCity({ actions: [first, first, ...rest] }))).toEqual([
       `duplicate action id "${first.id}"`,
     ]);
     const board = { ...defaultCity.board, home: 'atlantis' };
@@ -132,6 +152,13 @@ describe('content', () => {
     expect(checkContent(withCity({ jobs: noEntry }))).toContain(
       'at least one job must need nothing and always be open (FR-14)',
     );
+    // An entry job is only a floor if it can be worked (FR-14).
+    const moved = defaultCity.jobs.map((j) =>
+      j.id === 'picker' ? { ...j, location: 'thriftup' } : j,
+    );
+    expect(checkContent(withCity({ jobs: moved }))).toEqual([
+      'job "picker" has no work-shift action at its location',
+    ]);
     const [home] = defaultCity.housing;
     if (!home) throw new Error('no housing');
     expect(

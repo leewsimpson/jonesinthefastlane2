@@ -261,7 +261,7 @@
     "location": "freshmart",
     "ladder": "grocery",
     "level": 1,
-    "wage": 1500,
+    "wage": 1650,
     "dressTier": 0,
     "minExperience": 0,
     "requires": { "credentials": [], "skills": {} },

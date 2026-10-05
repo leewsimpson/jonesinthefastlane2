@@ -24,8 +24,11 @@ describe('education (§5, §3 Skills)', () => {
     expect(reason(state, perform('enroll', { target: 'degree' }))).toBe('ALREADY_ENROLLED');
   });
 
-  it('puts loan-eligible tuition on a student loan (FR-54)', () => {
+  it('puts loan-eligible tuition on a student loan, and the preview shows the debt (FR-54, FR-03)', () => {
     expect(reason(atCampus(), perform('enroll-loan', { target: 'cert' }))).toBe('NO_LOAN');
+    expect(engine.preview(atCampus(), perform('enroll-loan', { target: 'degree' }))).toMatchObject({
+      plan: { money: 0, transfers: [{ from: 'debt:student', to: 'outside', amount: 5000 }] },
+    });
     const { state, events } = play(atCampus(), perform('enroll-loan', { target: 'degree' }));
     expect(player(state).stats.cash).toBe(2000);
     expect(player(state).debts.student.balance).toBe(5000);
