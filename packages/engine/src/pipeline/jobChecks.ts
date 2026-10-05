@@ -1,5 +1,6 @@
 /** P4: AI disruption (FR-42), performance and promotions (FR-43), GigHub deactivation countdown (FR-44). */
 import type { PlayerCtx } from '../core/context.ts';
+import { newsEffect, newsExposure } from '../hooks/news.ts';
 import {
   effectiveExposure,
   jobById,
@@ -13,20 +14,23 @@ import type { PipelineStep } from './types.ts';
 
 type Disruption = 'hoursCut' | 'restructure' | 'layoff';
 
-/** News modifiers on the disruption rate arrive with the news ticker in Phase 3 (FR-72). */
-const NEWS_DISRUPTION_BP = BP_ONE;
-
 /**
- * Weekly chance = base rate × the player's effective exposure × news, rolled on the `job` stream. A hit cuts hours,
- * restructures the role (a wage cut) or warns of a layoff, which lands at the next check (FR-42).
+ * Weekly chance = base rate × the player's effective exposure × news, rolled on the `job` stream. News can raise the
+ * exposure of a whole ladder ("AI model release: copywriting exposure +20%") and the rate itself (FR-72). A hit cuts
+ * hours, restructures the role (a wage cut) or warns of a layoff, which lands at the next check (FR-42).
  */
 function rollDisruption(ctx: PlayerCtx): void {
   const { player, content, config } = ctx;
   const job = player.job;
   if (!job) return;
   const ai = content.balance.aiDisruption;
-  const exposure = effectiveExposure(content, player, jobById(content, job.id));
-  const weekly = applyBp(applyBp(ai.baseRateBp, exposure), NEWS_DISRUPTION_BP);
+  const role = jobById(content, job.id);
+  const exposure = Math.max(
+    0,
+    effectiveExposure(content, player, role) + newsExposure(content, ctx.world, role.ladder),
+  );
+  const news = Math.max(0, BP_ONE + newsEffect(content, ctx.world, 'disruptionBp'));
+  const weekly = applyBp(applyBp(ai.baseRateBp, exposure), news);
   const rng = ctx.rng('job');
   if (!rng.chance(Math.min(BP_ONE, weekly * config.turnLengthWeeks))) return;
   const w = ai.outcomeWeights;

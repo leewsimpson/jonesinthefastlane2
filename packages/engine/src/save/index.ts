@@ -9,7 +9,7 @@ import type { GameSetup, GameState } from '../types/state.ts';
 import { ENGINE_VERSION } from '../version.ts';
 
 /** Bump when the save shape changes, and add a migration from the previous version. */
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export interface SaveFile {
   format: 'fastlane-save';
@@ -29,8 +29,9 @@ export type SaveMigration = (save: Record<string, unknown>) => Record<string, un
 export type SaveMigrations = Readonly<Record<number, SaveMigration>>;
 
 /**
- * One entry per past save version. Version 1 (Phase 1 state) has no migration: no saves existed outside tests before
- * Phase 4's persistence, so `loadSave` refuses it rather than guessing at the Phase 2 player and world state.
+ * One entry per past save version. Versions 1 and 2 (Phase 1 and 2 state) have no migration: no saves existed
+ * outside tests before Phase 4's persistence, so `loadSave` refuses them rather than guessing at the newer player
+ * and world state.
  */
 export const SAVE_MIGRATIONS: SaveMigrations = {};
 

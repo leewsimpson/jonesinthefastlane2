@@ -5,6 +5,7 @@
  */
 import type { GameContent } from '@fastlane/content';
 import type { RoundCtx } from '../core/context.ts';
+import { newsEffect } from '../hooks/news.ts';
 import { applyBp, BP_ONE } from '../math/fixed.ts';
 import { transfer } from '../money/ledger.ts';
 import type { Rng } from '../rng/rng.ts';
@@ -14,9 +15,16 @@ import type { PipelineStep } from './types.ts';
 
 const cause: Cause = { kind: 'step', id: 'market' };
 
-/** Each job opens with its own weekly chance; always-open entry jobs keep the FR-14 floor. */
-function rollOpenings(content: GameContent, rng: Rng): string[] {
-  return content.city.jobs.filter((j) => rng.chance(j.openChanceBp)).map((j) => j.id);
+/**
+ * Each job opens with its own weekly chance, moved by the news (FR-72); always-open entry jobs stay open whatever
+ * the news, keeping the FR-14 floor.
+ */
+function rollOpenings(content: GameContent, rng: Rng, extraBp: number): string[] {
+  return content.city.jobs
+    .filter((j) =>
+      j.openChanceBp >= BP_ONE ? true : rng.chance(Math.max(0, j.openChanceBp + extraBp)),
+    )
+    .map((j) => j.id);
 }
 
 /** The world at the start of a game. Draws from its own week-0 generator. */
@@ -30,7 +38,8 @@ export function initialWorld(content: GameContent, rng: Rng): WorldState {
     regime: start.id,
     regimeWeeksLeft: rng.int(start.weeks.min, start.weeks.max),
     lastReturnsBp: Object.fromEntries(market.assets.map((a) => [a.id, 0])),
-    openings: rollOpenings(content, rng),
+    openings: rollOpenings(content, rng, 0),
+    news: [],
   };
 }
 
@@ -42,7 +51,9 @@ export const marketMove: PipelineStep<RoundCtx> = {
     const { inflation, market } = content.balance;
     const rng = ctx.rng('world');
 
-    const drift = rng.int(inflation.weeklyDriftBp.min, inflation.weeklyDriftBp.max);
+    const drift =
+      rng.int(inflation.weeklyDriftBp.min, inflation.weeklyDriftBp.max) +
+      newsEffect(content, world, 'inflationBp');
     world.priceIndexBp += applyBp(world.priceIndexBp, drift);
     world.wageIndexBp += applyBp(world.priceIndexBp - world.wageIndexBp, inflation.wageCatchUpBp);
 
@@ -69,7 +80,7 @@ export const marketMove: PipelineStep<RoundCtx> = {
         else if (change < 0) transfer(ctx, player, place, 'outside', -change, 'market', cause);
       }
 
-    world.openings = rollOpenings(content, rng);
+    world.openings = rollOpenings(content, rng, newsEffect(content, world, 'openingsBp'));
     ctx.emit({
       type: 'marketMoved',
       week: state.week,

@@ -23,7 +23,14 @@ export function restBonusEnergy(content: GameContent, minutes: number): number {
   return Math.floor((minutes * content.balance.restBonusEnergyPerHour) / 60);
 }
 
-const emptyPlan = (): Plan => ({ time: 0, money: 0, effects: [], modifiers: [], outcomes: [] });
+export const emptyPlan = (): Plan => ({
+  time: 0,
+  money: 0,
+  effects: [],
+  modifiers: [],
+  outcomes: [],
+  transfers: [],
+});
 
 /** What `action` would do for the active player, without changing state or using RNG. */
 export function previewAction(
@@ -43,7 +50,8 @@ export function previewAction(
   if (action.type === 'decide') {
     if (!pending || pending.id !== action.decisionId) return unavailable('NO_SUCH_DECISION');
     if (!pending.options.includes(action.optionId)) return unavailable('UNKNOWN_OPTION');
-    return { action, available: true, plan: emptyPlan() };
+    // The option's own plan when the step gave one, such as a weekend event's choice (FR-03).
+    return { action, available: true, plan: pending.plans[action.optionId] ?? emptyPlan() };
   }
   if (pending) return unavailable('DECISION_PENDING');
   if (phase.kind !== 'turn') throw new Error(`no player can act during ${phase.kind}`);
@@ -66,6 +74,7 @@ export function previewAction(
         effects: trip.energy > 0 ? [{ stat: 'energy', delta: -trip.energy }] : [],
         modifiers,
         outcomes: [],
+        transfers: [],
       };
       if (mode.requiresItem && !player.items.includes(mode.requiresItem))
         return unavailable('NEEDS_ITEM', plan);

@@ -87,6 +87,11 @@ export function skillPoints(
   return Math.floor(Math.sqrt(Math.floor((minutes * content.balance.skills.pointsScale) / 60)));
 }
 
+/** Study minutes on a track that give `points` skill points: the inverse of `skillPoints`. */
+export function skillMinutesFor(content: GameContent, points: number): number {
+  return Math.ceil((points * points * 60) / content.balance.skills.pointsScale);
+}
+
 /** Scale `value` by the summed modifiers, applied once, so stacking order never changes the result. */
 export function applyModifiers(value: number, modifiers: readonly AppliedModifier[]): number {
   if (modifiers.length === 0) return value;

@@ -1,7 +1,15 @@
 /** R3: the round-end win check (FR-11) and the week limit with scoring (FR-12). */
 import type { GameContent } from '@fastlane/content';
+import { GOAL_KEYS } from '@fastlane/content/keys';
 import type { RoundCtx } from '../core/context.ts';
-import { goalValues, hasWon, overshootBp, progressBp, scoreBp } from '../goals/goals.ts';
+import {
+  goalValues,
+  hasWon,
+  overshootBp,
+  progressBp,
+  rawProgressBp,
+  scoreBp,
+} from '../goals/goals.ts';
 import type { GameResult, GameState, PlayerId } from '../types/state.ts';
 import type { PipelineStep } from './types.ts';
 
@@ -42,14 +50,36 @@ export const goalCheck: PipelineStep<RoundCtx> = {
       });
       result = { reason: 'win', week: state.week, winner, scores: all };
     } else if (weekLimit !== null && state.week >= weekLimit) {
+      // Highest score wins (FR-12). Scores cap each goal at 100%, so ties are common; the bigger total overshoot
+      // breaks them, as for a win (FR-11), before seat order does.
+      const overshoot = (id: PlayerId) => {
+        const v = values[id];
+        return v ? overshootBp(v, goals) : 0;
+      };
+      const top = Math.max(...state.players.map((p) => all[p.id] ?? 0));
       const winner = best(
-        state.players.map((p) => p.id),
-        (id) => all[id] ?? 0,
+        state.players.filter((p) => (all[p.id] ?? 0) === top).map((p) => p.id),
+        overshoot,
       );
       result = { reason: 'weekLimit', week: state.week, winner, scores: all };
     }
     if (result) {
       state.phase = { kind: 'gameOver', result };
+      // ENG-13: "you were $120 away" for every goal that ended just short of its target.
+      for (const p of state.players) {
+        const v = values[p.id] ?? goalValues(content, p);
+        const raw = rawProgressBp(v, goals);
+        for (const goal of GOAL_KEYS)
+          if (raw[goal] >= content.balance.rival.nearMissBp && raw[goal] < 10_000)
+            emit({
+              type: 'nearMiss',
+              player: p.id,
+              goal,
+              short: goals[goal] - v[goal],
+              progressBp: raw[goal],
+              final: true,
+            });
+      }
       emit({ type: 'gameOver', result });
     }
     return { done: true };

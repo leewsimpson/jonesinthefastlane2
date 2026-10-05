@@ -6,7 +6,7 @@
 import type { ActionKind } from '@fastlane/content/keys';
 import { borrow, deposit, repay, withdraw } from './banking.ts';
 import { type ActionHandler, basic, eat } from './common.ts';
-import { enroll, study } from './education.ts';
+import { dropCourse, enroll, study } from './education.ts';
 import { rentHome } from './housing.ts';
 import { buy, eatStored, subscribe, subscriptionAudit, unsubscribe } from './shopping.ts';
 import { applyJob, gig, workShift } from './work.ts';
@@ -21,6 +21,7 @@ export const HANDLERS: Record<ActionKind, ActionHandler> = {
   gig,
   'apply-job': applyJob,
   enroll,
+  'drop-course': dropCourse,
   study,
   buy,
   'rent-home': rentHome,

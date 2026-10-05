@@ -7,10 +7,14 @@ import {
   checkStrings,
   defaultCity,
   defaultContent,
+  EVENT_CATEGORIES,
   en,
+  FEED_MOMENTS,
+  feedVariants,
   type GameContent,
   LocationActionSchema,
   MetaSchema,
+  MIN_FEED_VARIANTS,
   meta,
 } from './index.ts';
 
@@ -51,6 +55,20 @@ describe('content', () => {
     expect(BalanceSchema.safeParse({ ...balance, wardrobeTiers: ['casual'] }).success).toBe(false);
   });
 
+  it('rejects returns that lose more than everything and trips that take no time', () => {
+    const regimes = balance.market.regimes.map((r) => ({
+      ...r,
+      returnsBp: { ...r.returnsBp, 'index-fund': { min: -12_000, max: -11_000 } },
+    }));
+    const market = { ...balance.market, regimes };
+    expect(BalanceSchema.safeParse({ ...balance, market }).success).toBe(false);
+    const [mode] = defaultCity.board.transportModes;
+    if (!mode) throw new Error('no modes');
+    const instant = { ...mode, minutesBase: 0, minutesPerStep: 0 };
+    const board = { ...defaultCity.board, transportModes: [instant] };
+    expect(CitySchema.safeParse({ ...defaultCity, board }).success).toBe(false);
+  });
+
   it('rejects minutes that are not quarter-hours, fractional cents and bad effect ranges', () => {
     const action = {
       id: 'x',
@@ -65,6 +83,12 @@ describe('content', () => {
     expect(LocationActionSchema.safeParse({ ...action, minutes: 0 }).success).toBe(false);
     expect(LocationActionSchema.safeParse({ ...action, cost: 9.5 }).success).toBe(false);
     expect(LocationActionSchema.safeParse({ ...action, kind: 'teleport' }).success).toBe(false);
+    // A cash effect is earnings; a negative one would let an affordable action take cash below 0.
+    expect(LocationActionSchema.safeParse({ ...action, effects: { cash: -500 } }).success).toBe(
+      false,
+    );
+    const loss = { ...action, effects: { cash: { min: -100, max: 100 } } };
+    expect(LocationActionSchema.safeParse(loss).success).toBe(false);
     const inverted = { ...action, effects: { social: { min: 5, max: 1 } } };
     expect(LocationActionSchema.safeParse(inverted).success).toBe(false);
     expect(LocationActionSchema.safeParse({ ...action, id: 'Not Kebab' }).success).toBe(false);
@@ -77,12 +101,12 @@ describe('content', () => {
   });
 
   it('finds broken cross-references', () => {
-    const [first] = defaultCity.actions;
+    const [first, ...rest] = defaultCity.actions;
     if (!first) throw new Error('no actions');
-    expect(checkContent(withCity({ actions: [{ ...first, location: 'atlantis' }] }))).toEqual([
-      `action "${first.id}" is at unknown location "atlantis"`,
-    ]);
-    expect(checkContent(withCity({ actions: [first, first] }))).toEqual([
+    expect(
+      checkContent(withCity({ actions: [{ ...first, location: 'atlantis' }, ...rest] })),
+    ).toEqual([`action "${first.id}" is at unknown location "atlantis"`]);
+    expect(checkContent(withCity({ actions: [first, first, ...rest] }))).toEqual([
       `duplicate action id "${first.id}"`,
     ]);
     const board = { ...defaultCity.board, home: 'atlantis' };
@@ -132,6 +156,13 @@ describe('content', () => {
     expect(checkContent(withCity({ jobs: noEntry }))).toContain(
       'at least one job must need nothing and always be open (FR-14)',
     );
+    // An entry job is only a floor if it can be worked (FR-14).
+    const moved = defaultCity.jobs.map((j) =>
+      j.id === 'picker' ? { ...j, location: 'thriftup' } : j,
+    );
+    expect(checkContent(withCity({ jobs: moved }))).toEqual([
+      'job "picker" has no work-shift action at its location',
+    ]);
     const [home] = defaultCity.housing;
     if (!home) throw new Error('no housing');
     expect(
@@ -146,6 +177,50 @@ describe('content', () => {
     } as (typeof defaultCity.items)[number];
     expect(checkContent(withCity({ items: [...defaultCity.items, orphan] }))).toEqual([
       'item "orphan" needs unknown item "unicorn"',
+    ]);
+  });
+
+  it('ships the MVP event deck and news (§16: ~40 events across every FR-71 category, ~10 news)', () => {
+    const deck = defaultContent.events.filter((e) => !e.trigger);
+    expect(deck.length).toBeGreaterThanOrEqual(38);
+    expect(new Set(deck.map((e) => e.category))).toEqual(new Set(EVENT_CATEGORIES));
+    expect(deck.filter((e) => e.choices.length >= 2).length).toBeGreaterThan(deck.length / 2);
+    expect(defaultContent.news.length).toBeGreaterThanOrEqual(10);
+    expect(defaultContent.quests.length).toBeGreaterThanOrEqual(10);
+  });
+
+  it('finds broken event, news, quest and rival references (FR-74)', () => {
+    const [card] = defaultContent.events;
+    if (!card) throw new Error('no events');
+    const paid = { ...card, id: 'paid', choices: card.choices.map((c) => ({ ...c, cost: 100 })) };
+    expect(checkContent({ ...defaultContent, events: [...defaultContent.events, paid] })).toEqual([
+      'event "paid" needs a free choice with no condition',
+    ]);
+    const nowhere = { ...card, id: 'nowhere', when: { ...card.when, housing: ['castle'] } };
+    expect(
+      checkContent({ ...defaultContent, events: [...defaultContent.events, nowhere] }),
+    ).toEqual(['event "nowhere" needs unknown housing "castle"']);
+    const [story] = defaultContent.news;
+    if (!story) throw new Error('no news');
+    const odd = { ...story, id: 'odd', effects: { ...story.effects, regime: 'moonshot' } };
+    expect(checkContent({ ...defaultContent, news: [...defaultContent.news, odd] })).toEqual([
+      'news "odd" sets unknown regime "moonshot"',
+    ]);
+    const ai = {
+      ...defaultContent.ai,
+      byDifficulty: { ...defaultContent.ai.byDifficulty, chill: 'ghost' },
+    };
+    expect(checkContent({ ...defaultContent, ai })).toEqual([
+      'rival for chill is unknown persona "ghost"',
+    ]);
+  });
+
+  it('has several lines per Jones feed moment, using only the slots each fills (FR-82, FR-84)', () => {
+    for (const moment of Object.keys(FEED_MOMENTS))
+      expect([moment, feedVariants(en, moment) >= MIN_FEED_VARIANTS]).toEqual([moment, true]);
+    const bad = { ...en, 'feed.hired.1': 'Hired as {{salary}}!' };
+    expect(checkStrings(defaultContent, bad)).toEqual([
+      'string "feed.hired.1" uses unknown slot "salary"',
     ]);
   });
 

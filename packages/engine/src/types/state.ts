@@ -5,6 +5,7 @@
  */
 import type { DebtKind, Difficulty, GoalKey, StatKey } from '@fastlane/content/keys';
 import type { RngState } from '../rng/rng.ts';
+import type { Plan } from './actions.ts';
 
 /** `p1`, `p2`, … Never integer-like, so `Record` key order stays insertion order. */
 export type PlayerId = string;
@@ -15,6 +16,11 @@ export interface PlayerSetup {
   name: string;
   /** AI players play by the same rules (FR-80). The engine plays their turns (engine-design §7). */
   controller: Controller;
+  /**
+   * An AI player's persona id from `content.ai.rivals`. Defaults to the rival for the game's difficulty (FR-83).
+   * Ignored for humans.
+   */
+  persona?: string;
 }
 
 /** Goal targets (§3, FR-10). Wealth is in cents. */
@@ -81,10 +87,20 @@ export interface Debt {
   collections: boolean;
 }
 
+/** A micro-goal on the go (ENG-11). `baseline` is the measure when it was issued; progress is the change. */
+export interface ActiveQuest {
+  id: string;
+  /** The last week it can be finished in. */
+  deadline: number;
+  baseline: number;
+}
+
 export interface PlayerState {
   id: PlayerId;
   name: string;
   controller: Controller;
+  /** The AI persona that plays this seat (FR-83), or null for humans. */
+  persona: string | null;
   location: string;
   /** Discretionary minutes left this week (FR-01). */
   timeLeft: number;
@@ -112,6 +128,18 @@ export interface PlayerState {
   debts: Record<DebtKind, Debt>;
   /** Active subscription ids (FR-52). */
   subscriptions: string[];
+  /** The last turn ended at 0 Energy: the weekend event is a burnout card (§4 Energy). */
+  burnout: boolean;
+  /** Minutes added to (or taken from) next week's time budget by a weekend event. */
+  nextWeekMinutes: number;
+  /** The week each weekend event was last drawn, for cooldowns. */
+  seenEvents: Record<string, number>;
+  /** Micro-goals on the go (ENG-11). */
+  quests: ActiveQuest[];
+  /** The week each quest was last finished or failed, for cooldowns. */
+  seenQuests: Record<string, number>;
+  /** Quests finished so far. */
+  questsDone: number;
 }
 
 /** Shared economy state. Only per-round steps may change it (FR-05a). */
@@ -127,6 +155,16 @@ export interface WorldState {
   lastReturnsBp: Record<string, number>;
   /** Job ids open for applications this week. */
   openings: string[];
+  /** News stories running now (FR-72), oldest first. */
+  news: ActiveNews[];
+}
+
+export interface ActiveNews {
+  id: string;
+  /** The round it broke in. */
+  since: number;
+  /** Weeks it still runs, counting the coming one. */
+  weeksLeft: number;
 }
 
 /** A choice a pipeline step needs from a player before it can finish (engine-design §11). */
@@ -135,8 +173,23 @@ export interface Decision {
   player: PlayerId;
   /** The step that asked, and that resolves it. */
   stepId: string;
-  /** Option ids. Copy key: `decision.<stepId>.<option>`. */
+  /** What it is about, such as the weekend event's id, or null. */
+  subject: string | null;
+  /**
+   * Option ids. Copy key: `event.<subject>.<option>` for weekend events, otherwise `decision.<stepId>.<option>`.
+   */
   options: string[];
+  /** What each option costs and does, shown before the player picks (FR-03). Worked out when the step paused. */
+  plans: Record<string, ChoicePlan>;
+}
+
+/** A plan for a decision option: a `Plan` plus what it changes beyond stats and money. */
+export interface ChoicePlan extends Plan {
+  /** Added to next week's time budget, in minutes. */
+  nextWeekMinutes: number;
+  jobRating: number;
+  layoffWarning: boolean;
+  gigBanWeeks: number;
 }
 
 /** FR-11, FR-12. `scores` are each player's score in basis points (average goal progress, each capped at 100%). */
@@ -161,6 +214,15 @@ export interface WeekRecord {
   netWorth: number;
   /** Goal progress in basis points, each capped at 10 000. */
   progressBp: Record<GoalKey, number>;
+  /** FR-12 score in basis points. */
+  scoreBp: number;
+  /** What the rival feed and run summary compare week to week (FR-82, ENG-21). */
+  job: string | null;
+  jobLevel: number;
+  housing: string;
+  credentials: number;
+  items: number;
+  questsDone: number;
 }
 
 export interface GameState {

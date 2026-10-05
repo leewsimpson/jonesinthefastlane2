@@ -1,0 +1,221 @@
+[
+  {
+    "kpi": "win.balanced-standard",
+    "hard": {
+      "min": 5000,
+      "max": 9500
+    },
+    "soft": {
+      "min": 5500,
+      "max": 8000
+    },
+    "note": "Reference sensible player vs Standard Jones (simulator §5: 55–80%). Baseline: 69.0%"
+  },
+  {
+    "kpi": "winWeek.balanced-standard",
+    "hard": {
+      "min": 12,
+      "max": 52
+    },
+    "soft": {
+      "min": 30,
+      "max": 45
+    },
+    "note": "Median week balanced wins Standard (simulator §5: 30–45). Baseline: 22, too quick; Standard targets need raising in the Phase 5/6 balance pass"
+  },
+  {
+    "kpi": "jonesWin.balanced-chill",
+    "hard": {
+      "min": 0,
+      "max": 3500
+    },
+    "soft": {
+      "min": 1000,
+      "max": 2500
+    },
+    "note": "Difficulty curve, Chill (simulator §5: 10–25%). Baseline: 9.3%"
+  },
+  {
+    "kpi": "jonesWin.balanced-standard",
+    "hard": {
+      "min": 1000,
+      "max": 6500
+    },
+    "soft": {
+      "min": 3500,
+      "max": 5500
+    },
+    "note": "Difficulty curve, Standard (simulator §5: 35–55%). Baseline: 31.0%"
+  },
+  {
+    "kpi": "jonesWin.balanced-hustle-culture",
+    "hard": {
+      "min": 2500,
+      "max": 8500
+    },
+    "soft": {
+      "min": 5500,
+      "max": 7500
+    },
+    "note": "Difficulty curve, Hustle Culture (simulator §5: 55–75%). Baseline: 46.1%"
+  },
+  {
+    "kpi": "dominance",
+    "hard": {
+      "max": 4000
+    },
+    "soft": {
+      "max": 1500
+    },
+    "note": "Best persona's win rate minus the second best at Standard (simulator §5: ≤ 15 points). Baseline: 7.9 points"
+  },
+  {
+    "kpi": "win.careerist-standard",
+    "hard": {
+      "max": 9500
+    },
+    "soft": {
+      "max": 2000
+    },
+    "note": "One-goal personas should win < 20% (simulator §5). Baseline: 76.9%: Career is the critical path, so leaning on it pays; Phase 5/6 balance"
+  },
+  {
+    "kpi": "win.scholar-standard",
+    "hard": {
+      "max": 9000
+    },
+    "soft": {
+      "max": 2000
+    },
+    "note": "One-goal persona (simulator §5: < 20%). Baseline: 0.0%"
+  },
+  {
+    "kpi": "win.saver-standard",
+    "hard": {
+      "max": 9000
+    },
+    "soft": {
+      "max": 2000
+    },
+    "note": "One-goal persona (simulator §5: < 20%). Baseline: 0.0%"
+  },
+  {
+    "kpi": "win.socialite-standard",
+    "hard": {
+      "max": 9000
+    },
+    "soft": {
+      "max": 2000
+    },
+    "note": "One-goal persona (simulator §5: < 20%). Baseline: 7.7%"
+  },
+  {
+    "kpi": "win.gambler-standard",
+    "hard": {
+      "max": 9000
+    },
+    "soft": {
+      "max": 3000
+    },
+    "note": "Risky play should be swingy, not dominant (simulator §3). Baseline: 0.0%"
+  },
+  {
+    "kpi": "win.spender-standard",
+    "hard": {
+      "max": 9000
+    },
+    "soft": {
+      "max": 2000
+    },
+    "note": "Consumerism should hurt (simulator §3). Baseline: 9.9%"
+  },
+  {
+    "kpi": "win.casual-chill",
+    "hard": {
+      "min": 0
+    },
+    "soft": {
+      "min": 3000
+    },
+    "note": "A careless human should still do well on Chill (simulator §3). Baseline: 22.0%; Phase 5/6 balance"
+  },
+  {
+    "kpi": "win.gigger-standard",
+    "hard": {
+      "max": 1000
+    },
+    "note": "Gig work is a floor, not a winning strategy (simulator §5: < 10%, FR-44). Baseline: 0.0%"
+  },
+  {
+    "kpi": "win.idle-standard",
+    "hard": {
+      "max": 0
+    },
+    "note": "Doing nothing never wins; the game still ends (FR-14 floor). Baseline: 0.0%"
+  },
+  {
+    "kpi": "win.random-standard",
+    "hard": {
+      "max": 500
+    },
+    "note": "Random play is the floor for every KPI (simulator §3). Baseline: 0.0%"
+  },
+  {
+    "kpi": "hardship.balanced-standard",
+    "hard": {
+      "max": 8000
+    },
+    "soft": {
+      "min": 3000,
+      "max": 6000
+    },
+    "note": "Share of balanced games with an eviction, collections, burnout or layoff (simulator §5: 30–60%, pressure without misery). Baseline: 0.4%, too comfortable; Phase 5/6 balance"
+  },
+  {
+    "kpi": "seatGap.balanced-pair-standard",
+    "hard": {
+      "max": 3000
+    },
+    "soft": {
+      "max": 1000
+    },
+    "note": "Two balanced players, win-rate gap by seat (FR-05a, FR-11). ~180 games, so ±10 points is noise: a 600-game check gave 49/51. Baseline: 15.4 points"
+  },
+  {
+    "kpi": "firstPaycheck.balanced-standard",
+    "hard": {
+      "max": 3
+    },
+    "soft": {
+      "max": 1
+    },
+    "note": "Week of the first wage or gig pay (ENG-20). Baseline: 1"
+  },
+  {
+    "kpi": "reach.events",
+    "hard": {
+      "min": 7000
+    },
+    "soft": {
+      "min": 9000
+    },
+    "note": "Share of weekend events drawn at least once (simulator §5). Baseline: 97.6%"
+  },
+  {
+    "kpi": "reach.choices",
+    "hard": {
+      "min": 7000
+    },
+    "soft": {
+      "min": 9000
+    },
+    "note": "Share of event choices taken at least once (simulator §5). Baseline: 96.5%"
+  },
+  {
+    "kpi": "reach.news",
+    "hard": {
+      "min": 8000
+    },
+    "note": "Share of news stories that broke at least once. Baseline: 100.0%"
+  }
+]

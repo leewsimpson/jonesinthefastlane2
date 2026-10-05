@@ -1,50 +1,122 @@
 [
   {
     "id": "balanced",
-    "goalWeightsBp": { "wealth": 2500, "wellbeing": 2500, "skills": 2500, "career": 2500 },
+    "goalWeightsBp": {
+      "wealth": 2500,
+      "wellbeing": 2500,
+      "skills": 2500,
+      "career": 2500
+    },
+    "bottleneckBp": 5000,
     "riskAppetiteBp": 5000,
     "horizonWeeks": 8,
     "bestMoveRateBp": 9500,
+    "runnersUp": 3,
     "notes": "The reference sensible player: weights all four goals evenly"
   },
   {
     "id": "careerist",
-    "goalWeightsBp": { "wealth": 2000, "wellbeing": 1000, "skills": 3000, "career": 4000 },
+    "goalWeightsBp": {
+      "wealth": 2000,
+      "wellbeing": 1000,
+      "skills": 3000,
+      "career": 4000
+    },
+    "bottleneckBp": 2000,
     "riskAppetiteBp": 3000,
     "horizonWeeks": 8,
     "bestMoveRateBp": 9500,
+    "runnersUp": 3,
     "notes": "Grinds the job ladder"
   },
   {
     "id": "scholar",
-    "goalWeightsBp": { "wealth": 1500, "wellbeing": 1500, "skills": 5500, "career": 1500 },
+    "goalWeightsBp": {
+      "wealth": 1500,
+      "wellbeing": 1500,
+      "skills": 5500,
+      "career": 1500
+    },
+    "bottleneckBp": 2000,
     "riskAppetiteBp": 3000,
     "horizonWeeks": 12,
     "bestMoveRateBp": 9500,
+    "runnersUp": 3,
     "notes": "Collects credentials"
   },
   {
     "id": "saver",
-    "goalWeightsBp": { "wealth": 5500, "wellbeing": 1500, "skills": 1500, "career": 1500 },
+    "goalWeightsBp": {
+      "wealth": 5500,
+      "wellbeing": 1500,
+      "skills": 1500,
+      "career": 1500
+    },
+    "bottleneckBp": 2000,
     "riskAppetiteBp": 2000,
     "horizonWeeks": 8,
     "bestMoveRateBp": 9500,
+    "runnersUp": 3,
     "notes": "Hoards cash and savings"
   },
   {
     "id": "socialite",
-    "goalWeightsBp": { "wealth": 1500, "wellbeing": 5500, "skills": 1500, "career": 1500 },
+    "goalWeightsBp": {
+      "wealth": 1500,
+      "wellbeing": 5500,
+      "skills": 1500,
+      "career": 1500
+    },
+    "bottleneckBp": 2000,
     "riskAppetiteBp": 5000,
     "horizonWeeks": 4,
     "bestMoveRateBp": 9500,
+    "runnersUp": 3,
     "notes": "Lives for the weekend"
   },
   {
     "id": "casual",
-    "goalWeightsBp": { "wealth": 2500, "wellbeing": 2500, "skills": 2500, "career": 2500 },
+    "goalWeightsBp": {
+      "wealth": 2500,
+      "wellbeing": 2500,
+      "skills": 2500,
+      "career": 2500
+    },
+    "bottleneckBp": 3000,
     "riskAppetiteBp": 5000,
     "horizonWeeks": 2,
     "bestMoveRateBp": 6000,
+    "runnersUp": 5,
     "notes": "A careless human: balanced, short horizon, often misses the best move"
+  },
+  {
+    "id": "gambler",
+    "goalWeightsBp": {
+      "wealth": 4000,
+      "wellbeing": 2000,
+      "skills": 2000,
+      "career": 2000
+    },
+    "bottleneckBp": 2000,
+    "riskAppetiteBp": 9500,
+    "horizonWeeks": 4,
+    "bestMoveRateBp": 9000,
+    "runnersUp": 3,
+    "notes": "Loves crypto and YOLO choices: risky play should be swingy, not dominant"
+  },
+  {
+    "id": "spender",
+    "goalWeightsBp": {
+      "wealth": 1500,
+      "wellbeing": 5500,
+      "skills": 1500,
+      "career": 1500
+    },
+    "bottleneckBp": 1000,
+    "riskAppetiteBp": 6000,
+    "horizonWeeks": 2,
+    "bestMoveRateBp": 9000,
+    "runnersUp": 3,
+    "notes": "Buys whatever feels good now: consumerism and subscription creep should hurt"
   }
 ]

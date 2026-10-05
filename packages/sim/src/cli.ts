@@ -1,54 +1,85 @@
 /**
  * Headless simulator (simulator.md).
  *
- * Random play (Phase 1 exit check): random legal games, each replayed to the same state hash. Player 1 is a random
- * human; the rest are engine-played AI.
+ *   pnpm sim [random] [--games 20] [--weeks 52] [--players 2] [--seed fastlane]
+ *     Random legal games, each replayed to the same state hash (the Phase 1 check). Player 1 is a random human;
+ *     the rest are engine-played AI.
  *
- *   pnpm sim [--games 20] [--weeks 52] [--players 2] [--seed fastlane]
+ *   pnpm sim bots --bots balanced,careerist [--difficulty standard] [--override overrides/rent-plus-10.json]
+ *     Each bot plays solo games; prints wins, weeks and score. Bots are persona ids, or random, idle, sensible, gigger.
  *
- * Bots (simulator §3): each listed bot plays solo games and reports wins, weeks and score. Bots are persona ids from
- * `@fastlane/content/sim`, or `random`, `idle` or `sensible`. `--override` applies a content patch (simulator §7).
+ *   pnpm sim run [--games 1000] [--seed fastlane] [--workers N] [--override …] [--out sim-out/<seed>]
+ *                [--base <report.json>]
+ *     The balance run (simulator §5, CI-04): every matchup in the CI plan across a worker pool, KPIs checked against
+ *     `@fastlane/content/sim` bands. Writes report.json and summary.md; exits 1 when a hard band fails.
  *
- *   pnpm sim --bots balanced,careerist [--difficulty standard] [--override overrides/rent-plus-10.json]
- *
- * The full runner (worker pool, KPI bands, compare) arrives in Phase 3.
+ *   pnpm sim compare --base <report.json | git ref> --head <report.json>
+ *     Paired comparison on the same seeds (simulator §7). A git ref is run in a temporary worktree first.
  */
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { availableParallelism, tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { DIFFICULTIES, type Difficulty, defaultContent, type GameContent } from '@fastlane/content';
-import { personaById } from '@fastlane/content/sim';
+import { kpiBands } from '@fastlane/content/sim';
 import { createEngine, ENGINE_VERSION } from '@fastlane/engine';
-import { idleBot, personaBot, randomBot } from './bots/policies.ts';
-import { sensibleBot } from './bots/sensible.ts';
-import { type Bot, playGame } from './game.ts';
+import { playGame } from './game.ts';
 import { loadOverride } from './override.ts';
 import { randomPlay } from './random-play.ts';
+import { checkBands, computeKpis, unusedContent } from './runner/kpis.ts';
+import { CI_PLAN, jobsFor } from './runner/plan.ts';
+import { runPool } from './runner/pool.ts';
+import { botFor } from './runner/record.ts';
+import { compareReports, incomparable, type Report, summaryMarkdown } from './runner/report.ts';
 
-const { values } = parseArgs({
+const COMMANDS = ['random', 'bots', 'run', 'compare'] as const;
+type Command = (typeof COMMANDS)[number];
+
+const { values, positionals } = parseArgs({
   // pnpm forwards a literal `--` before script arguments.
   args: process.argv.slice(2).filter((a) => a !== '--'),
+  allowPositionals: true,
   options: {
-    games: { type: 'string', default: '20' },
+    games: { type: 'string' },
     weeks: { type: 'string', default: '52' },
     players: { type: 'string', default: '2' },
     seed: { type: 'string', default: 'fastlane' },
     bots: { type: 'string' },
     difficulty: { type: 'string', default: 'standard' },
     override: { type: 'string' },
+    workers: { type: 'string' },
+    out: { type: 'string' },
+    base: { type: 'string' },
+    head: { type: 'string' },
   },
 });
-const games = Number(values.games);
-const weeks = Number(values.weeks);
+const command: Command = COMMANDS.includes(positionals[0] as Command)
+  ? (positionals[0] as Command)
+  : values.bots
+    ? 'bots'
+    : 'random';
+/** Paths are relative to where the command was started: pnpm runs scripts from the package folder. */
+const fromCwd = (path: string) => resolve(process.env.INIT_CWD ?? process.cwd(), path);
 const content: GameContent = values.override
-  ? loadOverride(defaultContent, values.override)
+  ? loadOverride(defaultContent, fromCwd(values.override))
   : defaultContent;
 
 console.log(
-  `fastlane-sim — engine ${ENGINE_VERSION}, content v${content.meta.contentVersion}` +
+  `fastlane-sim ${command} — engine ${ENGINE_VERSION}, content v${content.meta.contentVersion}` +
     (values.override ? ` + ${values.override}` : ''),
 );
-process.exit(values.bots ? runBots(values.bots.split(',')) : runRandomPlay());
+const handlers: Record<Command, () => Promise<number> | number> = {
+  random: runRandomPlay,
+  bots: () => runBots((values.bots ?? 'balanced').split(',')),
+  run: runBalance,
+  compare: runCompare,
+};
+process.exit(await handlers[command]());
 
 function runRandomPlay(): number {
+  const games = Number(values.games ?? 20);
+  const weeks = Number(values.weeks);
   const players = Number(values.players);
   console.log(`${games} games × ${weeks} weeks × ${players} players of random legal actions`);
   let mismatches = 0;
@@ -79,14 +110,9 @@ function runRandomPlay(): number {
   return mismatches === 0 ? 0 : 1;
 }
 
-function botFor(id: string, seed: string): Bot {
-  if (id === 'random') return randomBot(seed);
-  if (id === 'idle') return idleBot;
-  if (id === 'sensible') return sensibleBot;
-  return personaBot(content, personaById(id), seed);
-}
-
 function runBots(ids: string[]): number {
+  const games = Number(values.games ?? 20);
+  const weeks = Number(values.weeks);
   const difficulty = values.difficulty as Difficulty;
   if (!DIFFICULTIES.includes(difficulty)) throw new Error(`unknown difficulty ${difficulty}`);
   console.log(`${games} solo games × ${weeks} weeks per bot, ${difficulty}`);
@@ -103,7 +129,7 @@ function runBots(ids: string[]): number {
         players: [{ name: id, controller: 'human' as const }],
         config: { weekLimit: weeks, difficulty },
       };
-      const { state } = playGame(engine, setup, [botFor(id, seed)]);
+      const { state } = playGame(engine, setup, [botFor(content, id, seed)]);
       if (state.phase.kind !== 'gameOver') throw new Error('game did not end');
       const { result } = state.phase;
       if (result.reason === 'win') winWeeks.push(result.week);
@@ -117,5 +143,117 @@ function runBots(ids: string[]): number {
         `${(scoreTotal / games / 100).toFixed(1).padStart(9)}%   ${ms.toFixed(0).padStart(7)}`,
     );
   }
+  return 0;
+}
+
+function gitCommit(): string | null {
+  try {
+    return execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+  } catch {
+    return null;
+  }
+}
+
+async function runBalance(): Promise<number> {
+  const games = Number(values.games ?? 1000);
+  const seed = values.seed;
+  const jobs = jobsFor(CI_PLAN, games, seed);
+  const workers = Math.min(
+    values.workers ? Number(values.workers) : availableParallelism(),
+    jobs.length,
+  );
+  if (!Number.isInteger(workers) || workers < 1)
+    throw new Error(`--workers must be a positive integer, got ${values.workers}`);
+  console.log(`${jobs.length} games across ${CI_PLAN.length} matchups`);
+  const started = performance.now();
+  let last = 0;
+  const records = await runPool(jobs, {
+    workers,
+    override: values.override ? fromCwd(values.override) : null,
+    onRecord(done) {
+      const pct = Math.floor((done * 10) / jobs.length);
+      if (pct > last) {
+        last = pct;
+        console.log(`  ${done}/${jobs.length} games`);
+      }
+    },
+  });
+  const seconds = (performance.now() - started) / 1000;
+  const kpis = computeKpis(content, records, seconds);
+  const report: Report = {
+    meta: {
+      engineVersion: ENGINE_VERSION,
+      contentVersion: content.meta.contentVersion,
+      contentHash: createEngine(content).contentHash,
+      seed,
+      plan: 'ci',
+      games: records.length,
+      workers,
+      seconds,
+      override: values.override ?? null,
+      commit: gitCommit(),
+    },
+    kpis,
+    bands: checkBands(kpis, kpiBands),
+    unused: unusedContent(content, records),
+    records,
+  };
+  const out = fromCwd(values.out ?? join('sim-out', seed));
+  mkdirSync(out, { recursive: true });
+  writeFileSync(join(out, 'report.json'), JSON.stringify(report));
+  const base = values.base ? loadReport(fromCwd(values.base)) : null;
+  const mismatch = base && incomparable(base, report);
+  if (mismatch) console.warn(`Not comparing with the base run: ${mismatch}`);
+  const summary = summaryMarkdown(report, base && !mismatch ? compareReports(base, report) : null);
+  writeFileSync(join(out, 'summary.md'), summary);
+  console.log(`\n${summary}\nwrote ${out}`);
+  const failed = report.bands.filter((b) => b.status === 'hard' || b.status === 'missing');
+  for (const b of failed)
+    console.error(`FAIL ${b.kpi} = ${b.value} (hard band ${JSON.stringify(b.band.hard)})`);
+  return failed.length > 0 ? 1 : 0;
+}
+
+function loadReport(path: string): Report {
+  return JSON.parse(readFileSync(path, 'utf8')) as Report;
+}
+
+/** Run the balance sim at a git ref in a temporary worktree, so `compare` can take a ref as its base. */
+function reportAtRef(ref: string): Report {
+  const dir = mkdtempSync(join(tmpdir(), 'fastlane-sim-'));
+  // pnpm is a .cmd shim on Windows, which needs a shell; quote every argument for it.
+  const shell = process.platform === 'win32';
+  const run = (cmd: string, args: string[], cwd?: string) =>
+    execFileSync(cmd, shell ? args.map((a) => JSON.stringify(a)) : args, {
+      cwd,
+      stdio: 'inherit',
+      shell,
+    });
+  try {
+    run('git', ['worktree', 'add', '--detach', dir, ref]);
+    run('pnpm', ['install', '--frozen-lockfile', '--prefer-offline'], dir);
+    const args = ['--filter', '@fastlane/sim', 'sim', 'run', '--out', join(dir, 'sim-out')];
+    if (values.games) args.push('--games', values.games);
+    args.push('--seed', values.seed);
+    try {
+      run('pnpm', args, dir);
+    } catch {
+      // Hard bands may fail at the base; the report is still written.
+    }
+    return loadReport(join(dir, 'sim-out', 'report.json'));
+  } finally {
+    run('git', ['worktree', 'remove', '--force', dir]);
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+function runCompare(): number {
+  if (!values.base || !values.head) throw new Error('compare needs --base and --head');
+  const base = values.base.endsWith('.json')
+    ? loadReport(fromCwd(values.base))
+    : reportAtRef(values.base);
+  const head = loadReport(fromCwd(values.head));
+  const mismatch = incomparable(base, head);
+  if (mismatch) throw new Error(`can't pair these runs: ${mismatch}`);
+  console.log(summaryMarkdown(head, compareReports(base, head)));
   return 0;
 }

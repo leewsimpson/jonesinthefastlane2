@@ -1,6 +1,8 @@
 /** Work: job shifts, GigHub and applying for jobs (FR-40–FR-44). */
 import { wage } from '../economy/prices.ts';
+import { newsEffect } from '../hooks/news.ts';
 import { jobById, newJobState, qualification, shiftPay, weeklyCap } from '../jobs/jobs.ts';
+import { applyBp, BP_ONE } from '../math/fixed.ts';
 import { scaleGain } from '../stats/stats.ts';
 import {
   type ActionHandler,
@@ -43,7 +45,10 @@ export const workShift: ActionHandler = {
   },
 };
 
-/** GigHub (FR-44): anywhere, surge pay rolled per shift, a chance of deactivation, no ladder experience. */
+/**
+ * GigHub (FR-44): anywhere, pay rolled per shift within a range that news surges move, a chance of deactivation,
+ * no ladder experience.
+ */
 export const gig: ActionHandler = {
   options: (_ctx, def) => durationOptions(def),
   plan(ctx, def, params) {
@@ -51,8 +56,13 @@ export const gig: ActionHandler = {
     const minutes = minutesOf(def, params);
     const plan = planFromData(ctx, def, params);
     const { min, max } = ctx.content.city.gigPayPerHour;
+    // Surge pricing comes from the news (FR-44, FR-72).
+    const surge = Math.max(0, BP_ONE + newsEffect(ctx.content, ctx.state.world, 'gigPayBp'));
     const pay = (perHour: number) =>
-      scaleGain(Math.floor((wage(ctx.state.world, perHour) * minutes) / 60), plan.modifiers);
+      scaleGain(
+        Math.floor((applyBp(wage(ctx.state.world, perHour), surge) * minutes) / 60),
+        plan.modifiers,
+      );
     plan.outcomes.unshift({ stat: 'cash', min: pay(min), max: pay(max) });
     return plan;
   },
@@ -66,7 +76,10 @@ export const gig: ActionHandler = {
   },
 };
 
-/** JobLink (FR-40): apply for an open job you qualify for. Hiring is immediate; your old job ends. */
+/**
+ * JobLink (FR-40): apply for an open job you qualify for. Hiring is immediate; your old job ends. The weekly hours
+ * cap counts hours from both, and the rating comes with you.
+ */
 export const applyJob: ActionHandler = {
   options: (ctx) => ctx.content.city.jobs.map((j) => ({ target: j.id })),
   plan(ctx, def, params) {
@@ -83,7 +96,13 @@ export const applyJob: ActionHandler = {
     applyPlan(ctx, def, plan);
     const id = params.target;
     if (!id) throw new Error('unreachable: the plan checked the target');
-    ctx.player.job = newJobState(ctx.content, id);
+    // Hours worked this week and the rating carry over: changing jobs can't reset the weekly cap or wipe a poor
+    // record (the balance sim found bots re-applying to dodge being let go).
+    const old = ctx.player.job;
+    ctx.player.job = {
+      ...newJobState(ctx.content, id, old?.rating),
+      minutesThisWeek: old?.minutesThisWeek ?? 0,
+    };
     ctx.emit({ type: 'jobChanged', player: ctx.player.id, change: 'hired', job: id });
   },
 };

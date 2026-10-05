@@ -114,3 +114,71 @@ Running ledger of finished phases, deferrals and deviations from [implementation
   - Add balance rules to `balance.json` and prices to the city folder; `checkContent` cross-checks both.
   - The sensible bot wins Standard by week 24, before simulator §5's 30–45-week band for `balanced`. Expect to raise
     Standard targets when Phase 3 sets the bands.
+
+## Phase 3 — Jones, events & hooks — done 2026-10-05
+
+- Review of Phases 0–2 first (same branch, user decision): plans list their ledger moves (`Plan.transfers`), so a
+  student loan or deposit never hides in a preview (FR-03); moving house counts the old deposit; changing jobs keeps
+  the week's hours; setup config is validated; paying rent on time builds credit; the content schema rejects
+  negative cash effects, returns below −100%, zero-time trips and jobs no work action can reach (FR-14); founder
+  hoodie and cashier rebalanced. New tests: ledger moves match the preview, and the world stream is the same whatever
+  players do (NFR-12).
+- Exit criteria:
+  - A full game, human-scripted vs Jones, runs headless with events, news and teasers:
+    `packages/sim/src/jones.test.ts` plays the sensible bot against Standard Jones on shipped content on 3 seeds. Each
+    game ends and shows weekend events (Jones resolving its own), news, teasers, quests, standings and Jones's posts,
+    and replays to the same hash.
+  - The balance sim runs in CI under the 8-minute budget with initial KPI bands: the `balance` job in `ci.yml`
+    (parallel to `checks`, `timeout-minutes: 8`) runs `pnpm sim run --games 2000`. Locally on 4 workers it takes
+    121 s; on 16 workers, 54 s. Bands are in `packages/content/sim/kpi-bands.json`, set from the baseline run
+    (2001 games, seed `fastlane`, engine 0.4.0, content hash `1f9130ce7ef6`). Every hard band passes. The soft-band
+    misses are recorded below and in each band's note.
+- Initial KPI baseline (soft-band misses marked ⚠): balanced vs Standard Jones wins 69.0%, median week 22 ⚠ (target
+  30–45). Jones wins 9.3% on Chill ⚠ (10–25), 31.0% on Standard ⚠ (35–55) and 46.1% on Hustle Culture ⚠ (55–75).
+  Dominance is 7.9 points. Careerist wins 76.9% ⚠ (< 20): Career is the critical path. Hardship is 0.4% ⚠
+  (30–60%). Casual on Chill wins 22.0% ⚠. Gigger, idle and random win 0%. First paycheck comes in week 1. Event reach
+  is 97.6% and news reach 100%. Seat gap is 15.4 points ⚠ on about 180 pair games; a 600-game check gave 49/51, so
+  this is noise.
+- Bot checks (implementation-plan note): balanced beats random on every seed; it scores 99.7% on Standard. The
+  scorer was reworked before the bands were set. It now uses a concave goal value with a bottleneck bonus, and counts
+  actual and expected progress separately. It plans promotions from the effort still needed, values a job as it
+  will stand after this week's job check, keeps a cash cushion, and prefers longer shifts. All tuning is in
+  `content/data/ai.json`. Before the rework, a more random Jones beat a greedier one. After it, a higher best-move
+  rate plays better again, and the difficulty curve runs Chill < Standard < Hustle.
+- Deferred:
+  - Luck share and week of first goal milestone (simulator §5), `sim assess/sweep/trace`, HTML report → Phase 5
+    (plan row "Sim choice assessment…").
+  - Balance tuning for the soft-band misses → Phase 5 content fill and Phase 6 playtest tuning. A first sweep of
+    Standard targets moved the KPIs erratically (careerist 0–94%), so content was left as Phase 2 shipped it.
+  - SIM-02 throughput (≥ 50 games/s per core) is not met: about 4 games/s per core with two utility players. The
+    pool and the CI budget make 2k games fit. Faster projections → when CI time warrants it.
+  - The throughput regression only warns in the summary; it has no band, because it depends on the runner.
+  - Jones posts about milestones, not about weekend events (a viral post, say) → Phase 5 copy pass.
+  - Event chains (FR-73, S) → Phase 8 as planned. Jones has one personality (FR-81) → Phase 8.
+  - Delivered meals count at the food check even if the subscription is cancelled for non-payment that week (Phase 2
+    review, low) → Phase 5 content pass.
+- Deviations:
+  - CI-04 runs on `main` and manual dispatch, not per PR, and posts to the job summary (user decision; CI-07). The
+    compare base is the last green `main` run's report, not the merge base; reports pair only when plan, seed and
+    game count match.
+  - Rule changes found by the sim: a new hire keeps the old job's rating (bots re-applied to dodge being let go);
+    week-limit score ties go to the bigger overshoot (ties were common with goals capped at 100% and handed seat 1
+    the win); a "Drop the course" action at UpSkill U (bots got stuck enrolled in a course they no longer needed).
+    Recorded in engine-design §17.
+  - Difficulty has two persona levers: best-move rate and how many runners-up the fallback picks from (FR-83: still
+    strategy, never rules). The rate alone barely moved Jones's win rate.
+  - Jones's personas ship in game content (`data/ai.json`), not `sim/personas.json`.
+  - The event deck has 41 cards; three have a single choice (FR-70: "many give the player a choice").
+  - Rival-feed lines are numbered copy variants (`feed.<moment>.<n>`); the engine picks the moment and slots, and
+    the UI picks the line.
+  - `SAVE_VERSION` 3 and state schema 3 with no migration (no saves exist outside tests); `ENGINE_VERSION` 0.4.0.
+  - Rules tests (`economy.properties`) and the random-play check use the random AI policy, so they stay fast and
+    games run their full length.
+- Notes for later phases:
+  - `pnpm sim run --base <report.json>` shows paired deltas for any change; use it for every balance tweak. Paths
+    are relative to where you run `pnpm`.
+  - The utility scorer is about 200 ms per player-game. A 2-player game with Jones costs about 0.4 s, so client-side
+    Jones turns are fine, but sim game counts drive CI time.
+  - Gotchas from building the bot: optional calls skip their arguments (`f?.(++x)` doesn't increment when `f` is
+    undefined); arrival values must be computed per transport mode; any chained step (withdraw → pay, enrol →
+    study, drop → enrol) needs explicit credit in the valuation or the bot never starts it.

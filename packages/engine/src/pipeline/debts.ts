@@ -1,6 +1,7 @@
 /** P3: savings interest, debt interest, payments due, collections and credit score (FR-53, FR-54, FR-14). */
 import { DEBT_KINDS, type DebtKind, SAVINGS_ID } from '@fastlane/content/keys';
 import type { PlayerCtx } from '../core/context.ts';
+import { newsEffect } from '../hooks/news.ts';
 import { applyBp, applyPpm } from '../math/fixed.ts';
 import { transfer } from '../money/ledger.ts';
 import { changeStat } from '../stats/stats.ts';
@@ -59,11 +60,17 @@ export const interestAndDebt: PipelineStep<PlayerCtx> = {
     const { player, content, config } = ctx;
     const finance = content.balance.finance;
     const weeks = config.turnLengthWeeks;
+    // Rate news moves both rates (FR-72); neither goes below zero.
+    const savingsPpm = Math.max(
+      0,
+      finance.savingsWeeklyPpm + newsEffect(content, ctx.world, 'savingsPpm'),
+    );
+    const cardPpm = Math.max(0, finance.card.weeklyPpm + newsEffect(content, ctx.world, 'cardPpm'));
     const savings = player.holdings[SAVINGS_ID] ?? 0;
-    const earned = applyPpm(savings, finance.savingsWeeklyPpm * weeks);
+    const earned = applyPpm(savings, savingsPpm * weeks);
     transfer(ctx, player, 'outside', `hold:${SAVINGS_ID}`, earned, 'interest', cause);
     const rates: Partial<Record<DebtKind, number>> = {
-      card: finance.card.weeklyPpm,
+      card: cardPpm,
       student: finance.studentWeeklyPpm,
     };
     for (const kind of DEBT_KINDS) {

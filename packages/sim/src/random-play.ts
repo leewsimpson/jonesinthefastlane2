@@ -5,6 +5,7 @@ import {
   createRng,
   type GameSetup,
   type GameState,
+  randomPolicy,
 } from '@fastlane/engine';
 
 export interface RandomPlayResult {
@@ -17,7 +18,7 @@ export interface RandomPlayResult {
 
 /**
  * Play to the setup's week limit, choosing uniformly among the humans' available actions (AI players are played by
- * the engine), then replay the log and hash both results. The chooser has its own generator, so it never touches
+ * the engine, with its random policy), then replay the log and hash both results. The chooser has its own generator, so it never touches
  * the game's streams.
  */
 export function randomPlay(
@@ -26,7 +27,8 @@ export function randomPlay(
   chooserSeed: string,
 ): RandomPlayResult {
   if (!setup.config?.weekLimit) throw new Error('random play needs a week limit');
-  const engine = createEngine(content);
+  // Random AI too, so a 52-week game runs its full length instead of Jones winning it.
+  const engine = createEngine(content, { ai: randomPolicy });
   const chooser = createRng(chooserSeed);
   const { state } = engine.newGame(setup);
   const log: Action[] = [];

@@ -4,7 +4,16 @@
  * are appended); any other value replaces. The result is validated like shipped content.
  */
 import { readFileSync } from 'node:fs';
-import { BalanceSchema, CitySchema, checkContent, type GameContent } from '@fastlane/content';
+import {
+  AiSchema,
+  BalanceSchema,
+  CitySchema,
+  checkContent,
+  type GameContent,
+  NewsSchema,
+  QuestSchema,
+  WeekendEventSchema,
+} from '@fastlane/content';
 
 type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 
@@ -38,6 +47,10 @@ export function applyOverride(content: GameContent, patch: unknown): GameContent
     meta: content.meta,
     balance: BalanceSchema.parse(merged.balance),
     city: CitySchema.parse(merged.city),
+    events: WeekendEventSchema.array().parse(merged.events),
+    news: NewsSchema.array().parse(merged.news),
+    quests: QuestSchema.array().parse(merged.quests),
+    ai: AiSchema.parse(merged.ai),
   };
   const problems = checkContent(result);
   if (problems.length > 0)
