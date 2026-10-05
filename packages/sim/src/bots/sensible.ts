@@ -4,7 +4,7 @@
  * keep friends, move out of the basement once it's affordable, pay down debt and save the rest. It is a test of the
  * rules and the balance, not a strong player.
  */
-import type { Course, GameContent, Job } from '@fastlane/content';
+import { ANYWHERE, type Course, type GameContent, type Job, SAVINGS_ID } from '@fastlane/content';
 import {
   type Action,
   type Engine,
@@ -60,7 +60,7 @@ function attempt(
   action: Action,
 ): Action | null {
   const player = me(state);
-  if (location === '*' || player.location === location)
+  if (location === ANYWHERE || player.location === location)
     return engine.preview(state, action).available ? action : null;
   const trip = tripTo(engine, state, location);
   if (!trip) return null;
@@ -296,7 +296,7 @@ function bank(engine: Engine, state: GameState, player: PlayerState): Action | n
         engine,
         state,
         deposit.location,
-        perform(deposit.id, { target: 'savings', amount: spare }),
+        perform(deposit.id, { target: SAVINGS_ID, amount: spare }),
       )
     : null;
 }

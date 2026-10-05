@@ -1,7 +1,7 @@
 /** LeaseLord (FR-51): sign a lease on another housing tier. */
 import { price } from '../economy/prices.ts';
 import { transfer } from '../money/ledger.ts';
-import { type ActionHandler, actionCause, fail, planFromData } from './common.ts';
+import { type ActionHandler, actionCause, applyPlan, fail, planFromData } from './common.ts';
 
 /**
  * Move to a housing tier: the old deposit comes back, the new one is paid, and a fresh lease starts at today's rent.
@@ -27,9 +27,16 @@ export const rentHome: ActionHandler = {
     const tier = content.city.housing.find((h) => h.id === params.target);
     if (!tier) throw new Error('unreachable: the plan checked the tier');
     const cause = actionCause(def);
-    player.timeLeft -= plan.time;
-    transfer(ctx, player, 'deposit', 'cash', player.housing.deposit, 'lease-deposit', cause);
-    transfer(ctx, player, 'cash', 'deposit', plan.money, 'lease-deposit', cause);
+    const refund = player.housing.deposit;
+    const deposit = price(world, tier.deposit);
+    // The action's own time, fee and effects as usual; the deposits move between the player's own places.
+    applyPlan(ctx, def, {
+      ...plan,
+      money: plan.money - deposit,
+      effects: refund > 0 ? plan.effects.slice(1) : plan.effects,
+    });
+    transfer(ctx, player, 'deposit', 'cash', refund, 'lease-deposit', cause);
+    transfer(ctx, player, 'cash', 'deposit', deposit, 'lease-deposit', cause);
     const from = player.housing.tier;
     player.housing.tier = tier.id;
     player.housing.rent = price(world, tier.rent);

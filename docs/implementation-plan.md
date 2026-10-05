@@ -162,6 +162,12 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
 - **Ask the user** which model the build-time Jones line generator uses and how generated lines are reviewed before they ship.
 - Record the initial KPI bands and the runs they came from in `docs/progress.md`.
 - Check the bots before trusting their numbers: if `balanced` loses to `random` or has high regret, the bot is broken, not the game.
+- The utility scorer (`engine/src/ai/utility.ts`) is greedy per hour with a horizon bonus. In Phase 2 `balanced`
+  scored about 80% on Standard but rarely won: it doesn't plan careers (dress, credentials, experience) ahead. Fix
+  that before setting bands, and move its tuning constants into persona or balance data. It runs at about 0.5 s per
+  game; SIM-02 needs about 25× faster (cache arrival scores, cheaper projections, worker pool).
+- AI disruption has a news hook (`NEWS_DISRUPTION_BP` in `pipeline/jobChecks.ts`) waiting for FR-72; gig surges
+  (FR-44) can come from news too.
 
 ---
 

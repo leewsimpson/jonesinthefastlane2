@@ -73,13 +73,8 @@ Most personas are **one utility scorer with different weights**: the same scorer
 `packages/engine` (`ai/utility.ts`), and Jones's difficulty is how often the bot picks its top-scored move (FR-83). It
 values a position as weighted goal progress plus what the persona expects over its horizon, and scores each option
 by value gained per hour; travel is scored by the best thing to do on arrival. A persona is data, in basis points
-like every other balance value:
-
-```jsonc
-// packages/content/sim/personas.json (loaded through @fastlane/content/sim)
-{ "id": "careerist", "goalWeightsBp": { "wealth": 2000, "wellbeing": 1000, "skills": 3000, "career": 4000 },
-  "riskAppetiteBp": 3000, "horizonWeeks": 8, "bestMoveRateBp": 9500, "notes": "Grinds the job ladder" }
-```
+like every other balance value: goal weights, risk appetite, horizon in weeks and best-move rate. The roster and its
+values live in `packages/content/sim/personas.json` (loaded through `@fastlane/content/sim`).
 
 | Persona | Plays like | Why it exists |
 |---|---|---|
