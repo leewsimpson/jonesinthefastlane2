@@ -1,0 +1,27 @@
+{
+  "name": "fastlane-2026",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.9.1",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "lint": "biome ci .",
+    "format": "biome check --write .",
+    "typecheck": "pnpm -r --parallel typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "content:validate": "pnpm --filter @fastlane/content validate",
+    "build": "pnpm -r build",
+    "size": "pnpm --filter @fastlane/web size",
+    "dev": "pnpm -r --parallel dev"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@types/node": "24.19.1",
+    "fast-check": "4.10.2",
+    "typescript": "7.0.2",
+    "vitest": "5.0.3"
+  }
+}
