@@ -9,6 +9,7 @@ AI job disruption, the housing crunch, gig work, side hustles, crypto swings, su
 | [art-direction.md](docs/art-direction.md) | Visual style, palette, typography, camera rules, image-gen prompts, asset pipeline, MVP asset list |
 | [tech-stack.md](docs/tech-stack.md) | Architecture, libraries, project structure, persistence, backend, testing, tooling, hosting |
 | [ci-cd.md](docs/ci-cd.md) | GitHub Actions pipelines, Cloudflare Pages/Workers/D1 deployment, environments, rollback, secrets |
+| [engine-design.md](docs/engine-design.md) | Design of the pure, deterministic engine: state, RNG streams, actions and previews, end-of-week pipeline, saves, tests |
 | [implementation-plan.md](docs/implementation-plan.md) | Phased build plan from foundations to MVP, v1.0 and post-launch, with exit criteria, art track, decisions and risks |
 
 ## Working title & IP note
