@@ -8,11 +8,10 @@ import type { GameContent } from '@fastlane/content';
 import { DEBT_KINDS, TEASERS, type TeaserId } from '@fastlane/content/keys';
 import type { RoundCtx } from '../core/context.ts';
 import { jobById, nextOnLadder, qualification } from '../jobs/jobs.ts';
+import type { SlotParams as Params } from '../types/events.ts';
 import type { GameState, PlayerState } from '../types/state.ts';
 import { questById, questProgressBp } from './quests.ts';
 import type { PipelineStep } from './types.ts';
-
-type Params = Record<string, string | number>;
 
 /** Every teaser that applies to `player`, in priority order. */
 export function teasersFor(
@@ -58,7 +57,7 @@ export function teasersFor(
       const ready =
         why === null ||
         (why === 'NEEDS_EXPERIENCE' && experienceLeft <= balance.jobs.maxWeeklyMinutes);
-      if (ready && job.rating >= balance.jobs.promotionRating - 10)
+      if (ready && job.rating >= balance.jobs.promotionRating - balance.teasers.promotionRatingGap)
         found['promotion-close'] = { job: next.id };
     }
   }
@@ -66,7 +65,7 @@ export function teasersFor(
   if (enrollment) {
     const course = content.city.courses.find((c) => c.id === enrollment.course);
     const left = course ? course.studyMinutes - enrollment.minutes : 0;
-    if (course && left > 0 && left <= 600)
+    if (course && left > 0 && left <= balance.teasers.credentialMinutes)
       found['credential-close'] = { course: course.id, hours: Math.ceil(left / 60) };
   }
   for (const active of player.quests) {

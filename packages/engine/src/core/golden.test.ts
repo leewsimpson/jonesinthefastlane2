@@ -41,7 +41,7 @@ it('fixture content: the same seed and log give the pinned hash', () => {
   expect(goldenRun(fixtureContent)).toMatchInlineSnapshot(`
     {
       "actions": 84,
-      "hash": "140a2301506b9b148b0e57764880",
+      "hash": "15e8a74cdef07615dbaa9a5b8ad2",
       "week": 12,
     }
   `);
@@ -51,7 +51,7 @@ it('shipped content: the same seed and log give the pinned hash', () => {
   expect(goldenRun(defaultContent)).toMatchInlineSnapshot(`
     {
       "actions": 319,
-      "hash": "1100addc5dc7fe0798b095650c4e",
+      "hash": "101a1cddcf9098188880c4e2855d",
       "week": 12,
     }
   `);

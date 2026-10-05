@@ -31,6 +31,7 @@ import {
 } from '../jobs/jobs.ts';
 import { applyBp, applyPpm, BP_ONE, clamp } from '../math/fixed.ts';
 import type { Rng } from '../rng/rng.ts';
+import { skillMinutesFor } from '../stats/stats.ts';
 import type { Action, Preview } from '../types/actions.ts';
 import type { ChoicePlan, Decision, GameState, JobState, PlayerState } from '../types/state.ts';
 import type { AiPolicy } from './random.ts';
@@ -49,7 +50,6 @@ const EXPECTED: Rng = {
   },
 };
 
-/** A job the player will still have after this week's job check: no layoff coming, not about to be let go. */
 /**
  * The job the player will hold after this week's job check, by the published rules (FR-42, FR-43): none if a layoff
  * is coming or a week with no shifts would drop the rating to 0, the next rung if the player qualifies, is rated
@@ -79,6 +79,7 @@ function careerPoints(content: GameContent, player: Readonly<PlayerState>, job: 
  */
 function minutesToRung(content: GameContent, player: Readonly<PlayerState>, next: Job): number {
   const { balance, city } = content;
+  const tuning = content.ai.utility;
   let left = Math.max(0, next.minExperience - (player.experience[next.ladder] ?? 0));
   // Enrolled in a course the rung doesn't need, while it needs study: dropping it is a step.
   const studying = player.enrollment?.course;
@@ -93,23 +94,22 @@ function minutesToRung(content: GameContent, player: Readonly<PlayerState>, next
     !next.requires.credentials.includes(course.id) &&
     !tracksNeeded.includes(course.track)
   )
-    left += 15;
+    left += tuning.stepMinutes;
   for (const id of next.requires.credentials) {
     if (player.credentials.includes(id)) continue;
     const course = city.courses.find((c) => c.id === id);
-    const done = player.enrollment?.course === id ? player.enrollment.minutes : -60;
+    const done = player.enrollment?.course === id ? player.enrollment.minutes : -tuning.stepMinutes;
     left += Math.max(0, (course?.studyMinutes ?? 0) - done);
   }
   for (const [track, points] of Object.entries(next.requires.skills)) {
-    const need = Math.ceil((points * points * 60) / balance.skills.pointsScale);
-    const missing = need - (player.trackMinutes[track] ?? 0);
+    const missing = skillMinutesFor(content, points) - (player.trackMinutes[track] ?? 0);
     if (missing <= 0) continue;
     // Skill hours come from study, which needs a course on the track: enrolling is a step too.
     const course =
       player.enrollment && city.courses.find((c) => c.id === player.enrollment?.course);
-    left += missing + (course?.track === track ? 0 : 60);
+    left += missing + (course?.track === track ? 0 : tuning.stepMinutes);
   }
-  if (player.stats.wardrobe < next.dressTier) left += 60;
+  if (player.stats.wardrobe < next.dressTier) left += tuning.stepMinutes;
   const rating = player.job?.rating ?? 0;
   if (rating < balance.jobs.promotionRating && balance.jobs.ratingPerHour > 0)
     left += Math.ceil(((balance.jobs.promotionRating - rating) * 60) / balance.jobs.ratingPerHour);
@@ -155,11 +155,11 @@ export function valuation(
   const current = job ? jobById(content, job.id) : null;
   const ahead = job && current ? outlook(content, player, current) : null;
   if (job) {
-    const hours = Math.min(weeklyCap(content, job), 1800);
-    let weekly = shiftPay(content, world, job, hours);
+    const minutes = Math.min(weeklyCap(content, job), tuning.workMinutesPerWeek);
+    let weekly = shiftPay(content, world, job, minutes);
     // The next rung's pay rise, as far as the outlook counts it.
     if (ahead) {
-      const raise = shiftPay(content, world, { ...job, id: ahead.next.id }, hours) - weekly;
+      const raise = shiftPay(content, world, { ...job, id: ahead.next.id }, minutes) - weekly;
       weekly += applyBp(Math.max(0, raise), ahead.shareBp);
     }
     wealth += applyBp(weekly * horizon, tuning.futurePayBp);
@@ -170,7 +170,8 @@ export function valuation(
   wealth += applyPpm(player.holdings[SAVINGS_ID] ?? 0, balance.finance.savingsWeeklyPpm * horizon);
   wealth -= applyPpm(player.debts.card.balance, balance.finance.card.weeklyPpm * horizon);
   wealth -= applyPpm(player.debts.student.balance, balance.finance.studentWeeklyPpm * horizon);
-  const riskBp = Math.floor(((persona.riskAppetiteBp - BP_ONE / 2) * horizon) / 52);
+  // Risk appetite as a yearly tilt on market holdings, prorated to the horizon.
+  const riskBp = Math.floor(((persona.riskAppetiteBp - BP_ONE / 2) * horizon) / WEEKS_PER_YEAR);
   for (const asset of balance.market.assets)
     wealth += applyBp(player.holdings[asset.id] ?? 0, riskBp);
 
@@ -259,6 +260,8 @@ export function valuation(
   return value;
 }
 
+const WEEKS_PER_YEAR = 52;
+
 /** Valuations are in parts per million of a goal's target. */
 const PPM_ONE = 1_000_000;
 
@@ -285,6 +288,9 @@ function copyPlayer(p: Readonly<PlayerState>): PlayerState {
       arrears: { ...p.debts.arrears },
     },
     subscriptions: [...p.subscriptions],
+    seenEvents: { ...p.seenEvents },
+    quests: p.quests.map((q) => ({ ...q })),
+    seenQuests: { ...p.seenQuests },
   };
 }
 
@@ -435,7 +441,7 @@ function choose<T extends { score: number }>(
   const best = order[0];
   if (!best || rng.chance(persona.bestMoveRateBp)) return best;
   const good = order.slice(0, runnersUp).filter((s) => s.score > 0);
-  return good[rng.int(0, good.length - 1)] ?? best;
+  return good.length > 0 ? good[rng.int(0, good.length - 1)] : best;
 }
 
 /**

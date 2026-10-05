@@ -3,7 +3,7 @@
  * AI rival's personas. Copy lives in `locales/` (FR-84); these files hold ids, conditions, weights and effects.
  */
 import { z } from 'zod';
-import { EVENT_CATEGORIES, GOAL_KEYS } from './keys.ts';
+import { DIFFICULTIES, EVENT_CATEGORIES, GOAL_KEYS } from './keys.ts';
 import {
   Bp,
   Cents,
@@ -194,6 +194,10 @@ export const UtilityTuningSchema = z.object({
    */
   cashCushion: Cents,
   liquidityBp: Chance,
+  /** Minutes a week the scorer expects to work, when it values a job's future pay. */
+  workMinutesPerWeek: Minutes.min(15),
+  /** Minutes it counts for a step toward a promotion that isn't study or work: enrolling, shopping, dropping a course. */
+  stepMinutes: Minutes.min(15),
   /** Weight of future pay: jobs end and hours get cut (FR-42). */
   futurePayBp: Chance,
   /** Share of the next rung's career points credited for being on the way to it. */
@@ -219,7 +223,7 @@ export type UtilityTuning = z.infer<typeof UtilityTuningSchema>;
 export const AiSchema = z.object({
   utility: UtilityTuningSchema,
   rivals: z.array(PersonaSchema).min(1),
-  byDifficulty: z.object({ chill: Id, standard: Id, 'hustle-culture': Id }),
+  byDifficulty: z.record(z.enum(DIFFICULTIES), Id),
 });
 
 export type Ai = z.infer<typeof AiSchema>;

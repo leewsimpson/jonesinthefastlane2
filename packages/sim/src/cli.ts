@@ -18,7 +18,7 @@
  */
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { availableParallelism, tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { DIFFICULTIES, type Difficulty, defaultContent, type GameContent } from '@fastlane/content';
@@ -31,7 +31,7 @@ import { checkBands, computeKpis, unusedContent } from './runner/kpis.ts';
 import { CI_PLAN, jobsFor } from './runner/plan.ts';
 import { runPool } from './runner/pool.ts';
 import { botFor } from './runner/record.ts';
-import { compareReports, type Report, summaryMarkdown } from './runner/report.ts';
+import { compareReports, incomparable, type Report, summaryMarkdown } from './runner/report.ts';
 
 const COMMANDS = ['random', 'bots', 'run', 'compare'] as const;
 type Command = (typeof COMMANDS)[number];
@@ -158,12 +158,17 @@ async function runBalance(): Promise<number> {
   const games = Number(values.games ?? 1000);
   const seed = values.seed;
   const jobs = jobsFor(CI_PLAN, games, seed);
-  const workers = values.workers ? Number(values.workers) : undefined;
+  const workers = Math.min(
+    values.workers ? Number(values.workers) : availableParallelism(),
+    jobs.length,
+  );
+  if (!Number.isInteger(workers) || workers < 1)
+    throw new Error(`--workers must be a positive integer, got ${values.workers}`);
   console.log(`${jobs.length} games across ${CI_PLAN.length} matchups`);
   const started = performance.now();
   let last = 0;
   const records = await runPool(jobs, {
-    ...(workers === undefined ? {} : { workers }),
+    workers,
     override: values.override ? fromCwd(values.override) : null,
     onRecord(done) {
       const pct = Math.floor((done * 10) / jobs.length);
@@ -183,7 +188,7 @@ async function runBalance(): Promise<number> {
       seed,
       plan: 'ci',
       games: records.length,
-      workers: workers ?? (await import('node:os')).availableParallelism(),
+      workers,
       seconds,
       override: values.override ?? null,
       commit: gitCommit(),
@@ -197,7 +202,9 @@ async function runBalance(): Promise<number> {
   mkdirSync(out, { recursive: true });
   writeFileSync(join(out, 'report.json'), JSON.stringify(report));
   const base = values.base ? loadReport(fromCwd(values.base)) : null;
-  const summary = summaryMarkdown(report, base ? compareReports(base, report) : null);
+  const mismatch = base && incomparable(base, report);
+  if (mismatch) console.warn(`Not comparing with the base run: ${mismatch}`);
+  const summary = summaryMarkdown(report, base && !mismatch ? compareReports(base, report) : null);
   writeFileSync(join(out, 'summary.md'), summary);
   console.log(`\n${summary}\nwrote ${out}`);
   const failed = report.bands.filter((b) => b.status === 'hard' || b.status === 'missing');
@@ -213,8 +220,14 @@ function loadReport(path: string): Report {
 /** Run the balance sim at a git ref in a temporary worktree, so `compare` can take a ref as its base. */
 function reportAtRef(ref: string): Report {
   const dir = mkdtempSync(join(tmpdir(), 'fastlane-sim-'));
+  // pnpm is a .cmd shim on Windows, which needs a shell; quote every argument for it.
+  const shell = process.platform === 'win32';
   const run = (cmd: string, args: string[], cwd?: string) =>
-    execFileSync(cmd, args, { cwd, stdio: 'inherit', shell: process.platform === 'win32' });
+    execFileSync(cmd, shell ? args.map((a) => JSON.stringify(a)) : args, {
+      cwd,
+      stdio: 'inherit',
+      shell,
+    });
   try {
     run('git', ['worktree', 'add', '--detach', dir, ref]);
     run('pnpm', ['install', '--frozen-lockfile', '--prefer-offline'], dir);
@@ -239,6 +252,8 @@ function runCompare(): number {
     ? loadReport(fromCwd(values.base))
     : reportAtRef(values.base);
   const head = loadReport(fromCwd(values.head));
+  const mismatch = incomparable(base, head);
+  if (mismatch) throw new Error(`can't pair these runs: ${mismatch}`);
   console.log(summaryMarkdown(head, compareReports(base, head)));
   return 0;
 }

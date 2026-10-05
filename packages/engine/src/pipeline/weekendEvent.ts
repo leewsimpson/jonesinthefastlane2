@@ -10,6 +10,7 @@ import { emptyPlan } from '../actions/plan.ts';
 import type { PlayerCtx } from '../core/context.ts';
 import { price } from '../economy/prices.ts';
 import { meets } from '../hooks/conditions.ts';
+import { clamp } from '../math/fixed.ts';
 import { transfer } from '../money/ledger.ts';
 import type { Cause } from '../types/events.ts';
 import type { ChoicePlan, WorldState } from '../types/state.ts';
@@ -71,7 +72,7 @@ function apply(ctx: PlayerCtx, card: WeekendEvent, choiceId: string, plan: Choic
     applyDelta(ctx, o.stat, ctx.rng('events').int(o.min, o.max), cause, 'income');
   player.nextWeekMinutes += plan.nextWeekMinutes;
   if (player.job) {
-    player.job.rating = Math.min(100, Math.max(0, player.job.rating + plan.jobRating));
+    player.job.rating = clamp(player.job.rating + plan.jobRating, 0, 100);
     if (plan.layoffWarning && !player.job.layoffWarning) {
       player.job.layoffWarning = true;
       ctx.emit({

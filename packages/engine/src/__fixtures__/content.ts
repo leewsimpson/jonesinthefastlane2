@@ -117,6 +117,7 @@ export const fixtureContent: GameContent = {
     events: { chanceBp: 10_000, cooldownWeeks: 2 },
     news: { chanceBp: 10_000, maxActive: 1 },
     quests: { active: 1, cooldownWeeks: 2 },
+    teasers: { promotionRatingGap: 10, credentialMinutes: 600 },
     rival: { nearMissBp: 9000, netWorthJump: 500, closeBp: 500 },
   }),
   city: CitySchema.parse({
@@ -355,6 +356,8 @@ export const fixtureContent: GameContent = {
       energyPenalty: 2000,
       cashCushion: 1000,
       liquidityBp: 1000,
+      workMinutesPerWeek: 1800,
+      stepMinutes: 60,
       futurePayBp: 5000,
       aspirationBp: 6000,
       patienceWeeks: 1,

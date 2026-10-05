@@ -45,6 +45,9 @@ export const EXTERNAL_FLOWS = [
 export const INTERNAL_FLOWS = ['save', 'withdraw', 'borrow', 'repay', 'lease-deposit'] as const;
 export type FlowReason = (typeof EXTERNAL_FLOWS)[number] | (typeof INTERNAL_FLOWS)[number];
 
+/** Values for a copy line's `{{slot}}`s: ids of things with their own copy, cents for money, plain numbers. */
+export type SlotParams = Record<string, string | number>;
+
 export type JobChange =
   | 'hired'
   | 'promoted'
@@ -130,7 +133,7 @@ export type DomainEvent =
    * A next-week hook (ENG-10). `params` fill the copy's slots (`teaser.<id>`): ids for things with their own copy
    * (a job id → `job.<id>`), cents for money, plain numbers otherwise.
    */
-  | { type: 'teaser'; player: PlayerId; teaser: TeaserId; params: Record<string, string | number> }
+  | { type: 'teaser'; player: PlayerId; teaser: TeaserId; params: SlotParams }
   /**
    * Jones's highlight reel (FR-82): `player` is the AI who posts, `about` the human it reacts to, if any. Copy:
    * `feed.<moment>.<n>`; the UI picks the variant. `params` as for teasers.
@@ -140,7 +143,7 @@ export type DomainEvent =
       player: PlayerId;
       moment: FeedMoment;
       about: PlayerId | null;
-      params: Record<string, string | number>;
+      params: SlotParams;
     }
   /** Every player's score and goal progress after the round (ENG-14: rival progress is always visible). */
   | {

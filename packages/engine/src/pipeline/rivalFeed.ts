@@ -8,10 +8,10 @@ import type { GameContent } from '@fastlane/content';
 import { type FeedMoment, GOAL_KEYS } from '@fastlane/content/keys';
 import type { RoundCtx } from '../core/context.ts';
 import { goalValues, rawProgressBp } from '../goals/goals.ts';
+import type { SlotParams as Params } from '../types/events.ts';
 import type { GameState, PlayerId, PlayerState, WeekRecord } from '../types/state.ts';
 import type { PipelineStep } from './types.ts';
 
-type Params = Record<string, string | number>;
 interface Moment {
   moment: FeedMoment;
   params: Params;
@@ -29,7 +29,7 @@ function startRecord(
     player: player.id,
     cash: content.balance.startingStats.cash,
     netWorth: content.balance.startingStats.cash,
-    progressBp: { wealth: 0, wellbeing: 0, skills: 0, career: 0 },
+    progressBp: Object.fromEntries(GOAL_KEYS.map((g) => [g, 0])) as WeekRecord['progressBp'],
     scoreBp: 0,
     job: null,
     jobLevel: 0,
@@ -128,7 +128,7 @@ export const rivalFeed: PipelineStep<RoundCtx> = {
 
     // Near misses (ENG-13): a goal entering the last stretch this week.
     for (const p of state.players) {
-      const { now, before } = get(p.id);
+      const { before } = get(p.id);
       const values = goalValues(content, p);
       const raw = rawProgressBp(values, goals);
       for (const goal of GOAL_KEYS) {
@@ -139,7 +139,7 @@ export const rivalFeed: PipelineStep<RoundCtx> = {
             player: p.id,
             goal,
             short: goals[goal] - values[goal],
-            progressBp: now.progressBp[goal],
+            progressBp: bp,
             final: false,
           });
       }

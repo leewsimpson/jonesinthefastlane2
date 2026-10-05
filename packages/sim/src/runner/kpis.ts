@@ -23,8 +23,8 @@ function byMatchup(records: GameRecord[]): Map<string, GameRecord[]> {
   return out;
 }
 
-/** Personas whose win rates count towards dominance: everyone who isn't a fixed floor. */
-const FLOORS = new Set(['idle', 'random']);
+/** Floor bots (simulator §3, §5): they set the floor, so their win rates don't count towards dominance. */
+const FLOORS = new Set(['gigger', 'idle', 'random']);
 
 export function computeKpis(content: GameContent, records: GameRecord[], seconds: number): Kpis {
   const kpis: Kpis = {};

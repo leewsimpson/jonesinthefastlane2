@@ -4,7 +4,7 @@
  * can be compared game by game (common random numbers, simulator §7).
  */
 import type { Difficulty } from '@fastlane/content';
-import type { Job } from './pool.ts';
+import type { GameJob } from './pool.ts';
 import type { Matchup } from './record.ts';
 
 const WEEKS = 52;
@@ -50,12 +50,12 @@ export const CI_PLAN = [
   },
 ];
 
-export type Plan = typeof CI_PLAN;
+export type MatchupPlan = typeof CI_PLAN;
 
 /** `games` shared out by weight, at least one game per matchup. */
-export function jobsFor(plan: Plan, games: number, seed: string): Job[] {
+export function jobsFor(plan: MatchupPlan, games: number, seed: string): GameJob[] {
   const total = plan.reduce((sum, m) => sum + m.weight, 0);
-  const jobs: Job[] = [];
+  const jobs: GameJob[] = [];
   for (const { matchup, weight } of plan) {
     const n = Math.max(1, Math.round((games * weight) / total));
     for (let i = 0; i < n; i++) jobs.push({ matchup, seed: `${seed}-${i}` });

@@ -220,6 +220,13 @@ export const BalanceSchema = z
       /** Weeks before a finished or failed quest can be issued again. */
       cooldownWeeks: z.number().int().nonnegative(),
     }),
+    /** Next-week teasers (ENG-10): how close counts as "close". */
+    teasers: z.object({
+      /** A promotion teaser shows once the rating is this close to `jobs.promotionRating`. */
+      promotionRatingGap: z.number().int().nonnegative(),
+      /** A credential teaser shows once this many study minutes or fewer are left. */
+      credentialMinutes: Minutes,
+    }),
     /** Rival tension and near misses (ENG-13, ENG-14). */
     rival: z.object({
       /** A goal at or above this progress, but short of it, is a near miss. */

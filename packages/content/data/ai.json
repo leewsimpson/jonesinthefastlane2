@@ -5,6 +5,8 @@
     "energyPenalty": 2000,
     "cashCushion": 100000,
     "liquidityBp": 1000,
+    "workMinutesPerWeek": 1800,
+    "stepMinutes": 60,
     "futurePayBp": 5000,
     "aspirationBp": 6000,
     "patienceWeeks": 1,

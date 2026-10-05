@@ -35,6 +35,17 @@ export interface KpiDelta {
   paired?: { mean: number; half: number; games: number };
 }
 
+/**
+ * Why two reports can't be paired game by game, or null if they can: they must play the same plan, seed and number
+ * of games, or the games differ and the deltas mean nothing.
+ */
+export function incomparable(base: Report, head: Report): string | null {
+  for (const key of ['plan', 'seed', 'games'] as const)
+    if (base.meta[key] !== head.meta[key])
+      return `base ${key} ${base.meta[key]} ≠ head ${head.meta[key]}`;
+  return null;
+}
+
 /** Paired comparison of every KPI the two reports share. */
 export function compareReports(base: Report, head: Report): KpiDelta[] {
   const baseGames = new Map(base.records.map((r) => [`${r.matchup}|${r.seed}`, r]));
@@ -112,8 +123,15 @@ export function summaryMarkdown(report: Report, deltas: KpiDelta[] | null): stri
       '</details>',
     );
   if (deltas) {
-    const moved = deltas.filter((d) => d.head !== d.base);
+    const moved = deltas.filter((d) => d.head !== d.base && d.kpi !== 'gamesPerSecond');
     lines.push('', `#### Compared with the base run (${moved.length} KPIs moved)`, '');
+    // Throughput (simulator §5): a regression over 20% is flagged. It depends on the machine, so it warns only.
+    const speed = deltas.find((d) => d.kpi === 'gamesPerSecond');
+    if (speed && speed.head < speed.base * 0.8)
+      lines.push(
+        `⚠️ Throughput fell from ${speed.base} to ${speed.head} games/s (more than 20%).`,
+        '',
+      );
     if (moved.length > 0)
       lines.push(
         '| KPI | Base | Head | Paired Δ (95% CI) |',

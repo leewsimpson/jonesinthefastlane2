@@ -6,7 +6,7 @@ import { checkBands, computeKpis } from './kpis.ts';
 import { CI_PLAN, jobsFor } from './plan.ts';
 import { runPool } from './pool.ts';
 import { type GameRecord, type Matchup, playRecorded } from './record.ts';
-import { compareReports, type Report, summaryMarkdown } from './report.ts';
+import { compareReports, incomparable, type Report, summaryMarkdown } from './report.ts';
 
 const engine = createEngine(defaultContent);
 const vsJones: Matchup = {
@@ -66,6 +66,7 @@ describe('balance runner', () => {
     const strip = (rs: GameRecord[]) => rs.map(({ ms: _ms, ...rest }) => rest);
     const one = await runPool(jobs, { workers: 1 });
     const two = await runPool(jobs, { workers: 2 });
+    expect(one.every((r) => r !== undefined)).toBe(true);
     expect(strip(two)).toEqual(strip(one));
   });
 
@@ -110,6 +111,8 @@ describe('balance runner', () => {
       kpis: { 'win.balanced-standard': 10_000 },
       records: [record({ seed: 'a' }), record({ seed: 'b' })],
     };
+    expect(incomparable(base, head)).toBeNull();
+    expect(incomparable(base, { ...head, meta: { ...head.meta, seed: 'other' } })).toMatch(/seed/);
     const [delta] = compareReports(base, head);
     expect(delta).toMatchObject({ kpi: 'win.balanced-standard', base: 0, head: 10_000 });
     expect(delta?.paired).toEqual({ mean: 10_000, half: 0, games: 2 });
