@@ -1,0 +1,60 @@
+// Cloudflare Worker config (ci-cd §2, §5). Each env deploys as its own Worker: fastlane-api-<env>.
+// The top level is only used by `wrangler dev`.
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "fastlane-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": true,
+  "observability": { "enabled": true },
+  "vars": { "ENVIRONMENT": "local", "VERSION": "dev" },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "fastlane-db-preview",
+      "database_id": "02fd689d-88da-435a-91b7-a387719c93f9",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "kv_namespaces": [{ "binding": "KV", "id": "7bec398dd08a4588a6e69d41f538d69f" }],
+  "env": {
+    "preview": {
+      "vars": { "ENVIRONMENT": "preview", "VERSION": "dev" },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "fastlane-db-preview",
+          "database_id": "02fd689d-88da-435a-91b7-a387719c93f9",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "kv_namespaces": [{ "binding": "KV", "id": "7bec398dd08a4588a6e69d41f538d69f" }]
+    },
+    "staging": {
+      "vars": { "ENVIRONMENT": "staging", "VERSION": "dev" },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "fastlane-db-staging",
+          "database_id": "20badc40-0c51-4202-b7a2-de9690b2a6bf",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "kv_namespaces": [{ "binding": "KV", "id": "97260bec6964488bb5dbdc9409cd6465" }]
+    },
+    "production": {
+      "vars": { "ENVIRONMENT": "production", "VERSION": "dev" },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "fastlane-db",
+          "database_id": "a4b4e26c-263d-4078-a5f9-b378ed785d40",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "kv_namespaces": [{ "binding": "KV", "id": "a2a04eddfc8f44d09443f64822f45d02" }]
+    }
+  }
+}
