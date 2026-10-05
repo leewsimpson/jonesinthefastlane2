@@ -128,6 +128,7 @@ hires workers (jobs), and offers actions.
 | FR-30 | Board layout, travel costs and location data are data-driven (content files), not hard-coded. | M |
 | FR-31 | Opening hours: some locations close on certain days or times, shown on the board. | C |
 | FR-32 | Each location has an NPC owner with short, rotating, witty dialogue lines. | S |
+| FR-33 | **One fictional city** at launch. All city-specific data (board layout, locations, prices, wages, rents, name pools, flavour text) lives in a single **city profile** in the content files, so more cities can be added later as data without engine changes. | M |
 
 ---
 
@@ -272,6 +273,7 @@ Life doesn't stop for your career. Relationships, family and life stages add the
 | FR-81 | Rival personalities with different strategies and difficulty: *Jones the Grinder* (career), *Crypto Jones* (high risk), *Wellness Jones* (balanced), *Influencer Jones* (clout). | S |
 | FR-82 | Jones posts a "highlight reel" social feed of their week, smug and funny, and reacts to the player's milestones. | M |
 | FR-83 | Rubber-banding is allowed **only** through strategy choice, never by bending the rules. Difficulty changes how often Jones picks the best move. | M |
+| FR-84 | Jones's feed lines and NPC dialogue (FR-32) are **LLM-generated during development**: written once with templates and game-state slots, reviewed, and committed as content data. No LLM calls at build time or runtime, so the game stays offline-capable (NFR-11). | M |
 
 ---
 
@@ -281,7 +283,7 @@ Life doesn't stop for your career. Relationships, family and life stages add the
 |---|---|---|
 | **Classic** | Set goals, race Jones or friends, no week limit | M |
 | **Daily Run** | One seeded scenario per day, the same for everyone, with a 26-week limit and a score. Shareable result card. Leaderboard | S |
-| **Career Mode** | A meta-progression campaign: unlock backgrounds, perks and new districts across runs (roguelite) | S |
+| **Career Mode** | A meta-progression campaign: unlock backgrounds, perks and new districts across runs (roguelite). Defaults to **Long Life** length (FR-91) so life stages get full screen time | S |
 | **Seasonal Scenarios** | Monthly themed rules (e.g. "Recession 2026", "AI Gold Rush", "Housing Bubble") | C |
 | **Online async multiplayer** | Play turns with friends at your own pace | C |
 
@@ -321,7 +323,7 @@ Use proven, modern retention techniques **with ethical guardrails**.
 | ID | Requirement | Pri |
 |---|---|---|
 | ENG-30 | No real-money loot boxes, gacha or paid randomness. | M |
-| ENG-31 | No pay-to-win. Any future monetization is limited to cosmetics, expansion packs or a one-time premium unlock. | M |
+| ENG-31 | No pay-to-win. Monetization is opt-in **rewarded video** (e.g. watch an ad for extra credits), plus optionally cosmetics or expansion packs. Rewards, caps and which modes they apply to (e.g. excluded from Daily Run leaderboards) are specified in Phase 6. | M |
 | ENG-32 | No energy/wait timers that block play, and no FOMO countdowns that punish absence. | M |
 | ENG-33 | No manipulative notifications. Push/email is opt-in and capped at one per day (e.g. "Daily Run is ready"). | M |
 | ENG-34 | Optional session reminder ("You've played 60 min — Jones is also taking a break"). | S |
@@ -378,11 +380,11 @@ Use proven, modern retention techniques **with ethical guardrails**.
 
 ---
 
-## 17. Open Questions
+## 17. Decisions (formerly Open Questions)
 
-1. Monetization model: free, premium one-time purchase, or free with cosmetic DLC?
-2. Art style: flat vector vs. pixel art? (This affects the asset pipeline. See tech-stack.)
-3. Setting: a fictional generic city, or selectable real-world-inspired cost-of-living profiles (US/UK/AU)?
-4. Should Jones's dialogue be pre-written only, or also LLM-generated at build time to add variety?
-5. Should Long Life mode (1 turn = 1 month) be the default for Career Mode, so life stages get full screen time?
-6. Do partners and spouses ever become playable co-op characters in hotseat multiplayer (e.g. two players as a couple)?
+1. **Monetization:** opt-in rewarded video (watch an ad for extra credits). Details in Phase 6 (ENG-31).
+2. **Art style:** flat vector (art-direction §1).
+3. **Setting:** one fictional city for now, built as a data-driven city profile so more cities can be added later (FR-33).
+4. **Dialogue:** LLM-generated during development and committed as content (FR-84).
+5. **Long Life default for Career Mode:** yes (§12).
+6. **Partners as co-op characters:** no. Partners are NPCs only and are never playable (FR-96).

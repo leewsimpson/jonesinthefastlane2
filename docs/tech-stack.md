@@ -95,7 +95,7 @@
 │  └─ api/                 # Cloudflare Worker (Hono) — daily seeds, leaderboards
 ├─ packages/
 │  ├─ engine/              # pure game rules, RNG, AI rival, scoring
-│  ├─ content/             # jobs.json, events/*.json, items.json, partners/ (name pools, traits, wants), life-stages.json, schemas.ts
+│  ├─ content/             # cities/<id>/ (board, prices, wages), jobs.json, events/*.json, items.json, partners/ (name pools, traits, wants), life-stages.json, schemas.ts
 │  └─ sim/                 # headless batch simulator for balancing (Node CLI)
 ├─ e2e/                    # Playwright tests
 ├─ docs/

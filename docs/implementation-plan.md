@@ -99,6 +99,7 @@ Phases 7, 8 and 9 are independent of each other and can run in parallel or in an
 | Gig work | GigHub anywhere, variable surge pay, deactivation risk, no ladder XP | FR-44 |
 | Education | UpSkill U: enrol, study hours, credentials, skill tracks with diminishing returns, student loans | §5, §3 Skills |
 | Housing | 5 housing tiers, LeaseLord rent/move/renew, deposits, credit checks, rent hikes on renewal, eviction → Parents' Basement | FR-51, FR-14 |
+| City profile | Prices, wages, rents and board layout load from one city profile (`content/cities/<id>/`) | FR-33 |
 | Inflation | Weekly price-index drift on the `world` stream, wage lag | FR-50 |
 | Subscriptions | Weekly auto-charge, buffs, Subscription Audit action | FR-52 |
 | Banking | Savings APY, index fund, crypto (with rug-pull events); market random walk with regimes | FR-53, FR-55 |
@@ -122,7 +123,7 @@ Phases 7, 8 and 9 are independent of each other and can run in parallel or in an
 | Task | Refs |
 |---|---|
 | Jones utility AI over legal actions, same rules as humans; difficulty = how often it picks the best move | FR-80, FR-83 |
-| Jones highlight-reel feed: event → templated smug post; reactions to player milestones | FR-82 |
+| Jones highlight-reel feed: event → templated smug post; reactions to player milestones. Line variants are LLM-written during development, reviewed and committed | FR-82, FR-84 |
 | Weekend event deck: weighted, condition-filtered, 2–3 choices, effects as data; ~40 MVP events across FR-71 categories | FR-70, FR-71, FR-74 |
 | News ticker: global modifiers for N weeks on the `world` stream; ~10 MVP news events | FR-72 |
 | Next-week teasers generated from pending state (lease renewal, layoff warning, trending post) | ENG-10 |
@@ -206,6 +207,7 @@ Phases 7, 8 and 9 are independent of each other and can run in parallel or in an
 | Save migration test: a save from the beta loads in the release build | tech-stack §4 |
 | **IP check:** rename "Hi-Tech U" art/IDs to the final name (requirements already say "UpSkill U Online"); legal review of title and names | README, art-direction §9.1 |
 | Privacy notice, consent flow, "about real financial help" credits link | NFR-14, ENG-35 |
+| Monetization spec: rewarded-video rewards, caps, excluded modes, ad provider and consent | ENG-31 |
 | Ethical guardrail review against ENG-30…33 | §13.3 |
 
 **Exit criteria**
@@ -279,17 +281,17 @@ Follows art-direction §7. Each step needs review against the §8 checklist befo
 
 ---
 
-## Decisions needed (from game-requirements §17)
+## Decisions (from game-requirements §17)
 
-| Question | Needed by | Why |
+| Question | Decision | Impact |
 |---|---|---|
-| Setting: fictional city vs. selectable cost-of-living profiles | Phase 2 | Shapes balance data structure (one price table vs. several) |
-| Jones dialogue: hand-written only vs. LLM-generated at build time | Phase 3 | Affects content pipeline for the feed |
-| Monetization model | Phase 6 | Affects store/PWA packaging and the guardrails review |
-| Long Life as default for Career Mode | Phase 8/9 | Affects meta-progression pacing |
-| Partners as co-op characters in hotseat | Phase 9 | Large scope change to the relationship model |
+| Setting | One fictional city; city-specific data in a city profile (FR-33) | Phase 2: prices, wages, rents and board layout load from `content/cities/<id>/`, not one global table |
+| Jones and NPC dialogue | LLM-generated during development, reviewed, committed as content (FR-84) | Phase 3: generate and review the line variants as a content task; no generation pipeline in the build |
+| Monetization | Opt-in rewarded video for extra credits; details TBD (ENG-31) | Phase 6: design reward rules, ad SDK vs. PWA/offline and bundle budget, guardrail review |
+| Long Life as Career Mode default | Yes | Phase 8/9: meta-progression pacing assumes monthly turns |
+| Partners as co-op characters | No, partners are NPCs only | Phase 9: no change to the hotseat model |
 
-Art style (open question 2) is already settled: flat vector (art-direction §1).
+Art style (open question 2): flat vector (art-direction §1).
 
 ## Risks
 
