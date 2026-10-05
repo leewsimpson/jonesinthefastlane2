@@ -40,7 +40,7 @@ pnpm size         # initial JS budget: 300 KB gzipped
 | Path | What |
 |---|---|
 | `apps/web` | Vite + React 19 + Tailwind v4 client. Reads `/config.json` at runtime for the API URL |
-| `apps/api` | Hono Worker. Envs `preview`, `staging`, `production` in `wrangler.jsonc` |
+| `apps/api` | Hono Worker. Envs `preview` and `production` in `wrangler.jsonc` |
 | `packages/engine` | Pure, deterministic game rules |
 | `packages/content` | Content data + Zod schemas (`pnpm content:validate`) |
 | `packages/sim` | Headless batch simulator |

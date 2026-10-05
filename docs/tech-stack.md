@@ -167,7 +167,7 @@
 | Env | Where | Trigger |
 |---|---|---|
 | Preview | Cloudflare Pages preview URL per PR (+ Worker preview env) | Pull request |
-| Staging | `staging.<domain>` — Pages branch deploy + Worker `staging` env + D1 staging DB | Merge to `main` |
+| Preview (`main`) | `main.<pages-host>` — stable alias in the preview env, same Worker/D1/KV as PR previews | Merge to `main` |
 | Production | `<domain>` — Pages production + Worker `production` env | Git tag / GitHub Release (manual approval) |
 
 Full pipeline: [ci-cd.md](ci-cd.md).

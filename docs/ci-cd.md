@@ -3,7 +3,8 @@
 ## 1. Goals
 
 - Every PR is checked automatically and gets a live preview URL.
-- `main` is always deployable and auto-deploys to **staging**.
+- `main` is always deployable and auto-deploys to the **preview** environment under a stable `main` alias.
+- Two environments only: **preview** (PRs + `main`) and **production**. There is no separate staging.
 - Production deploys are one click, gated by approval, and easy to roll back.
 - The pipeline is fast: PR checks should finish in **under 8 minutes**.
 
@@ -12,9 +13,9 @@
 | Component | Cloudflare product | Deploy tool |
 |---|---|---|
 | Web client (static PWA build from `apps/web/dist`) | **Cloudflare Pages** (Direct Upload project) | `cloudflare/wrangler-action` → `wrangler pages deploy` |
-| API (`apps/api`) | **Cloudflare Workers** (envs: `preview`, `staging`, `production`) | `wrangler deploy --env <env>` |
+| API (`apps/api`) | **Cloudflare Workers** (envs: `preview`, `production`) | `wrangler deploy --env <env>` |
 | Database | **D1** (one DB per env) | `wrangler d1 migrations apply --env <env>` |
-| Cache/config | **KV** namespaces per env | Bound in `wrangler.toml` |
+| Cache/config | **KV** namespaces per env | Bound in `wrangler.jsonc` |
 
 > Use Pages **Direct Upload** from Actions (not Cloudflare's Git integration), so that GitHub Actions is the single source
 > of truth for builds, checks and gating.
@@ -31,15 +32,15 @@
 | CI-06 | Security: CodeQL scanning, `pnpm audit` (high+ fails), Dependabot alerts, secret scanning with push protection on. | M |
 | CI-07 | Status checks are required on `main` through branch protection/rulesets. No direct pushes. Linear history. | M |
 | CD-01 | **Preview:** each PR deploys the web app to a Pages preview (`--branch=pr-<n>`). The URL is posted as a sticky PR comment. The Worker is uploaded with `wrangler versions upload --env preview --preview-alias pr-<n>`, which gives every PR its own Worker preview URL. (A single shared `preview` deploy would let parallel PRs overwrite each other mid-E2E.) The PR's web preview is built with that API URL. | M |
-| CD-02 | **Staging:** merging to `main` deploys web + API to staging, runs D1 migrations on the staging DB, then runs smoke E2E. | M |
-| CD-03 | **Production:** triggered by publishing a GitHub Release (tag `v*`) or a manual `workflow_dispatch`. Uses a GitHub **Environment `production`** with required reviewers. Deploys the *same build artifact* that passed staging (build once, promote). It doesn't rebuild. The web build must therefore not bake in environment-specific values: the API base URL and similar config are picked at runtime from the hostname or a `/config.json`. | M |
+| CD-02 | **Main:** merging to `main` deploys web + API to the preview environment under the stable `main` alias (Pages `--branch=main`, Worker `--preview-alias main`), runs D1 migrations on the preview DB, runs smoke E2E, and uploads the web build as artifact `web-dist-<sha>` for production to promote. | M |
+| CD-03 | **Production:** triggered by publishing a GitHub Release (tag `v*`) or a manual `workflow_dispatch`. Uses a GitHub **Environment `production`** with required reviewers. Deploys the *same build artifact* that passed on `main` (CD-02) (build once, promote). It doesn't rebuild. The web build must therefore not bake in environment-specific values: the API base URL and similar config are picked at runtime from the hostname or a `/config.json`. | M |
 | CD-04 | D1 migrations run **before** the Worker deploy and must be backward-compatible (expand → migrate → contract) so a rollback is always safe. | M |
 | CD-05 | Rollback: a `rollback.yml` workflow (manual) re-promotes a previous Pages deployment and runs `wrangler rollback` for the Worker. Documented in a runbook. | M |
 | CD-06 | Post-deploy smoke test: hit `/`, `/daily` and `/healthz`, and check the version header matches the released SHA. On failure, auto-alert and suggest a rollback. | M |
 | CD-07 | Release automation: release-please (or Changesets) creates the release PR, changelog and version tag. | S |
-| CD-08 | Sentry release + source map upload on staging/prod deploys. Source maps are **not** served publicly. | S |
+| CD-08 | Sentry release + source map upload on `main` and production deploys. Source maps are **not** served publicly. | S |
 | CD-09 | Clean up PR preview Worker resources/aliases when the PR closes. | C |
-| OPS-01 | Secrets live only in GitHub Environments: `CLOUDFLARE_API_TOKEN` (scoped: Pages Edit, Workers Scripts Edit, D1 Edit, KV Edit, for this account only), `CLOUDFLARE_ACCOUNT_ID`, `SENTRY_AUTH_TOKEN`, `POSTHOG_KEY`. Separate tokens for staging vs production. | M |
+| OPS-01 | Secrets live only in GitHub Environments: `CLOUDFLARE_API_TOKEN` (scoped: Pages Edit, Workers Scripts Edit, D1 Edit, KV Edit, for this account only), `CLOUDFLARE_ACCOUNT_ID`, `SENTRY_AUTH_TOKEN`, `POSTHOG_KEY`. Preview and production currently share one token (owner decision, 2026-10-05); split them if the blast radius ever matters. | M |
 | OPS-02 | Pin third-party actions to a full commit SHA. Workflows default to `permissions: contents: read`, and each job adds scopes only as needed. | M |
 | OPS-03 | `concurrency` groups: cancel superseded PR runs, and never run two production deploys at once. | M |
 | OPS-04 | Nightly workflow: full balance sim, full E2E matrix, dependency audit. Results go to a GitHub issue/Slack. | S |
@@ -50,7 +51,7 @@
 .github/workflows/
 ├─ ci.yml           # PR + main: lint, typecheck, test, build, size, sim (CI-01..06)
 ├─ preview.yml      # PR: deploy Pages preview + Worker preview, comment URL, run E2E + Lighthouse
-├─ staging.yml      # push to main: migrate D1, deploy Worker + Pages to staging, smoke test
+├─ main.yml         # push to main: migrate preview D1, deploy `main` alias (Worker + Pages), smoke, upload artifact
 ├─ production.yml   # release published / dispatch: approval gate → migrate → deploy → smoke
 ├─ rollback.yml     # manual: roll back Pages + Worker to a chosen version
 └─ nightly.yml      # cron: full sim, full E2E matrix, audit
@@ -62,7 +63,7 @@
 PR opened ─► ci.yml ──────────────┐
           └► preview.yml ─► Pages preview + Worker preview ─► E2E + Lighthouse ─► PR comment
                                    │
-merge to main ─► ci.yml ─► staging.yml ─► D1 migrate ─► Worker ─► Pages ─► smoke
+merge to main ─► ci.yml ─► main.yml ─► D1 migrate ─► Worker ─► Pages (main alias) ─► smoke ─► artifact
                                    │
 Release v1.2.0 ─► production.yml ─► [manual approval] ─► D1 migrate ─► Worker ─► Pages ─► smoke ─► Sentry release
 ```
@@ -74,7 +75,7 @@ name: production
 on:
   release: { types: [published] }
   workflow_dispatch:
-permissions: { contents: read, actions: read }   # actions:read = download the staging artifact
+permissions: { contents: read, actions: read }   # actions:read = download the main-build artifact
 concurrency: { group: production, cancel-in-progress: false }
 
 jobs:
@@ -87,14 +88,14 @@ jobs:
       - uses: actions/setup-node@<sha>
         with: { node-version-file: .nvmrc, cache: pnpm }
       - run: pnpm install --frozen-lockfile   # needed for wrangler + smoke tests, NOT for rebuilding
-      # Promote the exact web build that passed staging (CD-03): staging.yml uploads `web-dist-<sha>`.
-      - name: Download staging build
+      # Promote the exact web build that passed on main (CD-03): main.yml uploads `web-dist-<sha>`.
+      - name: Download main build
         uses: actions/download-artifact@<sha>
         with:
           name: web-dist-${{ github.sha }}
           path: apps/web/dist
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: <staging run id for this SHA, looked up via the API in a previous step>
+          run-id: <main.yml run id for this SHA, looked up via the API in a previous step>
       - name: Migrate D1
         uses: cloudflare/wrangler-action@<sha>
         with:
@@ -120,10 +121,10 @@ jobs:
 
 ## 5. Cloudflare Setup Checklist (one-time)
 
-1. Create the Pages project `fastlane` (Direct Upload) and attach the custom domain + `staging.` subdomain.
-2. Create the Worker with `preview` / `staging` / `production` envs in `apps/api/wrangler.toml`. Route `api.<domain>/*`.
-3. Create D1 databases `fastlane-db-staging` and `fastlane-db` and KV namespaces per env, then bind them in `wrangler.toml`.
-4. Create scoped API tokens (staging and production) and store them in the matching GitHub Environments.
+1. Create the Pages project `fastlane` (Direct Upload) and attach the custom domain.
+2. Create the Worker with `preview` / `production` envs in `apps/api/wrangler.jsonc`. Route `api.<domain>/*`.
+3. Create D1 databases `fastlane-db-preview` and `fastlane-db` and KV namespaces per env, then bind them in `wrangler.jsonc`.
+4. Create a scoped API token and store it in the `preview` and `production` GitHub Environments.
 5. Set security headers (CSP, HSTS) via `apps/web/public/_headers`. Set the SPA fallback via `_redirects`.
 6. Configure WAF rate-limit rules on `POST /runs`.
 7. Turn on Cloudflare Web Analytics (cookieless) as a privacy-friendly baseline alongside opt-in PostHog.
