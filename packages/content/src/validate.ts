@@ -1,6 +1,6 @@
 /** Validates every content file against its schema, then cross-references. CI fails on invalid content (CI-01, FR-74). */
 import { readdirSync, readFileSync } from 'node:fs';
-import type { z } from 'zod';
+import { z } from 'zod';
 import {
   BalanceSchema,
   CITY_FILES,
@@ -10,6 +10,7 @@ import {
   MetaSchema,
   StringsSchema,
 } from './schemas.ts';
+import { PersonaSchema } from './sim.ts';
 
 const dataDir = new URL('../data/', import.meta.url);
 const localesDir = new URL('../locales/', import.meta.url);
@@ -68,6 +69,17 @@ for (const id of cityIds) {
     failed = true;
     console.error(`FAIL ${relative}: ${problem}`);
   }
+}
+
+// Simulator personas (simulator §3) are content too.
+const personas = z
+  .array(PersonaSchema)
+  .safeParse(JSON.parse(readFileSync(new URL('../sim/personas.json', import.meta.url), 'utf8')));
+if (personas.success) console.log('ok   sim/personas.json');
+else {
+  failed = true;
+  console.error(`FAIL sim/personas.json
+${personas.error.message}`);
 }
 
 process.exit(failed ? 1 : 0);

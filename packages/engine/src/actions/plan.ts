@@ -148,21 +148,30 @@ export function listActions(content: GameContent, state: Readonly<GameState>): P
     );
   if (phase.kind !== 'turn') throw new Error(`no player can act during ${phase.kind}`);
 
-  const player = playerById(state, phase.player);
-  const { board, actions } = content.city;
+  const { board } = content.city;
   const options: Preview[] = [];
   for (const loc of board.locations)
     for (const mode of board.transportModes)
       options.push(preview({ type: 'travel', to: loc.id, mode: mode.id }));
-  for (const def of actions) {
+  options.push(...localActions(content, state));
+  options.push(preview({ type: 'endWeek' }));
+  return options;
+}
+
+/** The `perform` options at the active player's location and anywhere-actions: one per target, duration or amount. */
+export function localActions(content: GameContent, state: Readonly<GameState>): Preview[] {
+  const { phase } = state;
+  if (phase.kind !== 'turn') throw new Error(`no player can act during ${phase.kind}`);
+  const player = playerById(state, phase.player);
+  const options: Preview[] = [];
+  for (const def of content.city.actions) {
     if (def.location !== player.location && def.location !== ANYWHERE) continue;
     const handler = HANDLERS[def.kind];
     const variants = handler.options
       ? handler.options({ content, state, player }, def)
       : durationOptions(def);
     for (const params of variants)
-      options.push(preview({ type: 'perform', actionId: def.id, ...params }));
+      options.push(previewAction(content, state, { type: 'perform', actionId: def.id, ...params }));
   }
-  options.push(preview({ type: 'endWeek' }));
   return options;
 }

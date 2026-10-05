@@ -1,0 +1,10 @@
+{
+  "city": {
+    "housing": [
+      { "id": "shared-house", "rent": 16500 },
+      { "id": "studio", "rent": 27500 },
+      { "id": "apartment", "rent": 44000 },
+      { "id": "smart-condo", "rent": 77000 }
+    ]
+  }
+}

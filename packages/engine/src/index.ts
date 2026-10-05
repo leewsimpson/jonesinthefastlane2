@@ -3,7 +3,14 @@
  * enforces it. Content comes in as data through `createEngine`; only its types are imported here. Saves are a
  * separate entry point, `@fastlane/engine/save`.
  */
-export type { AiPolicy } from './ai/random.ts';
+export { type AiPolicy, randomPolicy } from './ai/random.ts';
+export {
+  type Persona,
+  type ScoredOption,
+  scoreOptions,
+  utilityPolicy,
+  valuation,
+} from './ai/utility.ts';
 export type { PlayerCtx, RoundCtx } from './core/context.ts';
 export { canonicalJson, hashValue } from './core/hash.ts';
 export {

@@ -239,7 +239,7 @@ export function createEngine(content: GameContent, options: EngineOptions = {}):
           if (++aiActions > maxAiActions(content))
             throw new Error(`AI ${player.id} took more than ${maxAiActions(content)} actions`);
           const options = listActions(content, state).filter((o) => o.available);
-          const action = ai.chooseAction(options, aiRng(state, player));
+          const action = ai.chooseAction(options, aiRng(state, player), state);
           const preview = previewAction(content, state, action);
           if (!preview.available)
             throw new Error(`AI chose an unavailable action: ${preview.reason.code}`);
@@ -251,7 +251,7 @@ export function createEngine(content: GameContent, options: EngineOptions = {}):
           const player = playerById(state, phase.player);
           if (state.pending) {
             if (player.controller === 'human') return;
-            resolveDecision(run, ai.chooseOption(state.pending, aiRng(state, player)));
+            resolveDecision(run, ai.chooseOption(state.pending, aiRng(state, player), state));
             break;
           }
           const step = pipeline.perPlayer[phase.step];
