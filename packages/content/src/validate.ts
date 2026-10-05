@@ -1,14 +1,16 @@
 /** Validates every content file against its schema, then cross-references. CI fails on invalid content (CI-01, FR-74). */
 import { readdirSync, readFileSync } from 'node:fs';
-import type { z } from 'zod';
+import { z } from 'zod';
 import {
   BalanceSchema,
+  CITY_FILES,
   CitySchema,
   checkContent,
   checkStrings,
   MetaSchema,
   StringsSchema,
 } from './schemas.ts';
+import { PersonaSchema } from './sim.ts';
 
 const dataDir = new URL('../data/', import.meta.url);
 const localesDir = new URL('../locales/', import.meta.url);
@@ -42,9 +44,21 @@ if (meta && !cityIds.includes(meta.defaultCity)) {
   console.error(`FAIL meta.json: default city "${meta.defaultCity}" has no cities/ folder`);
 }
 
+const readJson = (relative: string): unknown =>
+  JSON.parse(readFileSync(new URL(relative, dataDir), 'utf8'));
+
 for (const id of cityIds) {
-  const relative = `cities/${id}/city.json`;
-  const city = load(relative, CitySchema);
+  const relative = `cities/${id}/`;
+  // A city profile is a folder: city.json plus one file per section (FR-33).
+  const merged = { ...(readJson(`${relative}city.json`) as object) } as Record<string, unknown>;
+  for (const [field, file] of Object.entries(CITY_FILES)) merged[field] = readJson(relative + file);
+  const result = CitySchema.safeParse(merged);
+  const city = result.success ? result.data : undefined;
+  if (result.success) console.log(`ok   ${relative}`);
+  else {
+    failed = true;
+    console.error(`FAIL ${relative}\n${result.error.message}`);
+  }
   if (!city || !meta || !balance) continue;
   if (city.id !== id) {
     failed = true;
@@ -55,6 +69,17 @@ for (const id of cityIds) {
     failed = true;
     console.error(`FAIL ${relative}: ${problem}`);
   }
+}
+
+// Simulator personas (simulator §3) are content too.
+const personas = z
+  .array(PersonaSchema)
+  .safeParse(JSON.parse(readFileSync(new URL('../sim/personas.json', import.meta.url), 'utf8')));
+if (personas.success) console.log('ok   sim/personas.json');
+else {
+  failed = true;
+  console.error(`FAIL sim/personas.json
+${personas.error.message}`);
 }
 
 process.exit(failed ? 1 : 0);

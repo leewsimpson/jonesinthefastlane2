@@ -6,8 +6,8 @@
 import type { GameState, PlayerId } from '../types/state.ts';
 import { cyrb128, type Rng, type RngState, rngFrom } from './rng.ts';
 
-/** Streams scoped to one player. `ai` is only used for AI players' decisions. */
-export const PLAYER_STREAMS = ['action', 'job', 'events', 'ai'] as const;
+/** Streams scoped to one player. `ai` is only used for AI players' decisions; `bills` for lease renewals. */
+export const PLAYER_STREAMS = ['action', 'job', 'bills', 'events', 'ai'] as const;
 export type PlayerStream = (typeof PLAYER_STREAMS)[number];
 
 /** e.g. `world::12`, `events:p1:12`. */

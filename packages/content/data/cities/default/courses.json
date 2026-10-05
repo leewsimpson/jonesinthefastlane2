@@ -1,0 +1,74 @@
+[
+  {
+    "id": "ai-tools-cert",
+    "type": "cert",
+    "track": "ai-tools",
+    "tuition": 35000,
+    "studyMinutes": 1200,
+    "credentialPoints": 10,
+    "loanEligible": false
+  },
+  {
+    "id": "trades-cert",
+    "type": "cert",
+    "track": "trades",
+    "tuition": 60000,
+    "studyMinutes": 1800,
+    "credentialPoints": 10,
+    "loanEligible": false
+  },
+  {
+    "id": "food-safety-cert",
+    "type": "cert",
+    "track": "care",
+    "tuition": 15000,
+    "studyMinutes": 900,
+    "credentialPoints": 8,
+    "loanEligible": false
+  },
+  {
+    "id": "care-cert",
+    "type": "cert",
+    "track": "care",
+    "tuition": 30000,
+    "studyMinutes": 1200,
+    "credentialPoints": 10,
+    "loanEligible": false
+  },
+  {
+    "id": "ai-bootcamp",
+    "type": "bootcamp",
+    "track": "ai-tools",
+    "tuition": 300000,
+    "studyMinutes": 3600,
+    "credentialPoints": 20,
+    "loanEligible": true
+  },
+  {
+    "id": "business-bootcamp",
+    "type": "bootcamp",
+    "track": "business",
+    "tuition": 250000,
+    "studyMinutes": 3600,
+    "credentialPoints": 20,
+    "loanEligible": true
+  },
+  {
+    "id": "business-degree",
+    "type": "degree",
+    "track": "business",
+    "tuition": 900000,
+    "studyMinutes": 9000,
+    "credentialPoints": 35,
+    "loanEligible": true
+  },
+  {
+    "id": "tech-degree",
+    "type": "degree",
+    "track": "ai-tools",
+    "tuition": 1000000,
+    "studyMinutes": 9000,
+    "credentialPoints": 35,
+    "loanEligible": true
+  }
+]

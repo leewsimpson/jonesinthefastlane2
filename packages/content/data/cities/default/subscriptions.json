@@ -1,0 +1,25 @@
+[
+  { "id": "streaming", "weeklyCost": 400, "modifiers": [], "weekly": { "happiness": 1 } },
+  {
+    "id": "cloud-storage",
+    "weeklyCost": 200,
+    "modifiers": [{ "target": "studyOutput", "bp": 200 }],
+    "weekly": {},
+    "requiresItem": "laptop"
+  },
+  {
+    "id": "ai-assistant",
+    "weeklyCost": 500,
+    "modifiers": [{ "target": "workOutput", "bp": 1000 }, { "target": "studyOutput", "bp": 1000 }],
+    "weekly": {},
+    "requiresItem": "laptop"
+  },
+  { "id": "gym-pass", "weeklyCost": 600, "modifiers": [], "weekly": { "health": 2, "energy": 2 } },
+  {
+    "id": "delivery-pass",
+    "weeklyCost": 2500,
+    "modifiers": [],
+    "weekly": { "happiness": 1, "health": -1 },
+    "meals": 3
+  }
+]

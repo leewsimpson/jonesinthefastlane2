@@ -45,7 +45,12 @@ describe('newGame', () => {
   it('starts everyone at home with a full week and starting stats', () => {
     const { state, events } = engine.newGame(duo);
     expect(state).toMatchObject({ week: 1, phase: { kind: 'turn', player: 'p1' }, pending: null });
-    expect(state.config).toEqual({ weekLimit: null, turnLengthWeeks: 1 });
+    expect(state.config).toEqual({
+      weekLimit: null,
+      turnLengthWeeks: 1,
+      difficulty: 'standard',
+      goals: fixtureContent.balance.goals.presets.standard,
+    });
     expect(events).toEqual([{ type: 'turnStarted', player: 'p1', week: 1 }]);
     for (const p of state.players) {
       expect(p).toMatchObject({ location: 'a', timeLeft: 600, mealsThisWeek: 0 });
@@ -143,8 +148,17 @@ describe('actions (FR-03)', () => {
     expect(p1(state).stats.health).toBe(49);
     expect(p1(state).mealsThisWeek).toBe(1);
     const cause = { kind: 'action', id: 'snack' };
-    expect(events.slice(-3)).toEqual([
+    expect(events.slice(-4)).toEqual([
       { type: 'actionPerformed', player: 'p1', actionId: 'snack', minutes: 60, money: 400 },
+      {
+        type: 'moneyMoved',
+        player: 'p1',
+        from: 'cash',
+        to: 'outside',
+        amount: 400,
+        reason: 'spend',
+        cause,
+      },
       { type: 'statChanged', player: 'p1', stat: 'cash', from: 2000, to: 1600, cause },
       { type: 'statChanged', player: 'p1', stat: 'health', from: 50, to: 49, cause },
     ]);
@@ -178,7 +192,7 @@ describe('actions (FR-03)', () => {
     const atC = withStats(play(start(), walk('b'), walk('c')).state, { energy: 19 });
     expect(engine.preview(atC, perform('shift'))).toMatchObject({
       plan: {
-        modifiers: [{ source: 'low-energy', target: 'workOutput', bp: -5000 }],
+        modifiers: [{ source: 'modifier.low-energy', target: 'workOutput', bp: -5000 }],
         effects: [
           { stat: 'cash', delta: 2000 },
           { stat: 'energy', delta: -15 },
@@ -198,13 +212,22 @@ describe('ending the week (FR-04, FR-05)', () => {
       'restBonus',
       'turnEnded',
       'mealSkipped',
+      'marketMoved',
       'roundEnded',
       'turnStarted',
     ]);
     expect(events).toContainEqual({ type: 'restBonus', player: 'p1', minutes: 540, energy: 18 });
     // 50 − 2 walk + 18 rest − 10 hunger + 20 drift
     expect(p1(state).stats).toMatchObject({ energy: 76, health: 45, social: 47 });
-    expect(state.history).toEqual([{ week: 1, player: 'p1', cash: 2000 }]);
+    expect(state.history).toEqual([
+      {
+        week: 1,
+        player: 'p1',
+        cash: 2000,
+        netWorth: 2000,
+        progressBp: { wealth: 200, wellbeing: 5750, skills: 0, career: 0 },
+      },
+    ]);
   });
 
   it('previews the End Week rest bonus', () => {
@@ -267,11 +290,9 @@ describe('ending the week (FR-04, FR-05)', () => {
   it('ends the game after the week limit (FR-12)', () => {
     const limited = start({ ...solo, config: { weekLimit: 2 } });
     const { state, events } = play(limited, endWeek, endWeek);
-    expect(state.phase).toEqual({ kind: 'gameOver', result: { reason: 'weekLimit', week: 2 } });
-    expect(events.at(-1)).toEqual({
-      type: 'gameOver',
-      result: { reason: 'weekLimit', week: 2 },
-    });
+    const result = { reason: 'weekLimit', week: 2, winner: 'p1', scores: { p1: 1362 } };
+    expect(state.phase).toEqual({ kind: 'gameOver', result });
+    expect(events.at(-1)).toEqual({ type: 'gameOver', result });
     expect(engine.listActions(state)).toEqual([]);
     expect(engine.reduce(state, endWeek)).toEqual({ ok: false, error: { code: 'GAME_OVER' } });
   });
@@ -291,7 +312,7 @@ describe('decisions (engine-design §11)', () => {
           },
         }),
         resolve(ctx, _decision, optionId) {
-          ctx.player.items.push(optionId);
+          ctx.player.experience[optionId] = 1;
         },
       },
       { id: 'after', run: () => ({ done: true }) },
@@ -324,7 +345,7 @@ describe('decisions (engine-design §11)', () => {
     const decided = custom.reduce(paused.state, { ...wrong, optionId: 'tea' });
     if (!decided.ok) throw new Error('tea is an option');
     expect(decided.state.pending).toBeNull();
-    expect(p1(decided.state).items).toEqual(['tea']);
+    expect(p1(decided.state).experience).toEqual({ tea: 1 });
     expect(decided.state.week).toBe(2);
   });
 
@@ -343,7 +364,7 @@ describe('decisions (engine-design §11)', () => {
     });
     if (!decided.ok) throw new Error('coffee is an option');
     expect(decided.events.map((e) => e.type)).toContain('decisionMade');
-    expect(player(decided.state, 1).items).toHaveLength(1);
+    expect(Object.keys(player(decided.state, 1).experience)).toHaveLength(1);
     expect(decided.state).toMatchObject({ week: 2, pending: null });
   });
 });

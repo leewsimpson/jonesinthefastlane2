@@ -70,13 +70,11 @@ interface Policy {
 ```
 
 Most personas are **one utility scorer with different weights**: the same scorer that powers Jones (FR-80) lives in
-`packages/engine`, and Jones's difficulty is how often the bot picks its top-scored move (FR-83). A persona is data:
-
-```jsonc
-// packages/content/sim/personas.json
-{ "id": "careerist", "goalWeights": { "wealth": 0.2, "wellbeing": 0.1, "skills": 0.3, "career": 0.4 },
-  "riskAppetite": 0.3, "horizonWeeks": 8, "bestMoveRate": 0.95, "notes": "Grinds the job ladder" }
-```
+`packages/engine` (`ai/utility.ts`), and Jones's difficulty is how often the bot picks its top-scored move (FR-83). It
+values a position as weighted goal progress plus what the persona expects over its horizon, and scores each option
+by value gained per hour; travel is scored by the best thing to do on arrival. A persona is data, in basis points
+like every other balance value: goal weights, risk appetite, horizon in weeks and best-move rate. The roster and its
+values live in `packages/content/sim/personas.json` (loaded through `@fastlane/content/sim`).
 
 | Persona | Plays like | Why it exists |
 |---|---|---|
@@ -175,7 +173,9 @@ correlation only, unless the PR touches events or balance values.
 ## 7. Experiments
 
 - **Override files.** A JSON patch over content (`--override overrides/rent-plus-10.json`) changes any balance
-  value, job, item or event weight without editing content.
+  value, job, item or event weight without editing content. Objects merge key by key, arrays of objects with an `id`
+  merge by id (new ids are appended), anything else replaces; the result is validated like shipped content.
+  Examples live in `packages/sim/overrides/`.
 - **A/B compare.** `sim compare --base <ref|override> --head <ref|override>` runs both on the **same seeds** and reports
   paired differences with confidence intervals. In CI the base is the PR's merge base, so every PR comment shows
   "this change moved win rate by +4.1 ± 1.2 points".
@@ -185,6 +185,10 @@ correlation only, unless the PR touches events or balance values.
   playing 20 weeks to get there.
 
 ## 8. CLI, CI and reports
+
+Phase 2 ships a single-process subset: `pnpm sim --bots balanced,careerist [--difficulty standard] [--override …]`
+plays each bot solo and prints wins, median win week, mean score and time per game. The commands below arrive with
+the Phase 3 runner.
 
 ```
 pnpm sim run      --games 2000 --personas balanced,careerist,jones-standard --preset standard --weeks 52 --seed 1

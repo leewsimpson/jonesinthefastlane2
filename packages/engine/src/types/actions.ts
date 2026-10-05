@@ -3,10 +3,20 @@ import type { ModifierTarget, StatKey } from '@fastlane/content/keys';
 import type { DomainEvent } from './events.ts';
 import type { GameState } from './state.ts';
 
+/**
+ * What a `perform` is aimed at, for action kinds that take it: a job, course, item, housing tier, subscription,
+ * account or debt (`target`), a length for work and study (`minutes`), or a sum of money (`amount`, cents).
+ */
+export interface PerformParams {
+  target?: string;
+  minutes?: number;
+  amount?: number;
+}
+
 /** Everything a player can submit. Actions carry no player id: they always apply to the active player. */
 export type Action =
   | { type: 'travel'; to: string; mode: string }
-  | { type: 'perform'; actionId: string }
+  | ({ type: 'perform'; actionId: string } & PerformParams)
   | { type: 'endWeek' }
   | { type: 'decide'; decisionId: string; optionId: string };
 
@@ -21,8 +31,33 @@ export type RuleErrorCode =
   | 'ALREADY_THERE'
   | 'WRONG_LOCATION'
   | 'NEEDS_ITEM'
+  | 'NEEDS_HOUSING'
   | 'NOT_ENOUGH_TIME'
-  | 'NOT_ENOUGH_MONEY';
+  | 'NOT_ENOUGH_MONEY'
+  | 'BAD_TARGET'
+  | 'BAD_DURATION'
+  | 'BAD_AMOUNT'
+  | 'NO_JOB'
+  | 'HOURS_CAP'
+  | 'GIG_DEACTIVATED'
+  | 'NOT_OPEN'
+  | 'ALREADY_HIRED'
+  | 'DRESS_CODE'
+  | 'NEEDS_CREDENTIAL'
+  | 'NEEDS_SKILL'
+  | 'NEEDS_EXPERIENCE'
+  | 'ALREADY_ENROLLED'
+  | 'ALREADY_EARNED'
+  | 'NOT_ENROLLED'
+  | 'NO_LOAN'
+  | 'ALREADY_OWNED'
+  | 'NOTHING_STORED'
+  | 'CREDIT_CHECK'
+  | 'RENT_OWED'
+  | 'ALREADY_SUBSCRIBED'
+  | 'NOT_SUBSCRIBED'
+  | 'OVER_LIMIT'
+  | 'NO_DEBT';
 
 /** A rule the player broke. Bugs in the engine throw instead (engine-design §3). */
 export interface RuleError {
@@ -41,9 +76,12 @@ export interface OutcomeRange {
   max: number;
 }
 
-/** A modifier in effect on this action, e.g. `{ source: 'low-energy', target: 'workOutput', bp: -2000 }` (FR-21). */
+/**
+ * A modifier in effect on this action, e.g. `{ source: 'modifier.low-energy', target: 'workOutput', bp: -2000 }`
+ * (FR-21). `source` is the copy key of what causes it: `modifier.<id>`, `item.<id>`, `subscription.<id>` or
+ * `track.<id>`.
+ */
 export interface AppliedModifier {
-  /** Copy key: `modifier.<source>`. */
   source: string;
   target: ModifierTarget;
   bp: number;

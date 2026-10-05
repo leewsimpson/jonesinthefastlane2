@@ -14,7 +14,7 @@ describe('random play (Phase 1 exit criterion)', () => {
         config: { weekLimit: 52 },
       };
       const result = randomPlay(defaultContent, setup, `chooser-${g}`);
-      expect(result.state.phase).toEqual({
+      expect(result.state.phase).toMatchObject({
         kind: 'gameOver',
         result: { reason: 'weekLimit', week: 52 },
       });

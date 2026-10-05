@@ -8,9 +8,9 @@ import type { Cause } from '../types/events.ts';
 import type { PlayerState } from '../types/state.ts';
 
 /**
- * The one write path for stats. Clamps to the stat's range (FR-20), emits `statChanged` and returns the applied
- * delta, which can be smaller than requested. Cash is never clamped: clamping at 0 would create money, so a change
- * that would make it negative is an engine bug and throws (FR-14).
+ * The one write path for stats other than cash. Clamps to the stat's range (FR-20), emits `statChanged` and returns
+ * the applied delta, which can be smaller than requested. Cash moves only through the ledger (`money/ledger.ts`), so
+ * every cent has a named source or sink; calling this for cash throws.
  */
 export function changeStat(
   ctx: Emitter,
@@ -21,21 +21,17 @@ export function changeStat(
 ): number {
   if (!Number.isInteger(delta))
     throw new Error(`stat delta for ${stat} is not an integer: ${delta}`);
+  if (stat === 'cash') throw new Error('cash moves through the ledger, not changeStat');
   const from = player.stats[stat];
   const { min, max } = ctx.content.balance.statRanges[stat];
-  let to = from + delta;
-  if (stat === 'cash') {
-    if (to < min) throw new Error(`cash would go negative for ${player.id} (${from} + ${delta})`);
-  } else {
-    to = clamp(to, min, max ?? Number.POSITIVE_INFINITY);
-  }
+  const to = clamp(from + delta, min, max ?? Number.POSITIVE_INFINITY);
   if (to === from) return 0;
   player.stats[stat] = to;
   ctx.emit({ type: 'statChanged', player: player.id, stat, from, to, cause });
   return to - from;
 }
 
-/** Apply several deltas in `STAT_KEYS` order, so the event order never depends on JSON key order. */
+/** Apply several non-cash deltas in `STAT_KEYS` order, so the event order never depends on JSON key order. */
 export function changeStats(
   ctx: Emitter,
   player: PlayerState,
@@ -49,8 +45,8 @@ export function changeStats(
 }
 
 /**
- * Modifiers on `target` for this player, in a fixed order: stat thresholds from balance data (Phase 1), then items
- * (Phase 2), then news (Phase 3).
+ * Modifiers on `target` for this player, in a fixed order: stat thresholds, then items in content order, then
+ * subscriptions, then the AI-tools skill (FR-42), then news (Phase 3). Sources are copy keys.
  */
 export function collectModifiers(
   content: GameContent,
@@ -60,9 +56,35 @@ export function collectModifiers(
   const found: AppliedModifier[] = [];
   for (const m of content.balance.statModifiers) {
     if (m.target === target && player.stats[m.stat] < m.below)
-      found.push({ source: m.id, target, bp: m.bp });
+      found.push({ source: `modifier.${m.id}`, target, bp: m.bp });
+  }
+  for (const item of content.city.items)
+    if (player.items.includes(item.id))
+      for (const m of item.modifiers)
+        if (m.target === target) found.push({ source: `item.${item.id}`, target, bp: m.bp });
+  for (const sub of content.city.subscriptions)
+    if (player.subscriptions.includes(sub.id))
+      for (const m of sub.modifiers)
+        if (m.target === target) found.push({ source: `subscription.${sub.id}`, target, bp: m.bp });
+  if (target === 'workOutput') {
+    const ai = content.balance.aiDisruption;
+    const bp = Math.min(
+      ai.maxOutputBp,
+      skillPoints(content, player, ai.track) * ai.outputPerPointBp,
+    );
+    if (bp > 0) found.push({ source: `track.${ai.track}`, target, bp });
   }
   return found;
+}
+
+/** Skill points on one track: ⌊√(hours studied × scale)⌋, so each track has diminishing returns (§3 Skills). */
+export function skillPoints(
+  content: GameContent,
+  player: Readonly<PlayerState>,
+  track: string,
+): number {
+  const minutes = player.trackMinutes[track] ?? 0;
+  return Math.floor(Math.sqrt(Math.floor((minutes * content.balance.skills.pointsScale) / 60)));
 }
 
 /** Scale `value` by the summed modifiers, applied once, so stacking order never changes the result. */

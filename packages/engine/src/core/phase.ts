@@ -6,6 +6,7 @@
 import type { GameContent } from '@fastlane/content';
 import { playerById, restBonusEnergy } from '../actions/plan.ts';
 import type { AiPolicy } from '../ai/random.ts';
+import { goalValues, netWorth, progressBp } from '../goals/goals.ts';
 import type { Pipeline } from '../pipeline/types.ts';
 import { stream, streamKey } from '../rng/streams.ts';
 import { changeStat } from '../stats/stats.ts';
@@ -31,6 +32,7 @@ export function playerCtx(run: Run, player: PlayerState): PlayerCtx {
   return {
     ...emitter(run),
     week: state.week,
+    config: state.config,
     player,
     world: state.world,
     rng: (name) => stream(state, streamKey(name, player.id, state.week)),
@@ -68,7 +70,13 @@ export function endTurn(run: Run, player: PlayerState, reason: TurnEndReason): v
 /** After a player's last end-of-week step: record the week and hand over to the next player, or end the round. */
 export function finishTurn(run: Run, player: PlayerState): void {
   const { state } = run;
-  state.history.push({ week: state.week, player: player.id, cash: player.stats.cash });
+  state.history.push({
+    week: state.week,
+    player: player.id,
+    cash: player.stats.cash,
+    netWorth: netWorth(run.content, player),
+    progressBp: progressBp(goalValues(run.content, player), state.config.goals),
+  });
   const next = state.players[state.players.indexOf(player) + 1];
   if (next) startTurn(run, next);
   else state.phase = { kind: 'endOfRound', step: 0 };

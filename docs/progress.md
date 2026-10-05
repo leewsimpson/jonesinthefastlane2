@@ -72,3 +72,45 @@ Running ledger of finished phases, deferrals and deviations from [implementation
   - The weekend event (Phase 3) returns `{ pause }` from its step; the mechanism is tested (engine-design §11).
   - The pinned RNG output in `rng/rng.test.ts` and the golden hashes in `core/golden.test.ts` change only on purpose,
     with an `ENGINE_VERSION` bump.
+
+## Phase 2 — Economy, jobs & goals — done 2026-10-05
+
+- Exit criteria:
+  - A scripted "sensible" strategy can win a Standard game: `packages/sim/src/sensible.test.ts` (agreed bar: wins on
+    at least 8 of 10 seeds within 52 weeks, and every game replays to the same hash). It wins 10/10, in week 24–25.
+    `pnpm sim --bots sensible --games 10` reports 10/10 wins, median week 24.
+  - Property tests for money conservation and no-softlock pass: `packages/engine/src/core/economy.properties.test.ts`
+    on fixture and shipped content (also run at 600 cases each locally). Money conservation uses the definition agreed
+    with the user, recorded in engine-design §10.1.
+  - All ~20 MVP jobs and ~15 items exist as validated content: 20 jobs across 7 ladders, 15 durable items plus
+    groceries, 8 courses, 5 housing tiers, 5 subscriptions. `content/src/schemas.test.ts` pins the counts, and
+    `pnpm content:validate` passes.
+- Deferred:
+  - FR-44 surge pricing as its own mechanic → Phase 3. Gig pay is a rolled hourly rate within a range; news-driven
+    surges fit the news ticker.
+  - FR-57 theft, the smart lock's anti-theft effect and the air fryer's cheaper meals (FR-60) → Phase 5 content pass.
+    Both items have simple weekly buffs for now.
+  - Utility-bot quality → Phase 3. `balanced` scores about 80% on Standard but rarely wins: it plans careers
+    myopically. Its tuning constants (`ai/utility.ts`: buff weeks, energy comfort, future-pay weight, value cap)
+    should become persona or balance data then. It runs at about 0.5 s per game, far below SIM-02's 50 games/s.
+  - Code-review judgement calls (duplicated banking and travel-projection steps, debt-kind special cases) are left
+    for when Phase 3 touches those files.
+- Deviations:
+  - No save migration for the state change (user default): `SAVE_VERSION` 2 with no migration, so Phase 1 saves are
+    refused with a clear error. None existed outside tests.
+  - A city profile is a folder of files (`city.json`, `jobs.json`, `courses.json`, `housing.json`, `items.json`,
+    `subscriptions.json`) merged into one `City`, not one file (engine-design §13).
+  - Beyond the agreed shortfall rules: unpaid subscriptions are cancelled instead of becoming arrears; a missed rent
+    and an eviction each cost credit score too; card limits are banded by credit score. Arrears are due in full the
+    week they appear, so the first missed rent counts as one of the three misses before collections.
+  - The job score is called `rating`: `performance` is a banned word in the engine purity scan.
+  - Career stability uses the player's exposure after the AI-tools cut (FR-42's "personal exposure").
+  - Items count at resale value of their launch price, not the inflated price paid.
+  - The AI assistant subscription is taken at Your Place (online), not bought at Circuit Planet.
+  - Extra persona `casual` (simulator §3 lists it) and a `pnpm sim --bots` subset of the Phase 3 CLI.
+  - Engine AI players (Jones) still use the random policy; the utility policy is ready for Phase 3.
+- Notes for later phases:
+  - `ENGINE_VERSION` 0.3.0, state schema 2, `SAVE_VERSION` 2.
+  - Add balance rules to `balance.json` and prices to the city folder; `checkContent` cross-checks both.
+  - The sensible bot wins Standard by week 24, before simulator §5's 30–45-week band for `balanced`. Expect to raise
+    Standard targets when Phase 3 sets the bands.

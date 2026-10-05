@@ -6,7 +6,7 @@ import type { GameContent } from '@fastlane/content';
 import type { Rng } from '../rng/rng.ts';
 import type { PlayerStream } from '../rng/streams.ts';
 import type { DomainEvent } from '../types/events.ts';
-import type { GameState, PlayerState, WorldState } from '../types/state.ts';
+import type { GameConfig, GameState, PlayerState, WorldState } from '../types/state.ts';
 
 export interface Emitter {
   content: GameContent;
@@ -23,6 +23,7 @@ export interface PlanCtx {
 /** For handler `apply` and per-player pipeline steps. */
 export interface PlayerCtx extends Emitter {
   week: number;
+  config: Readonly<GameConfig>;
   player: PlayerState;
   world: Readonly<WorldState>;
   /** The stream for this player and week. */

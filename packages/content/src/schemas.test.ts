@@ -91,10 +91,62 @@ describe('content', () => {
     expect(checkContent(withCity({ board: short }))).toEqual([
       'the board needs one segment per location',
     ]);
-    const onlyItems = defaultCity.board.transportModes.map((m) => ({ ...m, requiresItem: 'car' }));
+    const onlyItems = defaultCity.board.transportModes.map((m) => ({
+      ...m,
+      requiresItem: 'laptop',
+    }));
     expect(
       checkContent(withCity({ board: { ...defaultCity.board, transportModes: onlyItems } })),
     ).toEqual(['at least one transport mode must need no item']);
+  });
+
+  it('ships the MVP jobs and items (§16: ~20 jobs, ~15 items)', () => {
+    expect(defaultCity.jobs.length).toBeGreaterThanOrEqual(20);
+    const durables = defaultCity.items.filter((i) => i.meals === undefined);
+    expect(durables.length).toBeGreaterThanOrEqual(15);
+    // Every MVP shop sells something (Phase 2: FreshMart, ThriftUp, Circuit Planet, Burger Bot).
+    for (const shop of ['freshmart', 'thriftup', 'circuit-planet', 'burger-bot'])
+      expect(defaultCity.items.some((i) => i.shop === shop)).toBe(true);
+    // Five housing tiers, the first free (FR-51, FR-14).
+    expect(defaultCity.housing.map((h) => h.rent)[0]).toBe(0);
+    expect(defaultCity.housing).toHaveLength(5);
+  });
+
+  it('finds broken job, item, course and market references', () => {
+    const [job] = defaultCity.jobs;
+    if (!job) throw new Error('no jobs');
+    const badJob = {
+      ...job,
+      id: 'ghost',
+      ladder: 'ghost',
+      requires: { credentials: ['nope'], skills: {} },
+    };
+    expect(checkContent(withCity({ jobs: [...defaultCity.jobs, badJob] }))).toEqual([
+      'job "ghost" needs unknown credential "nope"',
+    ]);
+    const gappy = { ...job, id: 'skipper', ladder: 'gap', level: 2 };
+    expect(checkContent(withCity({ jobs: [...defaultCity.jobs, gappy] }))).toEqual([
+      'ladder "gap" needs one job per level, starting at 1',
+    ]);
+    const noEntry = defaultCity.jobs.map((j) => ({ ...j, openChanceBp: 5000 }));
+    expect(checkContent(withCity({ jobs: noEntry }))).toContain(
+      'at least one job must need nothing and always be open (FR-14)',
+    );
+    const [home] = defaultCity.housing;
+    if (!home) throw new Error('no housing');
+    expect(
+      checkContent(
+        withCity({ housing: [{ ...home, rent: 100 }, ...defaultCity.housing.slice(1)] }),
+      ),
+    ).toEqual([`the first housing tier "${home.id}" must be free (FR-14)`]);
+    const orphan = {
+      ...defaultCity.items[0],
+      id: 'orphan',
+      requiresItem: 'unicorn',
+    } as (typeof defaultCity.items)[number];
+    expect(checkContent(withCity({ items: [...defaultCity.items, orphan] }))).toEqual([
+      'item "orphan" needs unknown item "unicorn"',
+    ]);
   });
 
   it('parses the city through its schema', () => {
