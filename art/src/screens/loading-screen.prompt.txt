@@ -1,0 +1,38 @@
+STYLE: Bold flat 2D vector illustration for a satirical life-sim board game set in 2026.
+Clean geometric shapes with soft rounded corners. Every shape has a uniform thick dark outline
+in #1F1B2E (about 6 px at 1024 px canvas width, same weight everywhere). Flat colour fills with
+at most one hard-edged cel-shadow tone per surface, light from the top-left. No gradients, no
+textures, no grain, no noise, no glow, no photorealism, no 3D render, no pixel art.
+Chunky, toy-like proportions: characters are about 3 heads tall with simple friendly faces
+(dot eyes, clear eyebrows, expressive mouths); buildings look like sturdy board-game pieces.
+Restricted palette: cream #FFF6E9, ink #1F1B2E, coral #FF5A4E, mustard #FFC23D, teal #1FB5A8,
+sky #5EB8FF, lilac #8E7CF0, mint #7EE0A1, blush #FFB3A7, slate #5B5872, plus natural diverse
+skin tones. Robots and AI devices are always lilac. Money and gold are always mustard.
+Tone: looks like a cheerful, optimistic fintech-app illustration, with small satirical details.
+ABSOLUTELY NO text, letters, numbers, logos or brand marks anywhere. Signs, screens and posters
+are blank coloured panels or simple pictograms.
+
+SUBJECT: Key art for the game's loading / title screen. A race down a city street toward the
+viewer, slightly low camera angle, road vanishing to a skyline in the distance.
+- Left foreground: the player, a young adult in a coral hoodie, riding a slightly wobbly
+  e-scooter, overloaded and frantic: a delivery backpack, a laptop under one arm, a coffee
+  cup in hand, flying paper bills and receipts trailing behind, determined but sweating.
+- Right foreground, half a length ahead: Jones, a smug late-20s man with perfect hair and
+  gleaming teeth, dark ink quarter-zip, gold mustard smartwatch, cruising effortlessly in a
+  shiny mustard convertible electric car, taking a selfie with his phone while waving, a few
+  mustard coins bouncing out of the back seat.
+- Around them: two small lilac delivery robots scurrying across the road, a lilac drone
+  carrying a parcel overhead.
+- The street is lined with chunky board-game-piece buildings: a diner with a coral and cream
+  striped awning and a burger pictogram sign, a teal bank pod with a coin-slot door, a glass
+  office with a lilac robot at the door, a grocery store with fruit crates.
+- Distant skyline: modest rental blocks with a few cranes, dominated by one tall glossy lilac
+  AI-company tower.
+- Sky: flat sky blue #5EB8FF with a few simple cream clouds and a mustard sun top-left.
+Mood: energetic, funny, optimistic chaos, "everyone is racing to make it".
+
+COMPOSITION: Landscape 1536 x 1024. Keep the TOP 30% of the canvas mostly open sky (only
+clouds, sun and the tip of the lilac tower) so the game can place its title logo there. Keep
+the bottom 10% calm road surface so a loading bar can sit there. The two characters are the
+focal point in the central area.
+FRAMING: Full-bleed scene filling the whole canvas, no border, no frame, no rounded corners.
