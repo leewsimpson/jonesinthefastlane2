@@ -51,7 +51,7 @@ packages/engine/src/
 Tests sit next to the code they cover (`*.test.ts`), with fixture content in `src/__fixtures__/`.
 
 `packages/engine` depends on `packages/content` for **types only** (`import type`), plus the Zod-free constants in
-`@fastlane/content/keys`. Zod runs in `content` and, from Phase 4, in `engine/save` at load time (§14), never in the
+`@fastlane/content/keys`. Zod runs in `content` and in the client's save loader (§14), never in the
 engine's main entry point, so it stays out of the hot path and the initial bundle.
 
 ## 3. Public API
@@ -526,7 +526,7 @@ rules are balance data.
   `contentHash`, so the hash always matches what the engine actually runs.
 - **Copy is not content.** Content holds ids only. Copy keys are derived from them (`city.<id>`, `location.<id>`,
   `transport.<id>`, `action.<id>`, `wardrobe.<tier>`, `modifier.<id>`, `decision.<stepId>.<option>`, and the
-  rest that `contentStringKeys` lists), and English text lives in `locales/en.json`, ready for `i18next` in Phase 4
+  rest that `contentStringKeys` lists), and English text lives in `locales/en.json`, which the client loads into `i18next`
   (NFR-06). Weekend events use `event.<id>`, `event.<id>.text` and `event.<id>.<choice>`; teasers `teaser.<id>`;
   Jones's lines are numbered variants `feed.<moment>.<n>` (FR-84). Their `{{slot}}`s are checked against the slots
   the engine fills (`TEASERS` and `FEED_MOMENTS` in `content/src/keys.ts`).
@@ -547,8 +547,9 @@ interface SaveFile {
 ```
 
 - **Loading uses the snapshot.** Check the format and version, run migrations (`migrations[n]` turns version `n`
-  into `n + 1`, each with a fixture test), and continue from the snapshot. The Zod save schema arrives with IndexedDB
-  persistence in Phase 4; until then `loadSave` does structural checks only.
+  into `n + 1`, each with a fixture test), and continue from the snapshot. `loadSave` does structural checks only;
+  the client validates the migrated save with its Zod schema (`apps/web/src/persistence/schema.ts`) before using it,
+  so Zod stays out of the engine.
 - **Replaying uses the log**, and only when `engineVersion` and `contentHash` match. `verifySave` returns `ok`, or why
   not: `incompatible` (other engine or content), `illegal` (the log breaks a rule) or `diverged` (a different state).
   Replays are for tests, bug reports (Sentry gets `seed + log`) and Daily Run verification. A migration can fix a
@@ -559,7 +560,7 @@ interface SaveFile {
 - **Hash:** canonical JSON (sorted keys) → two cyrb53 hashes with different seeds, as hex (~106 bits). It detects
   divergence; it isn't a security feature (the server re-runs the log rather than trusting a hash).
 - The save format and migrations are a separate entry point (`@fastlane/engine/save`), so the client can lazy-load
-  them, and Zod with them from Phase 4.
+  them.
 
 ## 15. Testing
 
@@ -571,7 +572,7 @@ interface SaveFile {
 | Golden | `core/golden.test.ts`: seed + chooser → hash, as inline snapshots. Catch accidental determinism changes. Updated deliberately, with an engine version bump |
 | Source scan | No banned APIs in `packages/engine/src` (§5) |
 | Smoke (Phase 1 exit) | `pnpm sim`: 52 weeks of random legal actions, 1 human plus AI, no crash, replay gives an identical hash |
-| Cross-runtime (Phase 4) | Golden fixtures replayed in Playwright on Chromium and WebKit must match Node's hashes |
+| Cross-runtime | `e2e/play-a-week.spec.ts`: the log a game in Chromium and in WebKit autosaves replays in Node to the save's snapshot hash |
 
 ## 16. Phase 1 build order
 
