@@ -4,7 +4,7 @@ Design for `packages/engine`, the pure, deterministic rules engine. It covers ev
 [implementation plan](implementation-plan.md) builds, and fixes the shapes that later phases plug into (jobs, events,
 Jones, Daily Run verification), so those phases add code without reworking the core.
 
-**Status:** draft for review. Decisions marked **(open)** are listed in §17.
+**Status:** draft for review. Settled and open decisions are listed in §17.
 
 ## 1. Constraints
 
@@ -220,7 +220,7 @@ newGame ─► turn(p1) ─endWeek─► endOfTurn(p1, steps…) ─► turn(p2)
   pipeline steps, plays AI turns, and starts the next round. One `endWeek` from the last human can therefore return a
   long list of events (their end of turn, Jones's whole turn, the round end, the next human's `turnStarted`). The UI
   plays them back in order.
-- **AI turns run inside the engine, and the log holds only human actions.** The AI policy picks actions using the `ai`
+- **AI turns run inside the engine, and the log holds only human actions** (decided, §17). The AI policy picks actions using the `ai`
   stream, so a replay recomputes Jones exactly. This means a client can't submit fake Jones moves in a Daily Run. The
   cost: changing the AI policy changes old replays, which is fine because saves and Daily Runs pin the engine version
   (§14). A turn longer than 200 AI actions throws, so a buggy policy can't loop forever.
@@ -310,12 +310,11 @@ points and applied once with `applyBp`, so stacking order never changes the resu
 {
   "ring": ["your-place", "leaselord", "joblink", "upskill-u", "fulfillment", "burger-bot",
            "freshmart", "thriftup", "circuit-planet", "neobank"],
-  "segments": [2, 1, 2, 2, 1, 2, 1, 1, 2, 2],   // distance from ring[i] to ring[i+1], wrapping
-  "bidirectional": true
+  "segments": [2, 1, 2, 2, 1, 2, 1, 1, 2, 2]    // distance from ring[i] to ring[i+1], wrapping
 }
 ```
 
-- Distance is the shorter way round the ring (or clockwise only if `bidirectional` is false, **open**).
+- Players can travel either way round the ring, and distance is always the shorter way (decided, §17).
 - Travel time = `distance × mode.minutesPerUnit + mode.overheadMinutes`, then travel-time modifiers. Money =
   `mode.costPerTrip`.
 - Transport modes live in `transport.json`, each with requirements (`requires: { item: 'e-scooter' }`). Phase 1 ships
@@ -489,13 +488,20 @@ Everything here is plain TypeScript and only needs the Phase 0 workspace, TypeSc
 12. Property tests, the source scan and the 52-week smoke script.
 13. Real Phase 1 content: the 10 MVP locations, eat and rest actions, walk and transit.
 
-## 17. Open questions
+## 17. Decisions and open questions
+
+### Decided
+
+| Question | Decision |
+|---|---|
+| Travel both ways round the ring, or one way like the original? | Both ways; travel takes the shorter way round (§9) |
+| Do AI turns run inside the engine, or get logged as actions? | Inside the engine. The save log holds only human actions, and replays recompute Jones's moves (§7) |
+
+### Open
 
 | # | Question | Proposed | Needed by |
 |---|---|---|---|
-| 1 | Travel both ways round the ring, or one way like the original? | Both ways (`bidirectional` flag keeps it a data choice) | Phase 1, step 7 |
-| 2 | Do AI turns run inside the engine (proposed) or get logged as actions? | Inside the engine, so Daily Run can't be fed fake Jones moves | Phase 1, step 5 |
-| 3 | Is anything finer than 15 minutes needed? | No; minutes are the unit but content uses multiples of 15 | Phase 1, step 3 |
-| 4 | Can cash go into overdraft, or does every shortfall become debt? | Never negative; shortfalls go through missed-payment handling | Phase 2 |
-| 5 | Energy 0: end the turn immediately, or allow actions with heavy penalties? | End the turn (forced rest), as in §4 of the requirements | Phase 1, step 6 |
-| 6 | How does the server replay a Daily Run after an engine update? | Pin each day's run to an engine + content version | Phase 7 |
+| 1 | Is anything finer than 15 minutes needed? | No; minutes are the unit but content uses multiples of 15 | Phase 1, step 3 |
+| 2 | Can cash go into overdraft, or does every shortfall become debt? | Never negative; shortfalls go through missed-payment handling | Phase 2 |
+| 3 | Energy 0: end the turn immediately, or allow actions with heavy penalties? | End the turn (forced rest), as in §4 of the requirements | Phase 1, step 6 |
+| 4 | How does the server replay a Daily Run after an engine update? | Pin each day's run to an engine + content version | Phase 7 |
