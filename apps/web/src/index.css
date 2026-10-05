@@ -1,0 +1,77 @@
+@import "tailwindcss";
+@import "@fontsource-variable/bricolage-grotesque/wght.css";
+@import "@fontsource-variable/atkinson-hyperlegible-next/wght.css";
+
+/* Palette from art-direction §2. UI theme tokens derive from these art colours. */
+@theme {
+  --color-ink: #1f1b2e;
+  --color-cream: #fff6e9;
+  --color-coral: #ff5a4e;
+  --color-mustard: #ffc23d;
+  --color-teal: #1fb5a8;
+  --color-sky: #5eb8ff;
+  --color-lilac: #8e7cf0;
+  --color-mint: #7ee0a1;
+  --color-blush: #ffb3a7;
+  --color-slate: #5b5872;
+  --color-night: #17142a;
+
+  /* Player colours (art-direction §2, colour-blind safe; always paired with a shape). */
+  --color-p1: #e69f00;
+  --color-p2: #56b4e9;
+  --color-p3: #009e73;
+  --color-p4: #d55e00;
+  --color-jones: #cc79a7;
+
+  /* Semantic theme tokens, switched for dark mode below. */
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+
+  --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Atkinson Hyperlegible Next Variable", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Dark mode follows the OS unless <html data-theme="light|dark"> overrides it. */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme="light"]) *) {
+      @slot;
+    }
+  }
+}
+
+:root {
+  --surface: #fff6e9;
+  --surface-raised: #ffffff;
+  --fg: #1f1b2e;
+  --fg-muted: #5b5872;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --surface: #17142a;
+    --surface-raised: #1f1b2e;
+    --fg: #fff6e9;
+    --fg-muted: #c9c4dc;
+  }
+}
+
+:root[data-theme="dark"] {
+  --surface: #17142a;
+  --surface-raised: #1f1b2e;
+  --fg: #fff6e9;
+  --fg-muted: #c9c4dc;
+}
+
+body {
+  @apply bg-surface text-fg font-sans antialiased;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
