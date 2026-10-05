@@ -2,8 +2,8 @@
   "frames": {
     "jones/exhausted": {
       "frame": {
-        "x": 0,
-        "y": 194,
+        "x": 1842,
+        "y": 0,
         "w": 176,
         "h": 192
       },
@@ -26,7 +26,7 @@
     },
     "jones/happy": {
       "frame": {
-        "x": 1123,
+        "x": 1118,
         "y": 0,
         "w": 181,
         "h": 192
@@ -50,7 +50,7 @@
     },
     "jones/neutral": {
       "frame": {
-        "x": 319,
+        "x": 318,
         "y": 582,
         "w": 156,
         "h": 192
@@ -74,7 +74,7 @@
     },
     "jones/proud": {
       "frame": {
-        "x": 1023,
+        "x": 850,
         "y": 388,
         "w": 164,
         "h": 192
@@ -98,7 +98,7 @@
     },
     "jones/shocked": {
       "frame": {
-        "x": 631,
+        "x": 630,
         "y": 582,
         "w": 150,
         "h": 192
@@ -122,7 +122,7 @@
     },
     "jones/stressed": {
       "frame": {
-        "x": 477,
+        "x": 476,
         "y": 582,
         "w": 152,
         "h": 192
@@ -146,7 +146,7 @@
     },
     "player-01/exhausted": {
       "frame": {
-        "x": 1590,
+        "x": 1588,
         "y": 194,
         "w": 171,
         "h": 192
@@ -170,7 +170,7 @@
     },
     "player-01/happy": {
       "frame": {
-        "x": 783,
+        "x": 782,
         "y": 582,
         "w": 192,
         "h": 187
@@ -194,7 +194,7 @@
     },
     "player-01/neutral": {
       "frame": {
-        "x": 1763,
+        "x": 1761,
         "y": 194,
         "w": 171,
         "h": 192
@@ -218,7 +218,7 @@
     },
     "player-01/proud": {
       "frame": {
-        "x": 888,
+        "x": 710,
         "y": 194,
         "w": 174,
         "h": 192
@@ -242,7 +242,7 @@
     },
     "player-01/shocked": {
       "frame": {
-        "x": 178,
+        "x": 0,
         "y": 194,
         "w": 176,
         "h": 192
@@ -266,7 +266,7 @@
     },
     "player-01/stressed": {
       "frame": {
-        "x": 173,
+        "x": 0,
         "y": 388,
         "w": 170,
         "h": 192
@@ -290,127 +290,7 @@
     },
     "player-02/exhausted": {
       "frame": {
-        "x": 855,
-        "y": 388,
-        "w": 166,
-        "h": 192
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 166,
-        "h": 192
-      },
-      "sourceSize": {
-        "w": 166,
-        "h": 192
-      },
-      "anchor": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "player-02/happy": {
-      "frame": {
-        "x": 1489,
-        "y": 0,
-        "w": 178,
-        "h": 192
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 178,
-        "h": 192
-      },
-      "sourceSize": {
-        "w": 178,
-        "h": 192
-      },
-      "anchor": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "player-02/neutral": {
-      "frame": {
-        "x": 1846,
-        "y": 388,
-        "w": 160,
-        "h": 192
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 160,
-        "h": 192
-      },
-      "sourceSize": {
-        "w": 160,
-        "h": 192
-      },
-      "anchor": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "player-02/proud": {
-      "frame": {
-        "x": 0,
-        "y": 388,
-        "w": 171,
-        "h": 192
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 171,
-        "h": 192
-      },
-      "sourceSize": {
-        "w": 171,
-        "h": 192
-      },
-      "anchor": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "player-02/shocked": {
-      "frame": {
-        "x": 754,
-        "y": 0,
-        "w": 183,
-        "h": 192
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 183,
-        "h": 192
-      },
-      "sourceSize": {
-        "w": 183,
-        "h": 192
-      },
-      "anchor": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    "player-02/stressed": {
-      "frame": {
-        "x": 1240,
+        "x": 1238,
         "y": 194,
         "w": 173,
         "h": 192
@@ -432,10 +312,130 @@
         "y": 0.5
       }
     },
-    "player-03/exhausted": {
+    "player-02/happy": {
+      "frame": {
+        "x": 191,
+        "y": 0,
+        "w": 187,
+        "h": 192
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 187,
+        "h": 192
+      },
+      "sourceSize": {
+        "w": 187,
+        "h": 192
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "player-02/neutral": {
       "frame": {
         "x": 0,
         "y": 582,
+        "w": 157,
+        "h": 192
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 157,
+        "h": 192
+      },
+      "sourceSize": {
+        "w": 157,
+        "h": 192
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "player-02/proud": {
+      "frame": {
+        "x": 682,
+        "y": 388,
+        "w": 166,
+        "h": 192
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 166,
+        "h": 192
+      },
+      "sourceSize": {
+        "w": 166,
+        "h": 192
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "player-02/shocked": {
+      "frame": {
+        "x": 886,
+        "y": 194,
+        "w": 174,
+        "h": 192
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 174,
+        "h": 192
+      },
+      "sourceSize": {
+        "w": 174,
+        "h": 192
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "player-02/stressed": {
+      "frame": {
+        "x": 1673,
+        "y": 388,
+        "w": 159,
+        "h": 192
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 159,
+        "h": 192
+      },
+      "sourceSize": {
+        "w": 159,
+        "h": 192
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "player-03/exhausted": {
+      "frame": {
+        "x": 1834,
+        "y": 388,
         "w": 158,
         "h": 192
       },
@@ -458,7 +458,7 @@
     },
     "player-03/happy": {
       "frame": {
-        "x": 356,
+        "x": 178,
         "y": 194,
         "w": 176,
         "h": 192
@@ -482,7 +482,7 @@
     },
     "player-03/neutral": {
       "frame": {
-        "x": 1355,
+        "x": 1182,
         "y": 388,
         "w": 163,
         "h": 192
@@ -506,7 +506,7 @@
     },
     "player-03/proud": {
       "frame": {
-        "x": 1520,
+        "x": 1347,
         "y": 388,
         "w": 161,
         "h": 192
@@ -530,7 +530,7 @@
     },
     "player-03/shocked": {
       "frame": {
-        "x": 1189,
+        "x": 1016,
         "y": 388,
         "w": 164,
         "h": 192
@@ -554,7 +554,7 @@
     },
     "player-03/stressed": {
       "frame": {
-        "x": 1683,
+        "x": 1510,
         "y": 388,
         "w": 161,
         "h": 192
@@ -578,7 +578,7 @@
     },
     "player-04/exhausted": {
       "frame": {
-        "x": 160,
+        "x": 159,
         "y": 582,
         "w": 157,
         "h": 192
@@ -626,7 +626,7 @@
     },
     "player-04/neutral": {
       "frame": {
-        "x": 517,
+        "x": 344,
         "y": 388,
         "w": 167,
         "h": 192
@@ -650,7 +650,7 @@
     },
     "player-04/proud": {
       "frame": {
-        "x": 534,
+        "x": 356,
         "y": 194,
         "w": 175,
         "h": 192
@@ -674,7 +674,7 @@
     },
     "player-04/shocked": {
       "frame": {
-        "x": 345,
+        "x": 172,
         "y": 388,
         "w": 170,
         "h": 192
@@ -698,7 +698,7 @@
     },
     "player-04/stressed": {
       "frame": {
-        "x": 686,
+        "x": 513,
         "y": 388,
         "w": 167,
         "h": 192
@@ -722,9 +722,9 @@
     },
     "player-05/exhausted": {
       "frame": {
-        "x": 567,
+        "x": 1301,
         "y": 0,
-        "w": 185,
+        "w": 181,
         "h": 192
       },
       "rotated": false,
@@ -732,11 +732,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 185,
+        "w": 181,
         "h": 192
       },
       "sourceSize": {
-        "w": 185,
+        "w": 181,
         "h": 192
       },
       "anchor": {
@@ -746,10 +746,10 @@
     },
     "player-05/happy": {
       "frame": {
-        "x": 1171,
+        "x": 976,
         "y": 582,
         "w": 192,
-        "h": 182
+        "h": 187
       },
       "rotated": false,
       "trimmed": false,
@@ -757,11 +757,11 @@
         "x": 0,
         "y": 0,
         "w": 192,
-        "h": 182
+        "h": 187
       },
       "sourceSize": {
         "w": 192,
-        "h": 182
+        "h": 187
       },
       "anchor": {
         "x": 0.5,
@@ -770,9 +770,9 @@
     },
     "player-05/neutral": {
       "frame": {
-        "x": 1306,
+        "x": 750,
         "y": 0,
-        "w": 181,
+        "w": 182,
         "h": 192
       },
       "rotated": false,
@@ -780,11 +780,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 181,
+        "w": 182,
         "h": 192
       },
       "sourceSize": {
-        "w": 181,
+        "w": 182,
         "h": 192
       },
       "anchor": {
@@ -794,9 +794,9 @@
     },
     "player-05/proud": {
       "frame": {
-        "x": 191,
+        "x": 380,
         "y": 0,
-        "w": 186,
+        "w": 183,
         "h": 192
       },
       "rotated": false,
@@ -804,11 +804,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 186,
+        "w": 183,
         "h": 192
       },
       "sourceSize": {
-        "w": 186,
+        "w": 183,
         "h": 192
       },
       "anchor": {
@@ -818,9 +818,9 @@
     },
     "player-05/shocked": {
       "frame": {
-        "x": 379,
+        "x": 565,
         "y": 0,
-        "w": 186,
+        "w": 183,
         "h": 192
       },
       "rotated": false,
@@ -828,11 +828,11 @@
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 186,
+        "w": 183,
         "h": 192
       },
       "sourceSize": {
-        "w": 186,
+        "w": 183,
         "h": 192
       },
       "anchor": {
@@ -842,7 +842,7 @@
     },
     "player-05/stressed": {
       "frame": {
-        "x": 939,
+        "x": 934,
         "y": 0,
         "w": 182,
         "h": 192
@@ -866,7 +866,7 @@
     },
     "player-06/exhausted": {
       "frame": {
-        "x": 1669,
+        "x": 1484,
         "y": 0,
         "w": 177,
         "h": 192
@@ -890,7 +890,7 @@
     },
     "player-06/happy": {
       "frame": {
-        "x": 977,
+        "x": 1170,
         "y": 582,
         "w": 192,
         "h": 187
@@ -914,7 +914,7 @@
     },
     "player-06/neutral": {
       "frame": {
-        "x": 711,
+        "x": 533,
         "y": 194,
         "w": 175,
         "h": 192
@@ -938,7 +938,7 @@
     },
     "player-06/proud": {
       "frame": {
-        "x": 1064,
+        "x": 1062,
         "y": 194,
         "w": 174,
         "h": 192
@@ -962,7 +962,7 @@
     },
     "player-06/shocked": {
       "frame": {
-        "x": 1848,
+        "x": 1663,
         "y": 0,
         "w": 177,
         "h": 192
@@ -986,7 +986,7 @@
     },
     "player-06/stressed": {
       "frame": {
-        "x": 1415,
+        "x": 1413,
         "y": 194,
         "w": 173,
         "h": 192
@@ -1014,7 +1014,7 @@
     "image": "busts.webp",
     "format": "RGBA8888",
     "size": {
-      "w": 2025,
+      "w": 2018,
       "h": 774
     },
     "scale": 2

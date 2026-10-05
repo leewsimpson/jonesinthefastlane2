@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # usage: gen_one.sh <category> <id> <canvas>
 cat="$1"; id="$2"; canvas="$3"
-ART="C:/Github/_experiment/jonesinthefastlane2/art/src"
+ART="$(cd "$(dirname "$0")/../src" && pwd)"
 LOG="${TMPDIR:-/tmp}/fastlane-art-logs"; mkdir -p "$LOG"
 cd "$ART/$cat" || exit 1
 [ -f "$id.png" ] && { echo "SKIP $id"; exit 0; }

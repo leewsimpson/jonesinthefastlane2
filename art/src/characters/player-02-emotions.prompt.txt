@@ -12,7 +12,7 @@ Tone: looks like a cheerful, optimistic fintech-app illustration, with small sat
 ABSOLUTELY NO text, letters, numbers, logos or brand marks anywhere. Signs, screens and posters
 are blank coloured panels or simple pictograms.
 
-SUBJECT: a young woman around 26, light skin with freckles, shoulder-length wavy red hair, round glasses, wearing a mustard cardigan over a cream top, teal skirt, dark tights and ankle boots, tote bag. Personality: bookish, anxious overachiever. This is the same character as the attached full-body reference image (player-02.png): match hair, skin tone, clothes and colours exactly.
+SUBJECT: a young woman around 26, light skin with freckles, shoulder-length wavy red hair, round glasses, wearing a mustard cardigan over a cream top, teal skirt, slate tights and ankle boots, cream tote bag. The tote bag and tights are flat colour with one hard-edged shadow tone each, no soft shading. Personality: bookish, anxious overachiever. This is the same character as the attached full-body reference image (player-02.png): match hair, skin tone, clothes and colours exactly.
 Expressions in order: 1 neutral, 2 happy/celebrating, 3 stressed (sweat drop), 4 exhausted/
 burnt out (bags under eyes, slumped), 5 shocked (wide eyes, open mouth), 6 proud/smug.
 
