@@ -182,3 +182,66 @@ Running ledger of finished phases, deferrals and deviations from [implementation
   - Gotchas from building the bot: optional calls skip their arguments (`f?.(++x)` doesn't increment when `f` is
     undefined); arrival values must be computed per transport mode; any chained step (withdraw → pay, enrol →
     study, drop → enrol) needs explicit credit in the valuation or the bot never starts it.
+
+## Phase 4 — Playable client — done 2026-10-05
+
+- The client in `apps/web`:
+  - Zustand store around the engine (`store/game.ts`): `dispatch` runs `engine.reduce`, keeps the action log, and
+    routes events: in-turn events to the ticker; everything from a turn's end to the end-of-week report.
+  - Screens: title (save slots) → setup (1–4 humans, Jones on/off, Chill/Standard/Hustle Culture or custom targets,
+    week limit, seed) → game → run summary (winner, scores, goal rings, net worth by week).
+  - Pixi board through `@pixi/react`: a code-drawn stadium ring road and pads from the palette, the A3 building
+    art on the pads, tokens with the A2 busts in a seat-colour ring (emotion from Energy and Happiness). Tokens glide
+    the shorter way round the loop; reduced motion jumps. Clicking a building opens travel to it.
+  - HUD: cash, Time and Energy bars, stat chips with icons, four goal rings, score, each rival's score ring; tap or
+    D for full details (stats, job, home, money by place, education, items, subscriptions, quests, news).
+  - Action sheet with every option's preview chips (time, cost, stat effects, random ranges, modifiers, ledger
+    moves) and the reason when unavailable; wage, rent, fee and study time on job, home, subscription and course rows.
+    Travel dialog with every destination by every mode.
+  - End-of-week sequence: bills and life → weekend card with choices and their previews → news and market → goal
+    rings for everyone with near misses → Jones's feed (overtakes, posts from `feed.<moment>.<n>`) → teasers.
+  - Hotseat handoff screen between humans. Dexie save slots: autosave after every action and at week end; loading
+    migrates, validates with Zod and resumes, reopening a pending weekend choice.
+  - Portrait (HUD, board, action sheet stacked) and landscape (HUD | board | sheet) layouts. Keyboard: E end week,
+    T travel, D details, numbers and letters on every action row, travel destinations and weekend choices; Enter
+    moves the wrap-up on. i18next with all strings in resources; `Intl` money formatting.
+  - Lazy chunks: the engine, content and Dexie load behind the title screen, Pixi with the board, the summary on
+    game over.
+- Exit criteria:
+  - The team can play a full game vs Jones on desktop and phone; saves survive a reload: **human-only, for the
+    user** (plan note). Evidence so far: played week 1 in Chrome at desktop size (apply for a job, travel, work,
+    weekend choice, the full wrap-up), reloaded mid-game and continued; a scripted 25-week game in Chromium ran to
+    Jones's win and the summary; iPhone 15 WebKit viewport screenshots show the portrait layout with no page
+    scroll.
+  - Bundle stays under budget: `pnpm size` → 88.61 kB gzipped initial JS against 300 kB.
+  - E2E runs against the PR preview: `e2e/play-a-week.spec.ts` (start → act → travel → get hired → end week through
+    the wrap-up → reload → continue) passes locally on `desktop-chromium` and `mobile-webkit` against a production
+    build. `preview.yml` now runs it against the PR's preview URL after the smoke test; it runs once the PR carries
+    the `preview` label.
+  - Cross-runtime determinism (engine-design §15): the same test reads the browser's autosave and replays its log in
+    Node; the hash matches the snapshot on Chromium and WebKit.
+- Deferred:
+  - Sim decision traces, `sim trace`, the client debug route that replays a sim game, and the HTML report (simulator
+    §4, §8) → Phase 5, with the rest of the sim tooling (plan row "Sim choice assessment…"). Nothing in the
+    playable loop needs them.
+  - NeoBank charts: NeoBank has no charts yet, so there is nothing to lazy-load there; the net-worth chart on the
+    summary is hand-made SVG in the lazy summary chunk → Phase 5 adds market charts.
+  - Motion (springs, number tickers) isn't installed yet: Phase 5's juice brings it.
+- Deviations:
+  - Location panels are a docked action sheet (bottom in portrait, right in landscape), not modal dialogs, so the
+    board stays visible (NFR-02). Radix dialogs carry travel, details and the week wrap-up.
+  - Art: A2 and A3 had landed, so the board uses the generated buildings and busts instead of placeholder shapes.
+    UpSkill U's building still uses the `hitech-u` art id (IP note in the Risks table).
+  - The Zod save schema lives in the client (`apps/web/src/persistence/schema.ts`), not in `engine/save`, so Zod
+    stays out of the engine (engine-design §14 updated).
+  - Removed the Phase 0 API health readout from the title screen; `config.ts` stays for Phase 7.
+- Notes for later phases:
+  - `@pixi/react`'s `<Application>` renders the children it was given before its async init finished. Anything a
+    scene needs from the first render (its size) must come from inside the scene, not a prop: `Board.tsx`
+    measures its container in `Scene`.
+  - Screen-reader-only text inside a scrolling list needs a positioned ancestor, or it stretches the page (the
+    action list is `relative`).
+  - Dialogs mark the keys they handle (`preventDefault`); `useHotkeys` ignores marked keys, because React re-adds the
+    window listener before the same key press reaches it.
+  - Root `devDependencies` link `@fastlane/engine` and `@fastlane/content` so E2E tests can replay in Node.
+

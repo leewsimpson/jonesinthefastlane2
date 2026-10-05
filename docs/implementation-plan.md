@@ -236,7 +236,15 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
   Standard Jones is too weak, Career is the critical path so `careerist` wins most games, `balanced` almost never
   hits a setback, and `casual` struggles on Chill. Tune through content (targets, wages, event pressure) and
   re-run `pnpm sim run --base` to see each change.
-- Still to add to the sim: luck share, week of first goal milestone (simulator §5), `assess`, `sweep`, `trace`.
+- Still to add to the sim: luck share, week of first goal milestone (simulator §5), `assess`, `sweep`, `trace`, plus
+  Phase 4's deferred decision traces, the client debug route that replays a sim game on the board, and the HTML
+  report (simulator §4, §8). The client can already replay a save: `engine.replay(setup, log)` gives the state, and
+  the board draws any `GameState`.
+- The client shows what Phase 4 built as plain readouts: the ticker under the action sheet and the week wrap-up
+  pages are where number pop-ups, coin bursts and reveals plug in (ENG-01, ENG-03). Domain events reach the UI in
+  `store/game.ts` (`lastEvents`, `report.events`).
+- UI copy lives in `apps/web/src/i18n/ui.en.json`; game copy stays in `packages/content/locales/en.json`. Event
+  category names are UI copy for now (`category.<id>`).
 - Jones's feed posts about milestones only; a moment for a good weekend event (a viral post) fits the copy pass.
 
 ---
