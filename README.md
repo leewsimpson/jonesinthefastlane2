@@ -8,6 +8,7 @@ AI job disruption, the housing crunch, gig work, side hustles, crypto swings, su
 | [game-requirements.md](docs/game-requirements.md) | Vision, core loop, goals, stats, locations, jobs, economy, life stages & relationships, events, AI rival, modes, engagement design, UX, MVP scope |
 | [art-direction.md](docs/art-direction.md) | Visual style, palette, typography, camera rules, image-gen prompts, asset pipeline, MVP asset list |
 | [tech-stack.md](docs/tech-stack.md) | Architecture, libraries, project structure, persistence, backend, testing, tooling, hosting |
+| [simulator.md](docs/simulator.md) | Headless bot simulator: personas, decision traces, KPI bands, choice assessment, experiments, CI gates |
 | [ci-cd.md](docs/ci-cd.md) | GitHub Actions pipelines, Cloudflare Pages/Workers/D1 deployment, environments, rollback, secrets |
 | [engine-design.md](docs/engine-design.md) | Design of the pure, deterministic engine: state, RNG streams, actions and previews, end-of-week pipeline, saves, tests |
 | [implementation-plan.md](docs/implementation-plan.md) | Phased build plan from foundations to MVP, v1.0 and post-launch, with exit criteria, art track, decisions and risks |
@@ -20,7 +21,7 @@ original is only a source of inspiration. Get a legal check before using the ori
 
 ## Requirement conventions
 
-- IDs: `FR-` functional, `NFR-` non-functional, `ENG-` engagement, `CI-`/`CD-`/`OPS-` pipeline.
+- IDs: `FR-` functional, `NFR-` non-functional, `ENG-` engagement, `CI-`/`CD-`/`OPS-` pipeline, `SIM-` simulator.
 - Priority: **M** = Must (MVP), **S** = Should (v1.0), **C** = Could (post-launch).
 - All numbers (prices, wages, hours) are **starting balance values**. They live in data files and get tuned in playtesting.
 
