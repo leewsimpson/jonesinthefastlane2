@@ -1,6 +1,7 @@
 /** P2: rent, lease renewals, eviction and subscriptions (FR-51, FR-52, FR-14). */
 import type { PlayerCtx } from '../core/context.ts';
 import { price } from '../economy/prices.ts';
+import { newsEffect } from '../hooks/news.ts';
 import { applyBp, BP_ONE } from '../math/fixed.ts';
 import { transfer } from '../money/ledger.ts';
 import { changeStat } from '../stats/stats.ts';
@@ -43,14 +44,18 @@ function payRent(ctx: PlayerCtx): void {
   if (housing.leaseWeeksLeft <= 0) renewLease(ctx);
 }
 
-/** A renewal raises the rent by a rolled hike, and never below today's listed rent (FR-51). */
+/**
+ * A renewal raises the rent by a rolled hike, plus any housing news (FR-72), and never below today's listed rent
+ * (FR-51).
+ */
 function renewLease(ctx: PlayerCtx): void {
   const { player, content, world } = ctx;
   const housing = player.housing;
   const tier = content.city.housing.find((h) => h.id === housing.tier);
   if (!tier) throw new Error(`unknown housing ${housing.tier}`);
   const { min, max } = content.balance.housing.renewalHikeBp;
-  const hiked = applyBp(housing.rent, BP_ONE + ctx.rng('bills').int(min, max));
+  const news = newsEffect(content, world, 'rentHikeBp');
+  const hiked = applyBp(housing.rent, Math.max(0, BP_ONE + ctx.rng('bills').int(min, max) + news));
   const from = housing.rent;
   housing.rent = Math.max(hiked, price(world, tier.rent));
   housing.leaseWeeksLeft = content.balance.housing.leaseWeeks;

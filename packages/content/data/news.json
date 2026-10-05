@@ -1,0 +1,142 @@
+[
+  {
+    "id": "ai-model-release",
+    "weight": 5,
+    "weeks": {
+      "min": 3,
+      "max": 6
+    },
+    "effects": {
+      "disruptionBp": 3000,
+      "exposure": [
+        {
+          "ladder": "office",
+          "bp": 2000
+        }
+      ]
+    }
+  },
+  {
+    "id": "warehouse-robots",
+    "weight": 4,
+    "weeks": {
+      "min": 3,
+      "max": 6
+    },
+    "effects": {
+      "exposure": [
+        {
+          "ladder": "fulfillment",
+          "bp": 2000
+        }
+      ],
+      "openingsBp": -1000
+    }
+  },
+  {
+    "id": "rate-cut",
+    "weight": 4,
+    "weeks": {
+      "min": 4,
+      "max": 8
+    },
+    "effects": {
+      "savingsPpm": -250,
+      "cardPpm": -800
+    }
+  },
+  {
+    "id": "rate-hike",
+    "weight": 4,
+    "weeks": {
+      "min": 4,
+      "max": 8
+    },
+    "effects": {
+      "savingsPpm": 250,
+      "cardPpm": 800
+    }
+  },
+  {
+    "id": "housing-bubble",
+    "weight": 4,
+    "weeks": {
+      "min": 4,
+      "max": 8
+    },
+    "effects": {
+      "rentHikeBp": 600,
+      "inflationBp": 4
+    }
+  },
+  {
+    "id": "delivery-surge",
+    "weight": 4,
+    "weeks": {
+      "min": 2,
+      "max": 4
+    },
+    "effects": {
+      "gigPayBp": 2500
+    }
+  },
+  {
+    "id": "gig-crackdown",
+    "weight": 3,
+    "weeks": {
+      "min": 2,
+      "max": 5
+    },
+    "effects": {
+      "gigPayBp": -1500
+    }
+  },
+  {
+    "id": "hiring-boom",
+    "weight": 4,
+    "weeks": {
+      "min": 3,
+      "max": 6
+    },
+    "effects": {
+      "openingsBp": 2500,
+      "disruptionBp": -2000
+    }
+  },
+  {
+    "id": "ai-bubble-mania",
+    "weight": 3,
+    "weeks": {
+      "min": 2,
+      "max": 5
+    },
+    "minWeek": 6,
+    "effects": {
+      "regime": "ai-bubble",
+      "disruptionBp": 1500
+    }
+  },
+  {
+    "id": "market-panic",
+    "weight": 2,
+    "weeks": {
+      "min": 1,
+      "max": 2
+    },
+    "minWeek": 10,
+    "effects": {
+      "regime": "crash"
+    }
+  },
+  {
+    "id": "grocery-shock",
+    "weight": 3,
+    "weeks": {
+      "min": 3,
+      "max": 6
+    },
+    "effects": {
+      "inflationBp": 10
+    }
+  }
+]

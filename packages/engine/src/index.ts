@@ -6,7 +6,9 @@
 export { type AiPolicy, randomPolicy } from './ai/random.ts';
 export {
   type Persona,
+  rivalPolicy,
   type ScoredOption,
+  scoreChoices,
   scoreOptions,
   utilityPolicy,
   valuation,
@@ -34,11 +36,16 @@ export {
   skillsValue,
   wellbeing,
 } from './goals/goals.ts';
+export { meets } from './hooks/conditions.ts';
+export { newsEffect, newsExposure } from './hooks/news.ts';
 export { effectiveExposure, qualification } from './jobs/jobs.ts';
 export { balanceOf, financialNetWorth, type Place, places, totalDebt } from './money/ledger.ts';
 export { scores } from './pipeline/goalCheck.ts';
 export { defaultPipeline } from './pipeline/order.ts';
+export { questMeasure, questProgressBp } from './pipeline/quests.ts';
+export { teasersFor } from './pipeline/teasers.ts';
 export type { Pipeline, PipelineStep, StepResult } from './pipeline/types.ts';
+export { choicePlan } from './pipeline/weekendEvent.ts';
 export { createRng, type Rng } from './rng/rng.ts';
 export { skillPoints } from './stats/stats.ts';
 export type * from './types/actions.ts';

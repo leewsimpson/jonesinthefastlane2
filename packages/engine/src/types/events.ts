@@ -2,7 +2,14 @@
  * Domain events (engine-design §12). The UI turns them into presentation (tech-stack §2). The engine never reads them
  * back and they aren't saved: a replay regenerates them.
  */
-import type { DebtKind, StatKey } from '@fastlane/content/keys';
+import type {
+  DebtKind,
+  EventCategory,
+  FeedMoment,
+  GoalKey,
+  StatKey,
+  TeaserId,
+} from '@fastlane/content/keys';
 import type { Place } from '../money/ledger.ts';
 import type { Decision, GameResult, PlayerId } from './state.ts';
 
@@ -11,7 +18,9 @@ export type Cause =
   | { kind: 'action'; id: string }
   | { kind: 'travel'; mode: string }
   | { kind: 'restBonus' }
-  | { kind: 'step'; id: string };
+  | { kind: 'step'; id: string }
+  | { kind: 'event'; id: string }
+  | { kind: 'quest'; id: string };
 
 export type TurnEndReason = 'endWeek' | 'outOfTime' | 'exhausted';
 
@@ -31,6 +40,7 @@ export const EXTERNAL_FLOWS = [
   'subscription',
   'tuition',
   'fee',
+  'reward',
 ] as const;
 export const INTERNAL_FLOWS = ['save', 'withdraw', 'borrow', 'repay', 'lease-deposit'] as const;
 export type FlowReason = (typeof EXTERNAL_FLOWS)[number] | (typeof INTERNAL_FLOWS)[number];
@@ -82,6 +92,7 @@ export type DomainEvent =
   | { type: 'gigDeactivated'; player: PlayerId; weeks: number }
   | { type: 'enrolled'; player: PlayerId; course: string; loan: boolean }
   | { type: 'credentialEarned'; player: PlayerId; course: string }
+  | { type: 'courseDropped'; player: PlayerId; course: string }
   | { type: 'itemBought'; player: PlayerId; item: string }
   | { type: 'subscribed'; player: PlayerId; subscription: string }
   | {
@@ -105,6 +116,52 @@ export type DomainEvent =
       returnsBp: Record<string, number>;
       priceIndexBp: number;
       wageIndexBp: number;
+    }
+  /** A weekend event card is drawn (FR-70). A card with choices then pauses for `decisionRequired`. */
+  | { type: 'weekendEvent'; player: PlayerId; event: string; category: EventCategory }
+  /** The card's effects were applied with this choice. */
+  | { type: 'eventResolved'; player: PlayerId; event: string; choice: string }
+  | { type: 'newsStarted'; news: string; weeks: number }
+  | { type: 'newsEnded'; news: string }
+  | { type: 'questIssued'; player: PlayerId; quest: string; deadline: number }
+  | { type: 'questCompleted'; player: PlayerId; quest: string }
+  | { type: 'questFailed'; player: PlayerId; quest: string }
+  /**
+   * A next-week hook (ENG-10). `params` fill the copy's slots (`teaser.<id>`): ids for things with their own copy
+   * (a job id → `job.<id>`), cents for money, plain numbers otherwise.
+   */
+  | { type: 'teaser'; player: PlayerId; teaser: TeaserId; params: Record<string, string | number> }
+  /**
+   * Jones's highlight reel (FR-82): `player` is the AI who posts, `about` the human it reacts to, if any. Copy:
+   * `feed.<moment>.<n>`; the UI picks the variant. `params` as for teasers.
+   */
+  | {
+      type: 'rivalPost';
+      player: PlayerId;
+      moment: FeedMoment;
+      about: PlayerId | null;
+      params: Record<string, string | number>;
+    }
+  /** Every player's score and goal progress after the round (ENG-14: rival progress is always visible). */
+  | {
+      type: 'standings';
+      week: number;
+      scoresBp: Record<PlayerId, number>;
+      progressBp: Record<PlayerId, Record<GoalKey, number>>;
+    }
+  /** `by` moved ahead of `player` on score this round (ENG-14). */
+  | { type: 'overtaken'; player: PlayerId; by: PlayerId }
+  /**
+   * A goal just short of its target (ENG-13): `short` is what's missing, in the goal's units (cents for wealth).
+   * `final` when the game has ended.
+   */
+  | {
+      type: 'nearMiss';
+      player: PlayerId;
+      goal: GoalKey;
+      short: number;
+      progressBp: number;
+      final: boolean;
     }
   | { type: 'roundEnded'; week: number }
   | { type: 'gameOver'; result: GameResult };

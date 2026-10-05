@@ -74,12 +74,14 @@ export function places(player: Readonly<PlayerState>): Place[] {
   ];
 }
 
-/** Assets minus debts, in cents, without items (goals count items separately, §3 Wealth). */
+/**
+ * Assets minus debts, in cents, without items (goals count items separately, §3 Wealth). The same sum as over
+ * `places`, written out because the AI scorer calls it for every option it weighs.
+ */
 export function financialNetWorth(player: Readonly<PlayerState>): number {
-  let total = 0;
-  for (const place of places(player))
-    total += isDebt(place) ? -balanceOf(player, place) : balanceOf(player, place);
-  return total;
+  let total = player.stats.cash + player.housing.deposit;
+  for (const id in player.holdings) total += player.holdings[id] ?? 0;
+  return total - totalDebt(player);
 }
 
 /** Total owed across every debt. */

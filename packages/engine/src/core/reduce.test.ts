@@ -233,6 +233,7 @@ describe('ending the week (FR-04, FR-05)', () => {
       'turnEnded',
       'mealSkipped',
       'marketMoved',
+      'standings',
       'roundEnded',
       'turnStarted',
     ]);
@@ -246,6 +247,13 @@ describe('ending the week (FR-04, FR-05)', () => {
         cash: 2000,
         netWorth: 2000,
         progressBp: { wealth: 200, wellbeing: 5750, skills: 0, career: 0 },
+        scoreBp: 1487,
+        job: null,
+        jobLevel: 0,
+        housing: 'couch',
+        credentials: 0,
+        items: 0,
+        questsDone: 0,
       },
     ]);
   });
@@ -328,7 +336,9 @@ describe('decisions (engine-design §11)', () => {
             id: ctx.newId('decision'),
             player: ctx.player.id,
             stepId: 'dilemma',
+            subject: null,
             options: ['coffee', 'tea'],
+            plans: {},
           },
         }),
         resolve(ctx, _decision, optionId) {
@@ -349,7 +359,9 @@ describe('decisions (engine-design §11)', () => {
       id: 'decision-1',
       player: 'p1',
       stepId: 'dilemma',
+      subject: null,
       options: ['coffee', 'tea'],
+      plans: {},
     });
     expect(paused.events.at(-1)).toEqual({ type: 'decisionRequired', decision });
     expect(custom.listActions(paused.state).map((o) => o.action)).toEqual([

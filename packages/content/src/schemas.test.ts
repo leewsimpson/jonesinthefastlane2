@@ -7,10 +7,14 @@ import {
   checkStrings,
   defaultCity,
   defaultContent,
+  EVENT_CATEGORIES,
   en,
+  FEED_MOMENTS,
+  feedVariants,
   type GameContent,
   LocationActionSchema,
   MetaSchema,
+  MIN_FEED_VARIANTS,
   meta,
 } from './index.ts';
 
@@ -173,6 +177,50 @@ describe('content', () => {
     } as (typeof defaultCity.items)[number];
     expect(checkContent(withCity({ items: [...defaultCity.items, orphan] }))).toEqual([
       'item "orphan" needs unknown item "unicorn"',
+    ]);
+  });
+
+  it('ships the MVP event deck and news (§16: ~40 events across every FR-71 category, ~10 news)', () => {
+    const deck = defaultContent.events.filter((e) => !e.trigger);
+    expect(deck.length).toBeGreaterThanOrEqual(38);
+    expect(new Set(deck.map((e) => e.category))).toEqual(new Set(EVENT_CATEGORIES));
+    expect(deck.filter((e) => e.choices.length >= 2).length).toBeGreaterThan(deck.length / 2);
+    expect(defaultContent.news.length).toBeGreaterThanOrEqual(10);
+    expect(defaultContent.quests.length).toBeGreaterThanOrEqual(10);
+  });
+
+  it('finds broken event, news, quest and rival references (FR-74)', () => {
+    const [card] = defaultContent.events;
+    if (!card) throw new Error('no events');
+    const paid = { ...card, id: 'paid', choices: card.choices.map((c) => ({ ...c, cost: 100 })) };
+    expect(checkContent({ ...defaultContent, events: [...defaultContent.events, paid] })).toEqual([
+      'event "paid" needs a free choice with no condition',
+    ]);
+    const nowhere = { ...card, id: 'nowhere', when: { ...card.when, housing: ['castle'] } };
+    expect(
+      checkContent({ ...defaultContent, events: [...defaultContent.events, nowhere] }),
+    ).toEqual(['event "nowhere" needs unknown housing "castle"']);
+    const [story] = defaultContent.news;
+    if (!story) throw new Error('no news');
+    const odd = { ...story, id: 'odd', effects: { ...story.effects, regime: 'moonshot' } };
+    expect(checkContent({ ...defaultContent, news: [...defaultContent.news, odd] })).toEqual([
+      'news "odd" sets unknown regime "moonshot"',
+    ]);
+    const ai = {
+      ...defaultContent.ai,
+      byDifficulty: { ...defaultContent.ai.byDifficulty, chill: 'ghost' },
+    };
+    expect(checkContent({ ...defaultContent, ai })).toEqual([
+      'rival for chill is unknown persona "ghost"',
+    ]);
+  });
+
+  it('has several lines per Jones feed moment, using only the slots each fills (FR-82, FR-84)', () => {
+    for (const moment of Object.keys(FEED_MOMENTS))
+      expect([moment, feedVariants(en, moment) >= MIN_FEED_VARIANTS]).toEqual([moment, true]);
+    const bad = { ...en, 'feed.hired.1': 'Hired as {{salary}}!' };
+    expect(checkStrings(defaultContent, bad)).toEqual([
+      'string "feed.hired.1" uses unknown slot "salary"',
     ]);
   });
 

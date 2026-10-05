@@ -1,0 +1,1030 @@
+[
+  {
+    "id": "surprise-bonus",
+    "category": "work",
+    "weight": 6,
+    "when": {
+      "job": true
+    },
+    "choices": [
+      {
+        "id": "bank-it",
+        "effects": {
+          "cash": {
+            "min": 8000,
+            "max": 15000
+          },
+          "happiness": 3
+        }
+      },
+      {
+        "id": "treat-team",
+        "effects": {
+          "cash": {
+            "min": 3000,
+            "max": 6000
+          },
+          "social": 6,
+          "happiness": 4
+        },
+        "jobRating": 5
+      }
+    ]
+  },
+  {
+    "id": "toxic-boss",
+    "category": "work",
+    "weight": 5,
+    "when": {
+      "job": true
+    },
+    "choices": [
+      {
+        "id": "grin",
+        "effects": {
+          "happiness": -6,
+          "energy": -5
+        },
+        "jobRating": 4
+      },
+      {
+        "id": "push-back",
+        "effects": {
+          "happiness": 3
+        },
+        "jobRating": -8
+      },
+      {
+        "id": "vent",
+        "cost": 2500,
+        "effects": {
+          "happiness": 2,
+          "social": 4
+        }
+      }
+    ]
+  },
+  {
+    "id": "ai-pilot",
+    "category": "work",
+    "weight": 5,
+    "when": {
+      "job": true
+    },
+    "choices": [
+      {
+        "id": "train-it",
+        "effects": {
+          "happiness": -3
+        },
+        "jobRating": 6
+      },
+      {
+        "id": "train-badly",
+        "effects": {
+          "happiness": 4
+        },
+        "jobRating": -6
+      },
+      {
+        "id": "update-cv",
+        "effects": {
+          "energy": -3
+        },
+        "nextWeekMinutes": -60
+      }
+    ]
+  },
+  {
+    "id": "layoff-rumours",
+    "category": "work",
+    "weight": 3,
+    "when": {
+      "job": true,
+      "minWeek": 4
+    },
+    "choices": [
+      {
+        "id": "volunteer-extra",
+        "effects": {
+          "energy": -8
+        },
+        "jobRating": 8
+      },
+      {
+        "id": "stay-calm",
+        "effects": {
+          "happiness": -2
+        }
+      }
+    ]
+  },
+  {
+    "id": "restructure-letter",
+    "category": "work",
+    "weight": 2,
+    "when": {
+      "job": true,
+      "minWeek": 8
+    },
+    "cooldownWeeks": 20,
+    "choices": [
+      {
+        "id": "read-it",
+        "effects": {
+          "happiness": -8
+        },
+        "layoffWarning": true
+      }
+    ]
+  },
+  {
+    "id": "overtime-offer",
+    "category": "work",
+    "weight": 5,
+    "when": {
+      "job": true
+    },
+    "choices": [
+      {
+        "id": "take-it",
+        "effects": {
+          "cash": {
+            "min": 6000,
+            "max": 9000
+          },
+          "energy": -10
+        },
+        "nextWeekMinutes": -240,
+        "jobRating": 5
+      },
+      {
+        "id": "decline",
+        "effects": {
+          "happiness": 3
+        }
+      }
+    ]
+  },
+  {
+    "id": "employee-of-month",
+    "category": "work",
+    "weight": 4,
+    "when": {
+      "job": true,
+      "stats": {
+        "energy": {
+          "min": 40
+        }
+      }
+    },
+    "choices": [
+      {
+        "id": "frame-it",
+        "effects": {
+          "happiness": 5,
+          "social": 2
+        },
+        "jobRating": 3
+      }
+    ]
+  },
+  {
+    "id": "tax-refund",
+    "category": "money",
+    "weight": 5,
+    "choices": [
+      {
+        "id": "save-it",
+        "effects": {
+          "cash": {
+            "min": 10000,
+            "max": 25000
+          }
+        }
+      },
+      {
+        "id": "treat-yourself",
+        "effects": {
+          "cash": {
+            "min": 4000,
+            "max": 10000
+          },
+          "happiness": 6
+        }
+      }
+    ]
+  },
+  {
+    "id": "crypto-tip",
+    "category": "money",
+    "weight": 4,
+    "when": {
+      "stats": {
+        "cash": {
+          "min": 10000
+        }
+      }
+    },
+    "choices": [
+      {
+        "id": "yolo",
+        "cost": 10000,
+        "effects": {
+          "cash": {
+            "min": 0,
+            "max": 30000
+          },
+          "happiness": {
+            "min": -4,
+            "max": 6
+          }
+        }
+      },
+      {
+        "id": "pass",
+        "effects": {}
+      }
+    ]
+  },
+  {
+    "id": "phishing-text",
+    "category": "money",
+    "weight": 4,
+    "when": {
+      "stats": {
+        "cash": {
+          "min": 3000
+        }
+      }
+    },
+    "choices": [
+      {
+        "id": "ignore",
+        "effects": {
+          "happiness": 1
+        }
+      },
+      {
+        "id": "click",
+        "cost": 3000,
+        "effects": {
+          "happiness": -6,
+          "creditScore": -10
+        }
+      }
+    ]
+  },
+  {
+    "id": "found-twenty",
+    "category": "money",
+    "weight": 5,
+    "choices": [
+      {
+        "id": "pocket-it",
+        "effects": {
+          "cash": {
+            "min": 1000,
+            "max": 4000
+          },
+          "happiness": 3
+        }
+      }
+    ]
+  },
+  {
+    "id": "bnpl-ad",
+    "category": "money",
+    "weight": 4,
+    "when": {
+      "stats": {
+        "cash": {
+          "min": 6000
+        }
+      }
+    },
+    "choices": [
+      {
+        "id": "resist",
+        "effects": {
+          "happiness": -1
+        }
+      },
+      {
+        "id": "splurge",
+        "cost": 6000,
+        "effects": {
+          "happiness": 7
+        }
+      }
+    ]
+  },
+  {
+    "id": "market-dip",
+    "category": "money",
+    "weight": 4,
+    "when": {
+      "invested": true
+    },
+    "choices": [
+      {
+        "id": "hold",
+        "effects": {
+          "happiness": -3
+        }
+      },
+      {
+        "id": "doomscroll",
+        "effects": {
+          "happiness": -6,
+          "energy": -4
+        },
+        "nextWeekMinutes": -60
+      }
+    ]
+  },
+  {
+    "id": "side-sale",
+    "category": "money",
+    "weight": 4,
+    "choices": [
+      {
+        "id": "sell",
+        "effects": {
+          "cash": {
+            "min": 2000,
+            "max": 9000
+          },
+          "energy": -4
+        }
+      },
+      {
+        "id": "keep",
+        "effects": {
+          "happiness": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "friends-wedding",
+    "category": "life",
+    "weight": 4,
+    "choices": [
+      {
+        "id": "go-all-in",
+        "cost": 8000,
+        "effects": {
+          "social": 10,
+          "happiness": 6,
+          "energy": -6
+        }
+      },
+      {
+        "id": "go-cheap",
+        "effects": {
+          "social": 5,
+          "happiness": 2,
+          "energy": -6
+        }
+      },
+      {
+        "id": "skip",
+        "effects": {
+          "social": -6
+        }
+      }
+    ]
+  },
+  {
+    "id": "group-chat-plans",
+    "category": "life",
+    "weight": 6,
+    "choices": [
+      {
+        "id": "organise",
+        "cost": 2000,
+        "effects": {
+          "social": 8,
+          "happiness": 4,
+          "energy": -3
+        }
+      },
+      {
+        "id": "mute",
+        "effects": {
+          "social": -3,
+          "energy": 3
+        }
+      }
+    ]
+  },
+  {
+    "id": "breakup",
+    "category": "life",
+    "weight": 3,
+    "cooldownWeeks": 16,
+    "choices": [
+      {
+        "id": "rebound",
+        "cost": 3000,
+        "effects": {
+          "happiness": 2,
+          "social": 5,
+          "energy": -6
+        }
+      },
+      {
+        "id": "ice-cream",
+        "cost": 800,
+        "effects": {
+          "happiness": -3,
+          "energy": 4
+        }
+      },
+      {
+        "id": "therapy-app",
+        "effects": {
+          "happiness": -5,
+          "health": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "stray-cat",
+    "category": "life",
+    "weight": 3,
+    "choices": [
+      {
+        "id": "feed",
+        "cost": 1500,
+        "effects": {
+          "happiness": 8
+        }
+      },
+      {
+        "id": "shoo",
+        "effects": {
+          "happiness": -1
+        }
+      }
+    ]
+  },
+  {
+    "id": "family-call",
+    "category": "life",
+    "weight": 5,
+    "choices": [
+      {
+        "id": "long-chat",
+        "effects": {
+          "happiness": 4,
+          "social": 3
+        },
+        "nextWeekMinutes": -60
+      },
+      {
+        "id": "text-back",
+        "effects": {
+          "social": -1
+        }
+      }
+    ]
+  },
+  {
+    "id": "neighbour-bbq",
+    "category": "life",
+    "weight": 4,
+    "choices": [
+      {
+        "id": "bring-salad",
+        "cost": 1200,
+        "effects": {
+          "social": 7,
+          "happiness": 3
+        }
+      },
+      {
+        "id": "stay-in",
+        "effects": {
+          "energy": 4
+        }
+      }
+    ]
+  },
+  {
+    "id": "old-friend",
+    "category": "life",
+    "weight": 4,
+    "choices": [
+      {
+        "id": "big-night",
+        "cost": 4500,
+        "effects": {
+          "social": 9,
+          "happiness": 6,
+          "energy": -10,
+          "health": -2
+        }
+      },
+      {
+        "id": "coffee",
+        "cost": 900,
+        "effects": {
+          "social": 5,
+          "happiness": 3
+        }
+      },
+      {
+        "id": "raincheck",
+        "effects": {
+          "social": -4
+        }
+      }
+    ]
+  },
+  {
+    "id": "flu",
+    "category": "health",
+    "weight": 5,
+    "when": {
+      "minWeek": 2
+    },
+    "choices": [
+      {
+        "id": "rest",
+        "effects": {
+          "health": -4,
+          "energy": 6
+        },
+        "nextWeekMinutes": -360
+      },
+      {
+        "id": "power-through",
+        "effects": {
+          "health": -10,
+          "energy": -8
+        }
+      }
+    ]
+  },
+  {
+    "id": "marathon",
+    "category": "health",
+    "weight": 3,
+    "when": {
+      "stats": {
+        "health": {
+          "min": 50
+        }
+      }
+    },
+    "choices": [
+      {
+        "id": "run",
+        "cost": 2000,
+        "effects": {
+          "health": 6,
+          "happiness": 5,
+          "social": 4,
+          "energy": -8
+        }
+      },
+      {
+        "id": "cheer",
+        "effects": {
+          "social": 3
+        }
+      }
+    ]
+  },
+  {
+    "id": "back-pain",
+    "category": "health",
+    "weight": 4,
+    "choices": [
+      {
+        "id": "physio",
+        "cost": 6000,
+        "effects": {
+          "health": 8
+        }
+      },
+      {
+        "id": "stretch",
+        "effects": {
+          "health": 2,
+          "energy": -2
+        }
+      }
+    ]
+  },
+  {
+    "id": "sleep-reset",
+    "category": "health",
+    "weight": 4,
+    "choices": [
+      {
+        "id": "early-night",
+        "effects": {
+          "energy": 10,
+          "health": 3,
+          "social": -3
+        }
+      },
+      {
+        "id": "ignore",
+        "effects": {}
+      }
+    ]
+  },
+  {
+    "id": "gym-trial",
+    "category": "health",
+    "weight": 3,
+    "choices": [
+      {
+        "id": "try-it",
+        "effects": {
+          "health": 5,
+          "energy": -4,
+          "happiness": 2
+        }
+      },
+      {
+        "id": "skip",
+        "effects": {}
+      }
+    ]
+  },
+  {
+    "id": "mould",
+    "category": "housing",
+    "weight": 4,
+    "when": {
+      "housing": ["shared-house", "studio"]
+    },
+    "choices": [
+      {
+        "id": "clean",
+        "cost": 1500,
+        "effects": {
+          "health": 2,
+          "energy": -5
+        }
+      },
+      {
+        "id": "report",
+        "effects": {
+          "happiness": -3,
+          "health": -2
+        }
+      }
+    ]
+  },
+  {
+    "id": "roommate-drama",
+    "category": "housing",
+    "weight": 5,
+    "when": {
+      "housing": ["shared-house"]
+    },
+    "choices": [
+      {
+        "id": "house-meeting",
+        "effects": {
+          "social": 3,
+          "happiness": -2,
+          "energy": -3
+        }
+      },
+      {
+        "id": "passive-note",
+        "effects": {
+          "happiness": 2,
+          "social": -4
+        }
+      }
+    ]
+  },
+  {
+    "id": "parents-chores",
+    "category": "housing",
+    "weight": 5,
+    "when": {
+      "housing": ["parents-basement"]
+    },
+    "choices": [
+      {
+        "id": "do-chores",
+        "effects": {
+          "happiness": 2,
+          "energy": -4
+        },
+        "nextWeekMinutes": -120
+      },
+      {
+        "id": "negotiate",
+        "cost": 1000,
+        "effects": {
+          "happiness": 3
+        }
+      }
+    ]
+  },
+  {
+    "id": "smart-condo-glitch",
+    "category": "housing",
+    "weight": 3,
+    "when": {
+      "housing": ["apartment", "smart-condo"]
+    },
+    "choices": [
+      {
+        "id": "wait",
+        "cost": 1200,
+        "effects": {
+          "happiness": -2,
+          "social": 2
+        }
+      },
+      {
+        "id": "rage-tweet",
+        "effects": {
+          "happiness": 3,
+          "social": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "housewarming",
+    "category": "housing",
+    "weight": 3,
+    "when": {
+      "housing": ["studio", "apartment", "smart-condo"]
+    },
+    "choices": [
+      {
+        "id": "host",
+        "cost": 4000,
+        "effects": {
+          "social": 10,
+          "happiness": 6,
+          "energy": -6
+        }
+      },
+      {
+        "id": "small",
+        "effects": {
+          "social": 4,
+          "happiness": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "post-blows-up",
+    "category": "viral",
+    "weight": 3,
+    "cooldownWeeks": 12,
+    "choices": [
+      {
+        "id": "brand-deal",
+        "effects": {
+          "cash": {
+            "min": 5000,
+            "max": 20000
+          },
+          "happiness": 4,
+          "social": 4
+        }
+      },
+      {
+        "id": "stay-humble",
+        "effects": {
+          "happiness": 6,
+          "energy": 4
+        }
+      }
+    ]
+  },
+  {
+    "id": "cancelled",
+    "category": "viral",
+    "weight": 2,
+    "cooldownWeeks": 20,
+    "choices": [
+      {
+        "id": "apologise",
+        "effects": {
+          "happiness": -4,
+          "social": -2
+        }
+      },
+      {
+        "id": "log-off",
+        "effects": {
+          "happiness": -2,
+          "energy": 6,
+          "social": -4
+        }
+      }
+    ]
+  },
+  {
+    "id": "meme-famous",
+    "category": "viral",
+    "weight": 3,
+    "choices": [
+      {
+        "id": "embrace",
+        "effects": {
+          "social": 6,
+          "happiness": 3
+        }
+      },
+      {
+        "id": "ask-takedown",
+        "effects": {
+          "happiness": -2
+        }
+      }
+    ]
+  },
+  {
+    "id": "linkedin-guru",
+    "category": "viral",
+    "weight": 3,
+    "when": {
+      "job": true
+    },
+    "choices": [
+      {
+        "id": "lean-in",
+        "effects": {
+          "social": 4,
+          "happiness": 2
+        },
+        "jobRating": 3
+      },
+      {
+        "id": "delete",
+        "effects": {
+          "happiness": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "heatwave",
+    "category": "climate",
+    "weight": 4,
+    "when": {
+      "minWeek": 3
+    },
+    "choices": [
+      {
+        "id": "ac-bill",
+        "cost": 4000,
+        "effects": {
+          "health": 2,
+          "energy": 4
+        }
+      },
+      {
+        "id": "mall",
+        "effects": {
+          "energy": -3,
+          "happiness": 1
+        }
+      },
+      {
+        "id": "suffer",
+        "effects": {
+          "health": -5,
+          "energy": -6
+        }
+      }
+    ]
+  },
+  {
+    "id": "flood-warning",
+    "category": "climate",
+    "weight": 3,
+    "when": {
+      "minWeek": 5
+    },
+    "choices": [
+      {
+        "id": "replace-stuff",
+        "cost": 5000,
+        "effects": {
+          "happiness": -2
+        }
+      },
+      {
+        "id": "dry-out",
+        "effects": {
+          "happiness": -5,
+          "energy": -6
+        },
+        "nextWeekMinutes": -120
+      }
+    ]
+  },
+  {
+    "id": "power-cut",
+    "category": "climate",
+    "weight": 3,
+    "choices": [
+      {
+        "id": "candles",
+        "effects": {
+          "social": 4,
+          "happiness": 4,
+          "energy": 4
+        }
+      },
+      {
+        "id": "cafe",
+        "cost": 1500,
+        "effects": {
+          "happiness": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "smoke-haze",
+    "category": "climate",
+    "weight": 2,
+    "choices": [
+      {
+        "id": "stay-in",
+        "cost": 1000,
+        "effects": {
+          "health": -1,
+          "happiness": -2
+        }
+      },
+      {
+        "id": "go-out",
+        "effects": {
+          "health": -6
+        }
+      }
+    ]
+  },
+  {
+    "id": "burnout",
+    "category": "health",
+    "weight": 5,
+    "cooldownWeeks": 0,
+    "trigger": "burnout",
+    "choices": [
+      {
+        "id": "full-stop",
+        "effects": {
+          "energy": 15,
+          "happiness": 2
+        },
+        "nextWeekMinutes": -480
+      },
+      {
+        "id": "push-on",
+        "effects": {
+          "energy": 5,
+          "health": -8,
+          "happiness": -6
+        }
+      }
+    ]
+  },
+  {
+    "id": "burnout-friends",
+    "category": "health",
+    "weight": 3,
+    "cooldownWeeks": 0,
+    "trigger": "burnout",
+    "choices": [
+      {
+        "id": "let-them",
+        "effects": {
+          "energy": 12,
+          "social": 6,
+          "happiness": 4
+        },
+        "nextWeekMinutes": -240
+      },
+      {
+        "id": "send-away",
+        "effects": {
+          "energy": 4,
+          "social": -6
+        }
+      }
+    ]
+  }
+]

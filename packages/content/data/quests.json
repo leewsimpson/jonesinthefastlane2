@@ -1,0 +1,230 @@
+[
+  {
+    "id": "get-hired",
+    "weight": 8,
+    "weeks": 2,
+    "when": {
+      "job": false
+    },
+    "goal": {
+      "kind": "hired"
+    },
+    "reward": {
+      "cash": 5000,
+      "stats": {
+        "happiness": 4
+      }
+    }
+  },
+  {
+    "id": "save-500",
+    "weight": 5,
+    "weeks": 5,
+    "goal": {
+      "kind": "save",
+      "amount": 50000
+    },
+    "reward": {
+      "cash": 5000
+    }
+  },
+  {
+    "id": "save-2000",
+    "weight": 3,
+    "weeks": 8,
+    "when": {
+      "minWeek": 6
+    },
+    "goal": {
+      "kind": "save",
+      "amount": 200000
+    },
+    "reward": {
+      "cash": 15000
+    }
+  },
+  {
+    "id": "get-promoted",
+    "weight": 4,
+    "weeks": 8,
+    "when": {
+      "job": true
+    },
+    "goal": {
+      "kind": "promoted"
+    },
+    "reward": {
+      "cash": 10000,
+      "stats": {
+        "happiness": 5
+      }
+    }
+  },
+  {
+    "id": "earn-credential",
+    "weight": 4,
+    "weeks": 8,
+    "when": {
+      "enrolled": true
+    },
+    "goal": {
+      "kind": "credential"
+    },
+    "reward": {
+      "cash": 8000,
+      "stats": {
+        "happiness": 4
+      }
+    }
+  },
+  {
+    "id": "clear-debt",
+    "weight": 3,
+    "weeks": 6,
+    "when": {
+      "debt": true
+    },
+    "goal": {
+      "kind": "debt-free"
+    },
+    "reward": {
+      "stats": {
+        "happiness": 8,
+        "creditScore": 15
+      }
+    }
+  },
+  {
+    "id": "move-out",
+    "weight": 3,
+    "weeks": 8,
+    "when": {
+      "housing": ["parents-basement", "shared-house"]
+    },
+    "goal": {
+      "kind": "move-up"
+    },
+    "reward": {
+      "stats": {
+        "happiness": 6
+      }
+    }
+  },
+  {
+    "id": "grind-20",
+    "weight": 5,
+    "weeks": 3,
+    "when": {
+      "job": true
+    },
+    "goal": {
+      "kind": "work",
+      "minutes": 1200
+    },
+    "reward": {
+      "cash": 4000
+    }
+  },
+  {
+    "id": "study-10",
+    "weight": 5,
+    "weeks": 3,
+    "goal": {
+      "kind": "study",
+      "minutes": 600
+    },
+    "reward": {
+      "cash": 3000,
+      "stats": {
+        "happiness": 2
+      }
+    }
+  },
+  {
+    "id": "touch-grass",
+    "weight": 4,
+    "weeks": 3,
+    "when": {
+      "stats": {
+        "social": {
+          "max": 50
+        }
+      }
+    },
+    "goal": {
+      "kind": "stat",
+      "stat": "social",
+      "atLeast": 60
+    },
+    "reward": {
+      "stats": {
+        "happiness": 5
+      }
+    }
+  },
+  {
+    "id": "glow-up",
+    "weight": 3,
+    "weeks": 4,
+    "when": {
+      "stats": {
+        "health": {
+          "max": 75
+        }
+      }
+    },
+    "goal": {
+      "kind": "stat",
+      "stat": "health",
+      "atLeast": 85
+    },
+    "reward": {
+      "stats": {
+        "happiness": 4,
+        "energy": 5
+      }
+    }
+  },
+  {
+    "id": "good-vibes",
+    "weight": 3,
+    "weeks": 3,
+    "when": {
+      "stats": {
+        "happiness": {
+          "max": 65
+        }
+      }
+    },
+    "goal": {
+      "kind": "stat",
+      "stat": "happiness",
+      "atLeast": 75
+    },
+    "reward": {
+      "stats": {
+        "social": 4
+      }
+    }
+  },
+  {
+    "id": "credit-builder",
+    "weight": 2,
+    "weeks": 8,
+    "when": {
+      "stats": {
+        "creditScore": {
+          "max": 660
+        }
+      }
+    },
+    "goal": {
+      "kind": "stat",
+      "stat": "creditScore",
+      "atLeast": 680
+    },
+    "reward": {
+      "cash": 5000
+    }
+  }
+]

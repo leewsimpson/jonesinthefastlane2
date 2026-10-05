@@ -3,10 +3,12 @@ import type { GameContent } from '@fastlane/content';
 import { DEBT_KINDS, DIFFICULTIES, GOAL_KEYS, SAVINGS_ID } from '@fastlane/content/keys';
 import { HANDLERS } from '../actions/handlers.ts';
 import { listActions, paramsOf, playerById, previewAction } from '../actions/plan.ts';
-import { type AiPolicy, randomPolicy } from '../ai/random.ts';
+import type { AiPolicy } from '../ai/random.ts';
+import { rivalPolicy } from '../ai/utility.ts';
 import { transfer } from '../money/ledger.ts';
 import { initialWorld } from '../pipeline/market.ts';
 import { defaultPipeline } from '../pipeline/order.ts';
+import { issueQuests } from '../pipeline/quests.ts';
 import type { Pipeline } from '../pipeline/types.ts';
 import { createRng } from '../rng/rng.ts';
 import { stream, streamKey } from '../rng/streams.ts';
@@ -73,6 +75,20 @@ export function resolveConfig(content: GameContent, setup: GameSetup): GameConfi
 
 const isPositiveInt = (n: unknown): boolean => Number.isInteger(n) && (n as number) > 0;
 
+/** An AI seat's persona: the one asked for, or the rival for the game's difficulty (FR-83). */
+function rivalFor(
+  content: GameContent,
+  config: GameConfig,
+  asked: string | undefined,
+  known: string[],
+): string {
+  const id =
+    asked ??
+    content.ai.byDifficulty[config.difficulty === 'custom' ? 'standard' : config.difficulty];
+  if (!known.includes(id)) throw new Error(`unknown rival persona ${id}`);
+  return id;
+}
+
 export interface Engine {
   readonly content: GameContent;
   /** Pinned in saves: a log only replays under the content it was played with (engine-design §14). */
@@ -109,7 +125,7 @@ export class ReplayError extends Error {
 
 export function createEngine(content: GameContent, options: EngineOptions = {}): Engine {
   const pipeline = options.pipeline ?? defaultPipeline;
-  const ai = options.ai ?? randomPolicy;
+  const ai = options.ai ?? rivalPolicy(content);
   const contentHash = hashValue(content);
   const newRun = (state: GameState): Run => ({ content, pipeline, ai, state, events: [] });
 
@@ -126,11 +142,13 @@ export function createEngine(content: GameContent, options: EngineOptions = {}):
     const [firstHome] = city.housing;
     if (!firstHome) throw new Error('no housing tiers');
     const holdings = [SAVINGS_ID, ...balance.market.assets.map((a) => a.id)];
+    const rivalIds = content.ai.rivals.map((r) => r.id);
     const players = setup.players.map(
       (p, i): PlayerState => ({
         id: `p${i + 1}`,
         name: p.name,
         controller: p.controller,
+        persona: p.controller === 'ai' ? rivalFor(content, config, p.persona, rivalIds) : null,
         location: city.board.home,
         timeLeft: balance.weekMinutes,
         stats: { ...balance.startingStats },
@@ -149,6 +167,12 @@ export function createEngine(content: GameContent, options: EngineOptions = {}):
           DEBT_KINDS.map((kind) => [kind, { balance: 0, missed: 0, collections: false }]),
         ) as PlayerState['debts'],
         subscriptions: [],
+        burnout: false,
+        nextWeekMinutes: 0,
+        seenEvents: {},
+        quests: [],
+        seenQuests: {},
+        questsDone: 0,
       }),
     );
     const state: GameState = {
@@ -165,6 +189,10 @@ export function createEngine(content: GameContent, options: EngineOptions = {}):
       history: [],
     };
     const run = newRun(state);
+    // Week-1 quests (ENG-11), each player on its own week-0 stream.
+    const ctx = emitter(run);
+    for (const p of players)
+      issueQuests(ctx, p, state.week, stream(state, streamKey('quests', p.id, 0)));
     startTurn(run, players[0] as PlayerState);
     advance(run);
     return { state, events: run.events };

@@ -1,6 +1,6 @@
 /**
  * The FR-05 step order, in one place. `order.test.ts` pins it, so reordering is a deliberate, reviewed change.
- * Stubs are filled in by later phases (engine-design §11).
+ * Jones's recap (`rival-feed`) sits between the goal check and the teasers, as in the core loop (§2).
  */
 import type { PlayerCtx } from '../core/context.ts';
 import { changeStats } from '../stats/stats.ts';
@@ -10,10 +10,14 @@ import { interestAndDebt } from './debts.ts';
 import { goalCheck } from './goalCheck.ts';
 import { jobChecks } from './jobChecks.ts';
 import { marketMove } from './market.ts';
+import { newsStep } from './news.ts';
+import { questProgress } from './quests.ts';
+import { rivalFeed } from './rivalFeed.ts';
+import { teasers } from './teasers.ts';
 import type { Pipeline, PipelineStep } from './types.ts';
+import { weekendEvent } from './weekendEvent.ts';
 
 const done = { done: true } as const;
-const stub = <Ctx>(id: string): PipelineStep<Ctx> => ({ id, run: () => done });
 
 /** P1: penalise a week without a meal (§4 Hunger), then reset the count. Delivered meals count (FR-52). */
 export const foodCheck: PipelineStep<PlayerCtx> = {
@@ -53,19 +57,6 @@ export const statDrift: PipelineStep<PlayerCtx> = {
 };
 
 export const defaultPipeline: Pipeline = {
-  perPlayer: [
-    foodCheck,
-    bills,
-    interestAndDebt,
-    jobChecks,
-    statDrift,
-    stub('weekend-event'), // Phase 3: may pause for a choice
-    stub('quest-progress'), // Phase 3
-  ],
-  perRound: [
-    marketMove,
-    stub('news'), // Phase 3
-    goalCheck,
-    stub('teasers'), // Phase 3
-  ],
+  perPlayer: [foodCheck, bills, interestAndDebt, jobChecks, statDrift, weekendEvent, questProgress],
+  perRound: [marketMove, newsStep, goalCheck, rivalFeed, teasers],
 };

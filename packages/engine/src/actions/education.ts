@@ -39,6 +39,24 @@ export const enroll: ActionHandler = {
   },
 };
 
+/**
+ * Drop the course you're enrolled in: no refund, and study done so far stays on its skill track but not toward the
+ * credential. Frees you to enrol in something else (one course at a time).
+ */
+export const dropCourse: ActionHandler = {
+  plan(ctx, def, params) {
+    if (!ctx.player.enrollment) return fail('NOT_ENROLLED');
+    return planFromData(ctx, def, params);
+  },
+  apply(ctx, def, plan) {
+    const enrollment = ctx.player.enrollment;
+    if (!enrollment) throw new Error('unreachable: the plan checked enrolment');
+    applyPlan(ctx, def, plan);
+    ctx.player.enrollment = null;
+    ctx.emit({ type: 'courseDropped', player: ctx.player.id, course: enrollment.course });
+  },
+};
+
 /** Study toward the enrolled course. Study-output modifiers scale the progress (FR-21). */
 export const study: ActionHandler = {
   options: (_ctx, def) => durationOptions(def),

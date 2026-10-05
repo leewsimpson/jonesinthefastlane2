@@ -2,15 +2,19 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { z } from 'zod';
 import {
+  AiSchema,
   BalanceSchema,
   CITY_FILES,
   CitySchema,
   checkContent,
   checkStrings,
   MetaSchema,
+  NewsSchema,
+  QuestSchema,
   StringsSchema,
+  WeekendEventSchema,
 } from './schemas.ts';
-import { PersonaSchema } from './sim.ts';
+import { KpiBandSchema, PersonaSchema } from './sim.ts';
 
 const dataDir = new URL('../data/', import.meta.url);
 const localesDir = new URL('../locales/', import.meta.url);
@@ -34,6 +38,10 @@ function load<T extends z.ZodType>(
 
 const meta = load('meta.json', MetaSchema);
 const balance = load('balance.json', BalanceSchema);
+const events = load('events.json', z.array(WeekendEventSchema));
+const news = load('news.json', z.array(NewsSchema));
+const quests = load('quests.json', z.array(QuestSchema));
+const ai = load('ai.json', AiSchema);
 const en = load('en.json', StringsSchema, localesDir);
 const cityIds = readdirSync(new URL('cities/', dataDir), { withFileTypes: true })
   .filter((d) => d.isDirectory())
@@ -59,12 +67,12 @@ for (const id of cityIds) {
     failed = true;
     console.error(`FAIL ${relative}\n${result.error.message}`);
   }
-  if (!city || !meta || !balance) continue;
+  if (!city || !meta || !balance || !events || !news || !quests || !ai) continue;
   if (city.id !== id) {
     failed = true;
     console.error(`FAIL ${relative}: id "${city.id}" doesn't match its folder`);
   }
-  const content = { meta, balance, city };
+  const content = { meta, balance, city, events, news, quests, ai };
   for (const problem of [...checkContent(content), ...(en ? checkStrings(content, en) : [])]) {
     failed = true;
     console.error(`FAIL ${relative}: ${problem}`);
@@ -80,6 +88,16 @@ else {
   failed = true;
   console.error(`FAIL sim/personas.json
 ${personas.error.message}`);
+}
+
+const bands = z
+  .array(KpiBandSchema)
+  .safeParse(JSON.parse(readFileSync(new URL('../sim/kpi-bands.json', import.meta.url), 'utf8')));
+if (bands.success) console.log('ok   sim/kpi-bands.json');
+else {
+  failed = true;
+  console.error(`FAIL sim/kpi-bands.json
+${bands.error.message}`);
 }
 
 process.exit(failed ? 1 : 0);

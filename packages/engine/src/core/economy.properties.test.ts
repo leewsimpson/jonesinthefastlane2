@@ -11,6 +11,7 @@ import { defaultContent, type GameContent } from '@fastlane/content';
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { fixtureContent } from '../__fixtures__/content.ts';
+import { randomPolicy } from '../ai/random.ts';
 import { balanceOf, financialNetWorth, type Place, places } from '../money/ledger.ts';
 import type { Action } from '../types/actions.ts';
 import { type DomainEvent, EXTERNAL_FLOWS, INTERNAL_FLOWS } from '../types/events.ts';
@@ -151,7 +152,8 @@ const contents: [string, GameContent][] = [
 ];
 
 for (const [name, content] of contents) {
-  const engine = createEngine(content);
+  // The random AI policy: these properties are about the rules, and the utility scorer would slow the search.
+  const engine = createEngine(content, { ai: randomPolicy });
 
   describe(`economy properties (${name} content)`, () => {
     it('conserves money: every balance change is a ledger flow with a named reason', () => {

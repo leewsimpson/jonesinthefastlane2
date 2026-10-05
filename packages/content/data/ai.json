@@ -1,0 +1,68 @@
+{
+  "utility": {
+    "buffWeeks": 4,
+    "energyComfort": 30,
+    "energyPenalty": 2000,
+    "cashCushion": 100000,
+    "liquidityBp": 1000,
+    "futurePayBp": 5000,
+    "aspirationBp": 6000,
+    "patienceWeeks": 1,
+    "prospectBp": 7000,
+    "overshootBp": 1500,
+    "valueCapBp": 12500,
+    "longerSlackBp": 1500
+  },
+  "rivals": [
+    {
+      "id": "jones-chill",
+      "goalWeightsBp": {
+        "wealth": 2500,
+        "wellbeing": 2500,
+        "skills": 2500,
+        "career": 2500
+      },
+      "bottleneckBp": 5000,
+      "riskAppetiteBp": 5000,
+      "horizonWeeks": 8,
+      "bestMoveRateBp": 3000,
+      "runnersUp": 8,
+      "notes": "Wellness Jones on a relaxed week: balanced goals, usually settles for any decent move"
+    },
+    {
+      "id": "jones-standard",
+      "goalWeightsBp": {
+        "wealth": 2500,
+        "wellbeing": 2500,
+        "skills": 2500,
+        "career": 2500
+      },
+      "bottleneckBp": 5000,
+      "riskAppetiteBp": 5000,
+      "horizonWeeks": 8,
+      "bestMoveRateBp": 7000,
+      "runnersUp": 4,
+      "notes": "Wellness Jones: balanced goals, usually finds the best move"
+    },
+    {
+      "id": "jones-hustle-culture",
+      "goalWeightsBp": {
+        "wealth": 2500,
+        "wellbeing": 2500,
+        "skills": 2500,
+        "career": 2500
+      },
+      "bottleneckBp": 5000,
+      "riskAppetiteBp": 5000,
+      "horizonWeeks": 8,
+      "bestMoveRateBp": 10000,
+      "runnersUp": 1,
+      "notes": "Wellness Jones at full tilt: always takes the best move"
+    }
+  ],
+  "byDifficulty": {
+    "chill": "jones-chill",
+    "standard": "jones-standard",
+    "hustle-culture": "jones-hustle-culture"
+  }
+}

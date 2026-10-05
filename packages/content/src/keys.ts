@@ -21,6 +21,7 @@ export const ACTION_KINDS = [
   'gig',
   'apply-job',
   'enroll',
+  'drop-course',
   'study',
   'buy',
   'rent-home',
@@ -55,3 +56,58 @@ export const SAVINGS_ID = 'savings';
 
 /** Location id for actions that are available everywhere, such as GigHub (FR-44). */
 export const ANYWHERE = '*';
+
+/** Weekend event categories (FR-71). */
+export const EVENT_CATEGORIES = [
+  'work',
+  'money',
+  'life',
+  'health',
+  'housing',
+  'viral',
+  'climate',
+] as const;
+export type EventCategory = (typeof EVENT_CATEGORIES)[number];
+
+/**
+ * Next-week teasers (ENG-10), in priority order, with the slots their copy may use. Copy key: `teaser.<id>`.
+ * Money slots are cents; the UI formats them.
+ */
+export const TEASERS = {
+  layoff: ['job'],
+  'eviction-risk': ['owed'],
+  'collections-risk': ['debt'],
+  'lease-renewal': ['rent'],
+  'rival-close': ['rival'],
+  'promotion-close': ['job'],
+  'credential-close': ['course', 'hours'],
+  'quest-deadline': ['quest'],
+  news: ['news'],
+  'gig-back': [],
+  'next-week': ['rival'],
+} as const satisfies Record<string, readonly string[]>;
+export type TeaserId = keyof typeof TEASERS;
+
+/**
+ * Moments Jones posts about in the highlight reel (FR-82), with the slots their lines may use. The engine picks the
+ * moment and fills the slots; copy keys are `feed.<moment>.<n>`, several variants each (FR-84). `react-*` moments
+ * react to a human's week; `overtook` and `fell-behind` are the rivalry beats (ENG-14).
+ */
+export const FEED_MOMENTS = {
+  hired: ['job'],
+  promoted: ['job'],
+  credential: ['course'],
+  'moved-up': ['home'],
+  bought: ['item'],
+  'net-worth-up': ['amount'],
+  'quest-done': [],
+  'quiet-week': [],
+  'react-hired': ['player', 'job'],
+  'react-promoted': ['player', 'job'],
+  'react-credential': ['player', 'course'],
+  'react-moved-up': ['player', 'home'],
+  'react-setback': ['player'],
+  overtook: ['player'],
+  'fell-behind': ['player'],
+} as const satisfies Record<string, readonly string[]>;
+export type FeedMoment = keyof typeof FEED_MOMENTS;

@@ -40,8 +40,8 @@ function goldenRun(content: GameContent) {
 it('fixture content: the same seed and log give the pinned hash', () => {
   expect(goldenRun(fixtureContent)).toMatchInlineSnapshot(`
     {
-      "actions": 83,
-      "hash": "181293887034800127a4498d325d",
+      "actions": 84,
+      "hash": "140a2301506b9b148b0e57764880",
       "week": 12,
     }
   `);
@@ -50,8 +50,8 @@ it('fixture content: the same seed and log give the pinned hash', () => {
 it('shipped content: the same seed and log give the pinned hash', () => {
   expect(goldenRun(defaultContent)).toMatchInlineSnapshot(`
     {
-      "actions": 325,
-      "hash": "1e85cda526c2660a10cfafce2fdf",
+      "actions": 319,
+      "hash": "1100addc5dc7fe0798b095650c4e",
       "week": 12,
     }
   `);

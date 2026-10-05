@@ -1,5 +1,14 @@
 /** Small hand-made content for rule tests, so tuning the real balance data never breaks them. */
-import { BalanceSchema, CitySchema, type GameContent, MetaSchema } from '@fastlane/content';
+import {
+  AiSchema,
+  BalanceSchema,
+  CitySchema,
+  type GameContent,
+  MetaSchema,
+  NewsSchema,
+  QuestSchema,
+  WeekendEventSchema,
+} from '@fastlane/content';
 
 const work = (id: string, location: string) => ({
   id,
@@ -105,6 +114,10 @@ export const fixtureContent: GameContent = {
       careerPointsPerLevel: 20,
       stabilityExposureBp: 5000,
     },
+    events: { chanceBp: 10_000, cooldownWeeks: 2 },
+    news: { chanceBp: 10_000, maxActive: 1 },
+    quests: { active: 1, cooldownWeeks: 2 },
+    rival: { nearMissBp: 9000, netWorthJump: 500, closeBp: 500 },
   }),
   city: CitySchema.parse({
     id: 'test',
@@ -185,6 +198,7 @@ export const fixtureContent: GameContent = {
       { id: 'apply', location: 'd', kind: 'apply-job', minutes: 60, cost: 0, effects: {} },
       { id: 'shop', location: 'd', kind: 'buy', minutes: 15, cost: 0, effects: {} },
       { id: 'enroll', location: 'e', kind: 'enroll', minutes: 15, cost: 0, effects: {} },
+      { id: 'drop', location: 'e', kind: 'drop-course', minutes: 15, cost: 0, effects: {} },
       {
         id: 'enroll-loan',
         location: 'e',
@@ -330,4 +344,110 @@ export const fixtureContent: GameContent = {
       },
     ],
   }),
+  // No events, news or quests by default, so rule tests see only the rule they test. `hooksContent` adds them.
+  events: [],
+  news: [],
+  quests: [],
+  ai: AiSchema.parse({
+    utility: {
+      buffWeeks: 4,
+      energyComfort: 30,
+      energyPenalty: 2000,
+      cashCushion: 1000,
+      liquidityBp: 1000,
+      futurePayBp: 5000,
+      aspirationBp: 6000,
+      patienceWeeks: 1,
+      prospectBp: 7000,
+      overshootBp: 1500,
+      valueCapBp: 12_500,
+      longerSlackBp: 1500,
+    },
+    rivals: [
+      {
+        id: 'jones',
+        goalWeightsBp: { wealth: 2500, wellbeing: 2500, skills: 2500, career: 2500 },
+        bottleneckBp: 5000,
+        riskAppetiteBp: 5000,
+        horizonWeeks: 4,
+        bestMoveRateBp: 10_000,
+        runnersUp: 1,
+        notes: 'Test rival',
+      },
+      {
+        id: 'jones-sloppy',
+        goalWeightsBp: { wealth: 2500, wellbeing: 2500, skills: 2500, career: 2500 },
+        bottleneckBp: 5000,
+        riskAppetiteBp: 5000,
+        horizonWeeks: 4,
+        bestMoveRateBp: 0,
+        runnersUp: 3,
+        notes: 'Never takes the best move',
+      },
+    ],
+    byDifficulty: { chill: 'jones-sloppy', standard: 'jones', 'hustle-culture': 'jones' },
+  }),
+};
+
+/** Fixture content with a small event deck, news and quests, for the Phase 3 hooks. */
+export const hooksContent: GameContent = {
+  ...fixtureContent,
+  events: WeekendEventSchema.array().parse([
+    {
+      id: 'windfall',
+      category: 'money',
+      weight: 1,
+      choices: [{ id: 'take', effects: { cash: { min: 100, max: 200 }, happiness: 2 } }],
+    },
+    {
+      id: 'dilemma',
+      category: 'life',
+      weight: 1,
+      choices: [
+        { id: 'splurge', cost: 300, effects: { happiness: 10 }, nextWeekMinutes: -60 },
+        { id: 'save', effects: { happiness: -2 } },
+        { id: 'bike-ride', effects: { health: 5 }, when: { items: ['bike'] } },
+      ],
+    },
+    {
+      id: 'boss',
+      category: 'work',
+      weight: 1,
+      when: { job: true },
+      choices: [{ id: 'cope', effects: { happiness: -1 }, jobRating: -10, layoffWarning: true }],
+    },
+    {
+      id: 'crash',
+      category: 'health',
+      weight: 1,
+      trigger: 'burnout',
+      cooldownWeeks: 0,
+      choices: [{ id: 'rest', effects: { energy: 20 }, nextWeekMinutes: -120 }],
+    },
+  ]),
+  news: NewsSchema.array().parse([
+    {
+      id: 'surge',
+      weight: 1,
+      weeks: { min: 2, max: 2 },
+      effects: { gigPayBp: 5000, disruptionBp: 10_000, rentHikeBp: 1000 },
+    },
+  ]),
+  quests: QuestSchema.array().parse([
+    {
+      id: 'get-hired',
+      weight: 1,
+      weeks: 2,
+      when: { job: false },
+      goal: { kind: 'hired' },
+      reward: { cash: 50 },
+    },
+    {
+      id: 'save-up',
+      weight: 1,
+      weeks: 3,
+      goal: { kind: 'save', amount: 500 },
+      reward: { stats: { happiness: 5 } },
+    },
+  ]),
 };

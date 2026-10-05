@@ -194,6 +194,14 @@
       "effects": {}
     },
     {
+      "id": "drop-course",
+      "location": "upskill-u",
+      "kind": "drop-course",
+      "minutes": 15,
+      "cost": 0,
+      "effects": { "happiness": -2 }
+    },
+    {
       "id": "study",
       "location": "upskill-u",
       "kind": "study",

@@ -3,33 +3,18 @@
  * point (`@fastlane/content/sim`) so the game never ships it.
  */
 import { z } from 'zod';
+import aiJson from '../data/ai.json' with { type: 'json' };
+import kpiBandsJson from '../sim/kpi-bands.json' with { type: 'json' };
 import personasJson from '../sim/personas.json' with { type: 'json' };
-import { GOAL_KEYS } from './keys.ts';
+import { AiSchema, type Persona, PersonaSchema } from './hooks.ts';
 
-const Bp = z.number().int().min(0).max(10_000);
+export { type Persona, PersonaSchema };
 
-/** A utility-bot persona: one scorer, different weights (simulator §3). */
-export const PersonaSchema = z
-  .object({
-    id: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/),
-    /** How much each goal's progress is worth. Sums to 10 000. */
-    goalWeightsBp: z.record(z.enum(GOAL_KEYS), Bp),
-    /** 5000 is neutral; higher likes volatile assets, lower avoids them. */
-    riskAppetiteBp: Bp,
-    /** Weeks ahead the bot values ongoing income, costs and buffs. */
-    horizonWeeks: z.number().int().positive(),
-    /** How often the bot takes its top-scored move (FR-83); otherwise one of its top few. */
-    bestMoveRateBp: Bp,
-    notes: z.string(),
-  })
-  .refine(
-    (p) => GOAL_KEYS.reduce((sum, k) => sum + p.goalWeightsBp[k], 0) === 10_000,
-    'goal weights must sum to 10 000',
-  );
-
-export type Persona = z.infer<typeof PersonaSchema>;
-
-export const personas: Persona[] = z.array(PersonaSchema).parse(personasJson);
+/** Bot personas, then Jones's own (`jones-<difficulty>`), so the sim can play humans against every rival. */
+export const personas: Persona[] = [
+  ...z.array(PersonaSchema).parse(personasJson),
+  ...AiSchema.parse(aiJson).rivals,
+];
 
 export function personaById(id: string): Persona {
   const persona = personas.find((p) => p.id === id);
@@ -37,3 +22,23 @@ export function personaById(id: string): Persona {
     throw new Error(`unknown persona "${id}" (have: ${personas.map((p) => p.id).join(', ')})`);
   return persona;
 }
+
+const Range = z
+  .object({ min: z.number().optional(), max: z.number().optional() })
+  .refine((r) => r.min === undefined || r.max === undefined || r.min <= r.max, 'min must be ≤ max');
+
+/**
+ * A KPI band (simulator §5): the agreed shape of the game, tuned like any balance value. Outside `hard` fails the
+ * balance gate (CI-04); outside `soft` is a warning in the summary. Rates are basis points; weeks are weeks.
+ */
+export const KpiBandSchema = z.object({
+  kpi: z.string().min(1),
+  hard: Range,
+  soft: Range.optional(),
+  /** Why the band is where it is, and the run it came from. */
+  note: z.string(),
+});
+
+export type KpiBand = z.infer<typeof KpiBandSchema>;
+
+export const kpiBands: KpiBand[] = z.array(KpiBandSchema).parse(kpiBandsJson);

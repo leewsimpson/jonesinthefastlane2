@@ -20,6 +20,7 @@ it('runs the end-of-week steps in FR-05 order (change deliberately)', () => {
         "market",
         "news",
         "goal-check",
+        "rival-feed",
         "teasers",
       ],
     }
