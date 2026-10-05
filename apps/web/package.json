@@ -20,11 +20,20 @@
     }
   ],
   "dependencies": {
+    "@fastlane/content": "workspace:*",
     "@fastlane/engine": "workspace:*",
     "@fontsource-variable/atkinson-hyperlegible-next": "5.3.0",
     "@fontsource-variable/bricolage-grotesque": "5.3.0",
+    "@pixi/react": "8.0.5",
+    "@radix-ui/react-dialog": "1.1.23",
+    "dexie": "4.4.6",
+    "i18next": "26.4.2",
+    "pixi.js": "8.22.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "react-i18next": "17.0.15",
+    "zod": "4.6.5",
+    "zustand": "5.0.15"
   },
   "devDependencies": {
     "@size-limit/file": "14.1.0",
@@ -32,6 +41,7 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.1",
+    "fake-indexeddb": "6.2.5",
     "sharp": "0.35.5",
     "size-limit": "14.1.0",
     "tailwindcss": "4.3.3",

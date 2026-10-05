@@ -75,3 +75,94 @@ body {
 .tabular {
   font-variant-numeric: tabular-nums;
 }
+
+/* Landscape layout (NFR-02): board in the middle, side panels. Portrait keeps the board on top. */
+@custom-variant wide (@media (orientation: landscape) and (min-width: 768px));
+
+.game-layout {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  height: 100dvh;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) minmax(0, 40dvh);
+  grid-template-areas: "hud" "board" "sheet";
+}
+.hud-area {
+  grid-area: hud;
+}
+.board-area {
+  grid-area: board;
+}
+.sheet {
+  grid-area: sheet;
+}
+
+@media (orientation: landscape) and (min-width: 768px) {
+  .game-layout {
+    grid-template-columns: minmax(220px, 24%) minmax(0, 1fr) minmax(280px, 30%);
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-areas: "hud board sheet";
+  }
+  .hud-area {
+    border-right: 2px solid color-mix(in srgb, var(--fg) 25%, transparent);
+  }
+  .sheet {
+    border-top: 0;
+    border-left: 2px solid color-mix(in srgb, var(--fg) 25%, transparent);
+  }
+}
+
+/* Small UI primitives, so components stay readable. */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border-2 border-ink bg-surface-raised px-4 py-2 font-bold text-fg shadow-[0_3px_0_var(--color-ink)] transition-transform active:translate-y-0.5 active:shadow-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-cream/70;
+  }
+  .btn-primary {
+    @apply bg-coral text-ink;
+  }
+  .btn-danger {
+    @apply bg-coral text-ink;
+  }
+  .btn-sm {
+    @apply px-2 py-1 text-sm;
+  }
+  .card {
+    @apply rounded-xl border-2 border-ink bg-surface-raised dark:border-cream/40;
+  }
+  .input {
+    @apply rounded-lg border-2 border-ink bg-surface-raised px-2 py-1 dark:border-cream/50;
+  }
+  .chip {
+    @apply inline-flex items-center gap-0.5 rounded-full border border-ink/25 bg-surface px-2 py-0.5 text-xs leading-tight dark:border-cream/25;
+  }
+  .chip-good {
+    @apply border-teal bg-teal/15;
+  }
+  .chip-bad {
+    @apply border-coral bg-coral/15;
+  }
+  .chip-random {
+    @apply border-lilac border-dashed bg-lilac/15;
+  }
+  .chip-toggle {
+    @apply cursor-pointer rounded-full border-2 border-ink px-3 py-1 has-checked:bg-mustard has-checked:text-ink has-focus-visible:outline-2 has-focus-visible:outline-coral dark:border-cream/60;
+  }
+  .action-row {
+    @apply flex w-full flex-col items-start gap-1 rounded-xl border-2 border-ink/30 bg-surface p-2 text-left hover:border-ink focus-visible:border-coral disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:border-ink/30 dark:border-cream/25 dark:hover:border-cream;
+  }
+  .dialog-overlay {
+    @apply fixed inset-0 z-40 bg-ink/50;
+  }
+  .dialog-content {
+    @apply fixed inset-x-0 bottom-0 z-50 max-h-[90dvh] overflow-y-auto rounded-t-2xl border-2 border-ink bg-surface-raised p-4 shadow-xl sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:w-[min(36rem,92vw)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl dark:border-cream/40;
+  }
+  kbd {
+    @apply inline-flex min-w-5 items-center justify-center rounded border border-current/40 px-1 font-mono text-[11px] leading-4 opacity-80;
+  }
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-coral);
+  outline-offset: 2px;
+}
