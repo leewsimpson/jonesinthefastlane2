@@ -1,0 +1,16 @@
+{
+  "name": "@fastlane/sim",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "fastlane-sim": "./src/cli.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "sim": "node src/cli.ts"
+  },
+  "dependencies": {
+    "@fastlane/engine": "workspace:*"
+  }
+}

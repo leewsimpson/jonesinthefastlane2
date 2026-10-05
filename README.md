@@ -22,3 +22,28 @@ original is only a source of inspiration. Get a legal check before using the ori
 - IDs: `FR-` functional, `NFR-` non-functional, `ENG-` engagement, `CI-`/`CD-`/`OPS-` pipeline.
 - Priority: **M** = Must (MVP), **S** = Should (v1.0), **C** = Could (post-launch).
 - All numbers (prices, wages, hours) are **starting balance values**. They live in data files and get tuned in playtesting.
+
+## Development
+
+Requires Node 24 LTS (`.nvmrc`) and pnpm via Corepack (`corepack enable`).
+
+```sh
+pnpm install
+pnpm dev          # web on http://localhost:5173, API on http://localhost:8787
+pnpm lint         # Biome lint + format check (pnpm format to fix)
+pnpm typecheck
+pnpm test         # Vitest + fast-check across all packages
+pnpm build
+pnpm size         # initial JS budget: 300 KB gzipped
+```
+
+| Path | What |
+|---|---|
+| `apps/web` | Vite + React 19 + Tailwind v4 client. Reads `/config.json` at runtime for the API URL |
+| `apps/api` | Hono Worker. Envs `preview`, `staging`, `production` in `wrangler.jsonc` |
+| `packages/engine` | Pure, deterministic game rules |
+| `packages/content` | Content data + Zod schemas (`pnpm content:validate`) |
+| `packages/sim` | Headless batch simulator |
+
+Every PR gets a web preview at `https://pr-<n>.fastlane-e6g.pages.dev` and its own Worker preview alias,
+linked in a sticky PR comment. Progress per phase is tracked in [docs/progress.md](docs/progress.md).

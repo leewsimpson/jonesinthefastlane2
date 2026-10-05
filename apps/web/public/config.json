@@ -1,0 +1,4 @@
+{
+  "environment": "local",
+  "apiBase": "http://localhost:8787"
+}
