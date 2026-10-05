@@ -35,10 +35,10 @@ assets: dict[str, dict[str, tuple[str, str]]] = {"characters": {}, "locations": 
 
 PLAYERS = {
     "player-01": "a young adult around 24, medium-brown skin, short curly black hair, wearing a coral hoodie, slate jeans, white sneakers and a teal backpack. Personality: hopeful, slightly tired",
-    "player-02": "a young woman around 26, light skin with freckles, shoulder-length wavy red hair, round glasses, wearing a mustard cardigan over a cream top, teal skirt, dark tights and ankle boots, tote bag. Personality: bookish, anxious overachiever",
+    "player-02": "a young woman around 26, light skin with freckles, shoulder-length wavy red hair, round glasses, wearing a mustard cardigan over a cream top, teal skirt, slate tights and ankle boots, cream tote bag. The tote bag and tights are flat colour with one hard-edged shadow tone each, no soft shading. Personality: bookish, anxious overachiever",
     "player-03": "a young man around 25, East Asian, black undercut hair, wearing a teal work polo with a blank name badge, slate chinos, black work shoes, lanyard. Personality: earnest, grinding through shifts",
     "player-04": "a young woman around 23, deep dark-brown skin, short natural afro with a mint headband, plus-size, wearing sky-blue denim overalls over a coral t-shirt, chunky sneakers, paint-splattered. Personality: creative, upbeat hustler",
-    "player-05": "a young man around 27, tan South Asian skin, neat beard, wearing a lilac puffer jacket over a slate hoodie, black joggers, sneakers, delivery bag strap across chest. Personality: easy-going gig worker",
+    "player-05": "a young man around 27, tan South Asian skin, neat beard, wearing a teal puffer jacket over a slate hoodie, black joggers, white sneakers, delivery bag strap across chest. No lilac anywhere on him (lilac is reserved for robots). Personality: easy-going gig worker",
     "player-06": "a young woman around 24, warm olive-brown skin, wearing a coral headscarf (hijab), a long mint shirt over slate trousers, white sneakers, laptop under one arm. Personality: focused, quietly ambitious",
 }
 for pid, desc in PLAYERS.items():
@@ -144,8 +144,8 @@ for cat, items in assets.items():
     d = ROOT / cat
     d.mkdir(parents=True, exist_ok=True)
     for aid, (canvas, body) in items.items():
-        (d / f"{aid}.prompt.txt").write_text(f"{STYLE}\n\n{body}\n", encoding="utf-8")
+        (d / f"{aid}.prompt.txt").write_text(f"{STYLE}\n\n{body}\n", encoding="utf-8", newline="\n")
         manifest.append(f"{cat}\t{aid}\t{canvas}")
         n += 1
-(ROOT.parent / "manifest.tsv").write_text("\n".join(manifest) + "\n")
+(ROOT.parent / "manifest.tsv").write_text("\n".join(manifest) + "\n", newline="\n")
 print(n, "prompts written")
