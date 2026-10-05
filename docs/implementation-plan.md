@@ -1,7 +1,7 @@
 # Implementation Plan — Fast Lane 2026
 
-This plan turns [game-requirements.md](game-requirements.md), [tech-stack.md](tech-stack.md), [ci-cd.md](ci-cd.md) and
-[art-direction.md](art-direction.md) into an ordered build. Requirement IDs refer to those docs.
+This plan turns [game-requirements.md](game-requirements.md), [tech-stack.md](tech-stack.md), [ci-cd.md](ci-cd.md),
+[simulator.md](simulator.md) and [art-direction.md](art-direction.md) into an ordered build. Requirement IDs refer to those docs.
 
 ## Guiding approach
 
@@ -39,6 +39,9 @@ Art track: anchor ─► cast ─► locations ─► items/events ─► backdr
 
 Phases 7, 8 and 9 are independent of each other and can run in parallel or in any order.
 
+Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold human-only steps, open questions and gotchas;
+`docs/progress.md` records what each finished phase delivered, deferred and changed.
+
 ---
 
 ## Phase 0 — Foundations
@@ -47,7 +50,7 @@ Phases 7, 8 and 9 are independent of each other and can run in parallel or in an
 
 | Task | Refs |
 |---|---|
-| `git init`, pnpm workspaces, Node LTS in `.nvmrc`, Corepack | tech-stack §7 |
+| pnpm workspaces, Node LTS in `.nvmrc`, Corepack | tech-stack §7 |
 | Scaffold `apps/web` (Vite + React 19 + Tailwind v4), `apps/api` (Hono Worker stub with `/healthz`), `packages/engine`, `packages/content`, `packages/sim` | tech-stack §3 |
 | TypeScript strict, Biome, Vitest, fast-check, shared tsconfig | tech-stack §7 |
 | Palette tokens in Tailwind (light/dark), fonts self-hosted (Bricolage Grotesque, Atkinson Hyperlegible Next) | art-direction §2–3 |
@@ -61,6 +64,11 @@ Phases 7, 8 and 9 are independent of each other and can run in parallel or in an
 **Exit criteria**
 - A PR shows green checks and a working preview URL within 8 minutes.
 - Initial bundle size is reported and enforced against 300 KB gz.
+
+**Notes**
+- **Human-only:** Cloudflare account and resources, scoped API tokens, GitHub Environments and secrets, rulesets, secret scanning / push protection / Dependabot alerts. Collect these first; the exit criterion can't pass without them.
+- Pin action SHAs by looking them up, never from memory.
+- Verify the size check by lowering the budget and watching it fail.
 
 ---
 
@@ -82,9 +90,16 @@ Phases 7, 8 and 9 are independent of each other and can run in parallel or in an
 | `packages/content` Zod schemas for locations, actions and balance constants; build fails on invalid content | FR-74, NFR-15 |
 | Save format: versioned schema + migration hook (serialise state + action log) | tech-stack §4 |
 | Tests: unit tests per rule; property tests for "stats stay in range", "replay(seed, actions) is stable", "preview never consumes RNG" | tech-stack §6 |
+| Sim skeleton: `packages/sim` runner, `random` + `idle` policies, `GameRecord`; engine exposes `newGame`, `legalActions`, `preview`, `hash`, cheap state copies | simulator §2, §10 |
 
 **Exit criteria**
 - A Node script plays 52 weeks of random legal actions with no crash, and replaying the log gives an identical state hash.
+
+**Notes**
+- Enforce engine purity mechanically: a lint rule or test that fails on `Math.random`, `Date.now`, `new Date`, `window` or `document` in `packages/engine`.
+- Define the state hash (canonical JSON → hash) now; the sim and Daily Run replay verification reuse it.
+- Deriving one RNG stream must not consume another stream's state. Test it.
+- The exit-criterion script is the first sim run (`random` policy), so CI can run it.
 
 ---
 
@@ -109,10 +124,17 @@ Phases 7, 8 and 9 are independent of each other and can run in parallel or in an
 | Goals | Wealth (net worth, items at resale value), Wellbeing (MVP: Happiness/Health/Social with low-part penalty), Skills, Career (level × stability + reputation bonus); difficulty presets + custom targets | §3, FR-10, FR-13 |
 | Win/score | Round-end win check with overshoot tiebreak; score formula (shared with Daily Run) | FR-11, FR-12 |
 | No-softlock | Property test: from any reachable state there is at least one money-earning action | FR-14 |
+| Sim bots | Utility scorer in the engine (shared with Jones), `balanced` + single-goal personas as content, override files | simulator §3, §7 |
 
 **Exit criteria**
 - A scripted "sensible" strategy can win a Standard game; property tests for money conservation and no-softlock pass.
 - All ~20 MVP jobs and ~15 items exist as validated content (placeholder copy is fine).
+
+**Notes**
+- Largest phase: consider one PR per area row.
+- Agree a precise definition of "money conservation" with the user before writing the property test (e.g. every cash change goes through a ledger with a named source or sink).
+- Placeholder job and item copy is fine; the local LLM can draft it.
+- The scripted "sensible" strategy is a test, not a manual run.
 
 ---
 
@@ -129,12 +151,17 @@ Phases 7, 8 and 9 are independent of each other and can run in parallel or in an
 | Next-week teasers generated from pending state (lease renewal, layoff warning, trending post) | ENG-10 |
 | Micro-goals/quests: 1–3 active, rewards | ENG-11 |
 | Near-miss and rival-progress data exposed as engine events | ENG-13, ENG-14 |
-| `packages/sim`: headless AI-vs-AI batch runner, KPI report (win rate, game length, goal mix, bankruptcy rate) | tech-stack §6 |
+| `packages/sim`: Jones personas, worker pool, MVP KPIs with bands in content, `sim compare` against the merge base, Markdown summary, throughput benchmark | simulator §5, §7, §8 |
 | CI-04: 2k games per PR with KPI bands, PR comment table; content cross-reference test (all event IDs resolve) | CI-04 |
 
 **Exit criteria**
 - A full game (human-scripted vs Jones) runs headless with events, news and teasers.
 - Balance sim runs in CI under the 8-minute budget and has initial KPI bands.
+
+**Notes**
+- **Ask the user** which model the build-time Jones line generator uses and how generated lines are reviewed before they ship.
+- Record the initial KPI bands and the runs they came from in `docs/progress.md`.
+- Check the bots before trusting their numbers: if `balanced` loses to `random` or has high regret, the bot is broken, not the game.
 
 ---
 
@@ -158,10 +185,16 @@ Phases 7, 8 and 9 are independent of each other and can run in parallel or in an
 | i18n plumbing (`i18next`) from the start; all strings in resources | NFR-06 |
 | Lazy-load NeoBank charts, summary screen and non-critical libs | NFR-10 |
 | First Playwright test: start → play a week → save/reload | CI-03 |
+| Sim decision traces, `sim trace`, client debug route that replays a sim game on the board, HTML report | simulator §4, §8 |
 
 **Exit criteria**
 - The team can play a full game vs Jones on desktop and phone; saves survive a reload.
 - Bundle stays under budget; E2E runs against the PR preview.
+
+**Notes**
+- Use placeholder shapes unless art track A2/A3 have landed (check `art/`).
+- Verify in a real browser at phone portrait and desktop landscape: play at least one week and a save/reload.
+- **Human-only:** the full game vs Jones in the exit criterion is played by the user.
 
 ---
 
@@ -183,11 +216,17 @@ Phases 7, 8 and 9 are independent of each other and can run in parallel or in an
 | Accessibility pass: WCAG 2.2 AA contrast, colour + icon stats, scalable text, screen-reader labels, reduced-motion setting | NFR-04 |
 | PWA: offline after first load, install prompt | NFR-11 |
 | Content fill to MVP counts: ~20 jobs, ~15 items, ~40 events, ~10 news | §16 |
+| Sim choice assessment (no-brainers, traps, dead content), `sim sweep`, scenario starts; use them to tune the content fill | simulator §6, §7 |
 | Opt-in analytics (PostHog, lazy) and Sentry (lazy, seed + action log attached) | NFR-14, NFR-16 |
 
 **Exit criteria**
 - New testers reach the first paycheck in under 3 minutes without help.
 - Lighthouse performance and accessibility budgets pass on the preview URL.
+
+**Notes**
+- Final art needs art track A2–A5; generate missing assets with the `codex-image` skill and confirm batch sizes with the user first (quota cost).
+- **Human-only:** the first-paycheck exit criterion needs real testers. Instrument time-to-first-paycheck so their runs report it.
+- Fix every no-brainer, trap and dead choice that `sim assess` reports, or record why it stays.
 
 ---
 
@@ -203,7 +242,7 @@ Phases 7, 8 and 9 are independent of each other and can run in parallel or in an
 | Security headers (CSP, HSTS) via `_headers`, SPA fallback via `_redirects`; Cloudflare Web Analytics | ci-cd §5 |
 | Full E2E matrix (Chromium + mobile WebKit), visual snapshots light/dark | CI-03, tech-stack §6 |
 | Performance on a mid-range 2022 phone: 60 fps board, ≤3 s first load on 4G | NFR-10 |
-| Playtest rounds → balance tuning through content data only; tighten sim KPI bands | NFR-15, CI-04 |
+| Playtest rounds → balance tuning through content data only; tighten sim KPI bands; nightly `optimizer` exploit search | NFR-15, CI-04, simulator §3 |
 | Save migration test: a save from the beta loads in the release build | tech-stack §4 |
 | **IP check:** rename "Hi-Tech U" art/IDs to the final name (requirements already say "UpSkill U Online"); legal review of title and names | README, art-direction §9.1 |
 | Privacy notice, consent flow, "about real financial help" credits link | NFR-14, ENG-35 |
@@ -213,6 +252,12 @@ Phases 7, 8 and 9 are independent of each other and can run in parallel or in an
 **Exit criteria**
 - Production deploy and rollback both rehearsed (rollback first on the preview env's `main` alias).
 - All **M** requirements in game-requirements, ci-cd and tech-stack are met or explicitly deferred with a reason.
+
+**Notes**
+- Put the **M** requirement audit table in `docs/progress.md`.
+- **Human-only:** production reviewers, playtest rounds, legal/IP review, privacy notice wording, ad provider choice.
+- Record the staging rehearsal run links as evidence for the deploy and rollback exit criterion.
+- The save migration test needs a real beta save: capture one from the Phase 5 build before changing the schema.
 
 ---
 
@@ -229,6 +274,10 @@ Phases 7, 8 and 9 are independent of each other and can run in parallel or in an
 | Sentry releases + private source maps | CD-08 |
 | Release automation (release-please or Changesets) | CD-07 |
 
+**Notes**
+- Include the engine and content version in each run submission and reject mismatches, so replay uses the exact rules the client ran.
+- **Human-only:** WAF rate-limit rules, Sentry project and auth token.
+
 ## Phase 8 — Depth & retention (v1.0)
 
 | Task | Refs |
@@ -243,6 +292,11 @@ Phases 7, 8 and 9 are independent of each other and can run in parallel or in an
 | Session reminder; opt-in "Daily Run is ready" notification (max one per day) | ENG-34, ENG-33 |
 | Nightly workflow: 10k-game sim, full E2E, audit | OPS-04 |
 
+**Notes**
+- Many small features: one PR per row is reasonable.
+- **Ask the user** where audio comes from.
+- Test the notification caps (ENG-33, ENG-34).
+
 ## Phase 9 — Life stages & relationships (v1.0)
 
 Build in this order, since each step depends on the one before:
@@ -255,11 +309,18 @@ Build in this order, since each step depends on the one before:
 6. **Integration:** Relationships part of Wellbeing (friends or pets count), relationship event decks, partner job simulation, Jones's love life, life timeline in the run summary (FR-106, FR-108…111).
 7. **Guardrail review:** content rating, no "correct" path, sensitive-event exclusions and settings toggle (FR-112…115).
 
+**Notes**
+- Each step is its own PR, merged before the next starts.
+- Step 7: present guardrail findings to the user; the content rating is their call.
+
 ## Phase 10 — Post-launch backlog
 
 StartupGarage, Civic Center and taxes, seasonal scenarios, opening hours, async online multiplayer (Durable Objects),
 home decoration and collections, localisation beyond English, kids and parenting stages, daycare, custody, ageing
 parents, prenups, optional "Family & Love" goal, PR preview cleanup (CD-09). Prioritise from telemetry and player feedback.
+
+**Notes**
+- Not built as one phase: pick one item, using telemetry and player feedback, and build it as the phase scope.
 
 ---
 
@@ -299,7 +360,7 @@ Art style (open question 2): flat vector (art-direction §1).
 |---|---|
 | Bundle budget (300 KB) squeezed by React + Pixi + Motion | Enforced from Phase 0; lazy-load everything non-critical; `zod/mini` in client |
 | Game isn't fun once the systems are in | Phase 4 alpha is deliberately ugly so fun is tested early; tune through data, not code |
-| Balance sim too slow for the 8-minute PR budget | Smaller PR game count, full runs nightly; keep the engine allocation-light |
+| Balance sim too slow for the 8-minute PR budget | Smaller PR game count, full runs nightly; keep the engine allocation-light. More sim risks in simulator §11 |
 | Image generation style drift | Style anchor attached to every prompt; acceptance checklist; prompts saved next to images |
 | Determinism bugs break Daily Run verification | Replay-stability property tests from Phase 1; state hash checked in CI |
 | IP exposure from original names | Original names only; rename Hi-Tech U art IDs; legal check before public launch |

@@ -96,7 +96,7 @@
 ├─ packages/
 │  ├─ engine/              # pure game rules, RNG, AI rival, scoring
 │  ├─ content/             # cities/<id>/ (board, prices, wages), jobs.json, events/*.json, items.json, partners/ (name pools, traits, wants), life-stages.json, schemas.ts
-│  └─ sim/                 # headless batch simulator for balancing (Node CLI)
+│  └─ sim/                 # headless batch simulator for balancing (Node CLI), see simulator.md
 ├─ e2e/                    # Playwright tests
 ├─ docs/
 └─ .github/workflows/      # CI/CD (see ci-cd.md)
@@ -142,7 +142,7 @@
 | Unit | Vitest | Engine rules, economy maths, event conditions |
 | Property-based | fast-check | Invariants: money is conserved, stats stay in range, no softlocks, replay(seed, actions) is stable |
 | Content | Zod + Vitest | Every content file validates. Every event's referenced IDs exist |
-| Balance | `packages/sim` | 10k headless AI-vs-AI games per PR. Fails if win-rate or average game length drifts outside bands |
+| Balance | `packages/sim` | Headless bot games with KPI bands (CI-04). See [simulator.md](simulator.md) |
 | Component | Vitest + Testing Library | Key UI panels |
 | E2E | Playwright | Start game → week 1 tutorial → end week → save/reload. Mobile + desktop viewports |
 | Visual | Playwright screenshots | Main screens, light/dark |
