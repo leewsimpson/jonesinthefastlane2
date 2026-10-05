@@ -1,53 +1,49 @@
 {
   "id": "default",
-  "name": "Fast Lane City",
   "board": {
     "home": "your-place",
     "locations": [
-      { "id": "your-place", "name": "Your Place" },
-      { "id": "leaselord", "name": "LeaseLord" },
-      { "id": "joblink", "name": "JobLink Hub" },
-      { "id": "upskill-u", "name": "UpSkill U Online" },
-      { "id": "fulfillment", "name": "Fulfillment Center" },
-      { "id": "burger-bot", "name": "Burger Bot" },
-      { "id": "freshmart", "name": "FreshMart" },
-      { "id": "thriftup", "name": "ThriftUp" },
-      { "id": "circuit-planet", "name": "Circuit Planet" },
-      { "id": "neobank", "name": "NeoBank" }
+      { "id": "your-place" },
+      { "id": "leaselord" },
+      { "id": "joblink" },
+      { "id": "upskill-u" },
+      { "id": "fulfillment" },
+      { "id": "burger-bot" },
+      { "id": "freshmart" },
+      { "id": "thriftup" },
+      { "id": "circuit-planet" },
+      { "id": "neobank" }
     ],
+    "segments": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     "transportModes": [
       {
         "id": "walk",
-        "name": "Walk",
-        "hoursBase": 0,
-        "hoursPerStep": 1,
+        "minutesBase": 0,
+        "minutesPerStep": 60,
         "costBase": 0,
         "costPerStep": 0,
         "energyPerStep": 1
       },
       {
         "id": "transit",
-        "name": "Transit",
-        "hoursBase": 0.5,
-        "hoursPerStep": 0.5,
-        "costBase": 3,
+        "minutesBase": 30,
+        "minutesPerStep": 30,
+        "costBase": 300,
         "costPerStep": 0,
         "energyPerStep": 0
       },
       {
         "id": "rideshare",
-        "name": "Rideshare",
-        "hoursBase": 0.25,
-        "hoursPerStep": 0.25,
-        "costBase": 6,
-        "costPerStep": 2,
+        "minutesBase": 15,
+        "minutesPerStep": 15,
+        "costBase": 600,
+        "costPerStep": 200,
         "energyPerStep": 0
       },
       {
         "id": "e-scooter",
-        "name": "E-scooter",
-        "hoursBase": 0,
-        "hoursPerStep": 0.5,
+        "minutesBase": 0,
+        "minutesPerStep": 30,
         "costBase": 0,
         "costPerStep": 0,
         "energyPerStep": 0,
@@ -59,56 +55,50 @@
     {
       "id": "nap",
       "location": "your-place",
-      "name": "Take a nap",
-      "hours": 2,
+      "kind": "basic",
+      "minutes": 120,
       "cost": 0,
-      "effects": { "energy": 10 },
-      "tags": ["rest"]
+      "effects": { "energy": 10 }
     },
     {
       "id": "binge-stream",
       "location": "your-place",
-      "name": "Binge a streaming series",
-      "hours": 3,
+      "kind": "basic",
+      "minutes": 180,
       "cost": 0,
-      "effects": { "energy": 4, "happiness": 4, "social": -1 },
-      "tags": ["rest"]
+      "effects": { "energy": 4, "happiness": 4, "social": -1 }
     },
     {
       "id": "instant-noodles",
       "location": "your-place",
-      "name": "Instant noodles",
-      "hours": 0.5,
-      "cost": 3,
-      "effects": { "health": -2 },
-      "tags": ["eat"]
+      "kind": "eat",
+      "minutes": 30,
+      "cost": 300,
+      "effects": { "health": -2 }
     },
     {
       "id": "burger-combo",
       "location": "burger-bot",
-      "name": "Robo combo meal",
-      "hours": 1,
-      "cost": 12,
-      "effects": { "health": -1, "happiness": 2 },
-      "tags": ["eat"]
+      "kind": "eat",
+      "minutes": 60,
+      "cost": 1200,
+      "effects": { "health": -1, "happiness": 2 }
     },
     {
       "id": "hang-out",
       "location": "burger-bot",
-      "name": "Hang out with friends",
-      "hours": 3,
-      "cost": 18,
-      "effects": { "social": { "min": 4, "max": 8 }, "happiness": 3, "energy": -3 },
-      "tags": ["social"]
+      "kind": "basic",
+      "minutes": 180,
+      "cost": 1800,
+      "effects": { "social": { "min": 4, "max": 8 }, "happiness": 3, "energy": -3 }
     },
     {
       "id": "ready-meal",
       "location": "freshmart",
-      "name": "Deli ready meal",
-      "hours": 1,
-      "cost": 9,
-      "effects": { "health": 1 },
-      "tags": ["eat"]
+      "kind": "eat",
+      "minutes": 60,
+      "cost": 900,
+      "effects": { "health": 1 }
     }
   ]
 }

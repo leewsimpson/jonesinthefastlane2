@@ -8,20 +8,28 @@ describe('random play (Phase 1 exit criterion)', () => {
       const setup = {
         seed: `exit-${g}`,
         players: [
-          { name: 'Ada', kind: 'human' as const },
-          { name: 'Jones', kind: 'ai' as const },
+          { name: 'Ada', controller: 'human' as const },
+          { name: 'Jones', controller: 'ai' as const },
         ],
+        config: { weekLimit: 52 },
       };
-      const result = randomPlay(defaultContent, setup, 52, g);
-      expect(result.state.week).toBe(53);
+      const result = randomPlay(defaultContent, setup, `chooser-${g}`);
+      expect(result.state.phase).toEqual({
+        kind: 'gameOver',
+        result: { reason: 'weekLimit', week: 52 },
+      });
       expect(result.replayHash).toBe(result.hash);
     }
   });
 
   it('is deterministic across runs', () => {
-    const setup = { seed: 'same', players: [{ name: 'Ada', kind: 'human' as const }] };
-    expect(randomPlay(defaultContent, setup, 10, 1).hash).toBe(
-      randomPlay(defaultContent, setup, 10, 1).hash,
+    const setup = {
+      seed: 'same',
+      players: [{ name: 'Ada', controller: 'human' as const }],
+      config: { weekLimit: 10 },
+    };
+    expect(randomPlay(defaultContent, setup, 'c').hash).toBe(
+      randomPlay(defaultContent, setup, 'c').hash,
     );
   });
 });

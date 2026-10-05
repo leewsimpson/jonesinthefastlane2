@@ -12,5 +12,10 @@ export const STAT_KEYS = [
 ] as const;
 export type StatKey = (typeof STAT_KEYS)[number];
 
-export const ACTION_TAGS = ['eat', 'rest', 'output', 'social'] as const;
-export type ActionTag = (typeof ACTION_TAGS)[number];
+/** Engine handler for an action definition (engine-design §8.2). Phase 2 adds work, study, buy and banking kinds. */
+export const ACTION_KINDS = ['basic', 'eat'] as const;
+export type ActionKind = (typeof ACTION_KINDS)[number];
+
+/** Quantities a modifier can scale (engine-design §8.3, FR-21). */
+export const MODIFIER_TARGETS = ['workOutput', 'studyOutput', 'travelTime'] as const;
+export type ModifierTarget = (typeof MODIFIER_TARGETS)[number];
