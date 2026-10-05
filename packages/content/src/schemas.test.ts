@@ -91,7 +91,10 @@ describe('content', () => {
     expect(checkContent(withCity({ board: short }))).toEqual([
       'the board needs one segment per location',
     ]);
-    const onlyItems = defaultCity.board.transportModes.map((m) => ({ ...m, requiresItem: 'car' }));
+    const onlyItems = defaultCity.board.transportModes.map((m) => ({
+      ...m,
+      requiresItem: 'laptop',
+    }));
     expect(
       checkContent(withCity({ board: { ...defaultCity.board, transportModes: onlyItems } })),
     ).toEqual(['at least one transport mode must need no item']);

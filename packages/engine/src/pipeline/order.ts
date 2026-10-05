@@ -2,52 +2,52 @@
  * The FR-05 step order, in one place. `order.test.ts` pins it, so reordering is a deliberate, reviewed change.
  * Stubs are filled in by later phases (engine-design §11).
  */
-import type { PlayerCtx, RoundCtx } from '../core/context.ts';
+import type { PlayerCtx } from '../core/context.ts';
 import { changeStats } from '../stats/stats.ts';
+import type { Cause } from '../types/events.ts';
+import { bills } from './bills.ts';
+import { interestAndDebt } from './debts.ts';
+import { goalCheck } from './goalCheck.ts';
+import { jobChecks } from './jobChecks.ts';
+import { marketMove } from './market.ts';
 import type { Pipeline, PipelineStep } from './types.ts';
 
 const done = { done: true } as const;
 const stub = <Ctx>(id: string): PipelineStep<Ctx> => ({ id, run: () => done });
 
-/** P1: penalise a week without a meal (§4 Hunger), then reset the count. */
+/** P1: penalise a week without a meal (§4 Hunger), then reset the count. Delivered meals count (FR-52). */
 export const foodCheck: PipelineStep<PlayerCtx> = {
   id: 'food-check',
   run(ctx) {
-    const { player } = ctx;
-    if (player.mealsThisWeek === 0) {
+    const { player, content } = ctx;
+    let meals = player.mealsThisWeek;
+    for (const sub of content.city.subscriptions)
+      if (player.subscriptions.includes(sub.id)) meals += sub.meals ?? 0;
+    if (meals === 0) {
       ctx.emit({ type: 'mealSkipped', player: player.id });
-      changeStats(ctx, player, ctx.content.balance.hungerPenalty, {
-        kind: 'step',
-        id: 'food-check',
-      });
+      changeStats(ctx, player, content.balance.hungerPenalty, { kind: 'step', id: 'food-check' });
     }
     player.mealsThisWeek = 0;
     return done;
   },
 };
 
-/** P5: weekly sleep recovery and decay (Energy, Health, Social; Relationships join in Phase 9). */
+/**
+ * P5: weekly sleep recovery and decay, then what home, items and subscriptions give each week (FR-51, FR-52,
+ * FR-60). Relationships join in Phase 9.
+ */
 export const statDrift: PipelineStep<PlayerCtx> = {
   id: 'stat-drift',
   run(ctx) {
-    changeStats(ctx, ctx.player, ctx.content.balance.weeklyDrift, {
-      kind: 'step',
-      id: 'stat-drift',
-    });
-    return done;
-  },
-};
-
-/** R3: ends the game at the week limit (FR-12). Goal targets and the win check arrive in Phase 2 (FR-11). */
-export const goalCheck: PipelineStep<RoundCtx> = {
-  id: 'goal-check',
-  run({ state, emit }) {
-    const { weekLimit } = state.config;
-    if (weekLimit !== null && state.week >= weekLimit) {
-      const result = { reason: 'weekLimit', week: state.week } as const;
-      state.phase = { kind: 'gameOver', result };
-      emit({ type: 'gameOver', result });
-    }
+    const { player, content } = ctx;
+    const cause: Cause = { kind: 'step', id: 'stat-drift' };
+    changeStats(ctx, player, content.balance.weeklyDrift, cause);
+    const home = content.city.housing.find((h) => h.id === player.housing.tier);
+    if (home) changeStats(ctx, player, home.weekly, cause);
+    for (const item of content.city.items)
+      if (player.items.includes(item.id)) changeStats(ctx, player, item.weekly, cause);
+    for (const sub of content.city.subscriptions)
+      if (player.subscriptions.includes(sub.id)) changeStats(ctx, player, sub.weekly, cause);
     return done;
   },
 };
@@ -55,15 +55,15 @@ export const goalCheck: PipelineStep<RoundCtx> = {
 export const defaultPipeline: Pipeline = {
   perPlayer: [
     foodCheck,
-    stub('bills'), // Phase 2: rent, bills, subscriptions
-    stub('interest-debt'), // Phase 2: interest and debt payments
-    stub('job-checks'), // Phase 2: AI disruption
+    bills,
+    interestAndDebt,
+    jobChecks,
     statDrift,
     stub('weekend-event'), // Phase 3: may pause for a choice
     stub('quest-progress'), // Phase 3
   ],
   perRound: [
-    stub('market'), // Phase 2
+    marketMove,
     stub('news'), // Phase 3
     goalCheck,
     stub('teasers'), // Phase 3

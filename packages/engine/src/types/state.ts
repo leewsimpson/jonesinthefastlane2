@@ -3,7 +3,7 @@
  * so it clones, hashes, stores and crosses the Worker boundary as-is. Money is integer cents and time is integer
  * minutes (§5); field names carry the unit.
  */
-import type { StatKey } from '@fastlane/content/keys';
+import type { DebtKind, Difficulty, GoalKey, StatKey } from '@fastlane/content/keys';
 import type { RngState } from '../rng/rng.ts';
 
 /** `p1`, `p2`, … Never integer-like, so `Record` key order stays insertion order. */
@@ -17,11 +17,17 @@ export interface PlayerSetup {
   controller: Controller;
 }
 
+/** Goal targets (§3, FR-10). Wealth is in cents. */
+export type GoalTargets = Record<GoalKey, number>;
+
 export interface GameConfig {
   /** The game ends after this week's round, or never if null (FR-12). */
   weekLimit: number | null;
-  /** Weeks per turn. Long Life (FR-91) raises it; Phase 1 only carries the field. */
+  /** Weeks per turn. Long Life (FR-91) raises it; recurring charges and interest multiply by it. */
   turnLengthWeeks: number;
+  /** A preset, or `custom` when the setup gave its own targets (FR-10). */
+  difficulty: Difficulty | 'custom';
+  goals: GoalTargets;
 }
 
 export interface GameSetup {
@@ -29,8 +35,50 @@ export interface GameSetup {
   seed: string;
   /** In turn order. 1–4 humans plus optional AI rivals (FR-06). */
   players: PlayerSetup[];
-  /** Missing fields take the defaults in `newGame`. */
+  /**
+   * Missing fields take the defaults in `newGame`. `difficulty` picks preset targets; `goals` alone means custom
+   * targets.
+   */
   config?: Partial<GameConfig>;
+}
+
+/** The player's current job (FR-40). */
+export interface JobState {
+  id: string;
+  /** Wage multiplier after restructures (FR-42), 10 000 = ×1. */
+  wageBp: number;
+  /** Weekly hours cap multiplier after hours cuts (FR-42). */
+  hoursCapBp: number;
+  /** 0–100. Promotions need it (FR-43); at 0 the player is let go. */
+  rating: number;
+  minutesThisWeek: number;
+  /** A layoff is coming at the next job check (FR-42's one-week warning). */
+  layoffWarning: boolean;
+}
+
+export interface Enrollment {
+  course: string;
+  /** Study minutes done, after study-output modifiers. */
+  minutes: number;
+}
+
+export interface HousingState {
+  tier: string;
+  /** Weekly rent in cents, locked for the lease (FR-51). */
+  rent: number;
+  leaseWeeksLeft: number;
+  /** Held by LeaseLord; returned on moving out, kept against arrears on eviction. */
+  deposit: number;
+  /** Consecutive weeks of rent not paid in full (FR-14). */
+  missedRent: number;
+}
+
+/** A debt (FR-54). `balance` is cents owed. */
+export interface Debt {
+  balance: number;
+  /** Consecutive weeks the payment due was missed. */
+  missed: number;
+  collections: boolean;
 }
 
 export interface PlayerState {
@@ -44,12 +92,42 @@ export interface PlayerState {
   stats: Stats;
   /** The food check penalises 0 (§4 Hunger). */
   mealsThisWeek: number;
-  /** Owned item ids. Items arrive in Phase 2; transport modes can already require one. */
+  /** Owned item ids, in purchase order. */
   items: string[];
+  /** Stored grocery meals (FR-60: groceries need a fridge). */
+  pantryMeals: number;
+  job: JobState | null;
+  /** Minutes worked per career ladder (FR-43). Gig work doesn't count (FR-44). */
+  experience: Record<string, number>;
+  /** Weeks left of a GigHub deactivation (FR-44). */
+  gigBanWeeks: number;
+  enrollment: Enrollment | null;
+  /** Earned credential (course) ids. */
+  credentials: string[];
+  /** Study minutes per skill track (§3 Skills). */
+  trackMinutes: Record<string, number>;
+  housing: HousingState;
+  /** Cents held in savings and each market asset (FR-53). */
+  holdings: Record<string, number>;
+  debts: Record<DebtKind, Debt>;
+  /** Active subscription ids (FR-52). */
+  subscriptions: string[];
 }
 
-/** Shared economy state. Only per-round steps may change it (FR-05a). Prices, market and news arrive in Phase 2–3. */
-export type WorldState = Record<string, never>;
+/** Shared economy state. Only per-round steps may change it (FR-05a). */
+export interface WorldState {
+  /** Price index, 10 000 = launch prices (FR-50). Scales prices, rents, tuition and travel. */
+  priceIndexBp: number;
+  /** Wage index; lags the price index (FR-50). */
+  wageIndexBp: number;
+  /** Market regime id and how many more weeks it lasts (FR-55). */
+  regime: string;
+  regimeWeeksLeft: number;
+  /** Each asset's return in the last market move, for the ticker. */
+  lastReturnsBp: Record<string, number>;
+  /** Job ids open for applications this week. */
+  openings: string[];
+}
 
 /** A choice a pipeline step needs from a player before it can finish (engine-design §11). */
 export interface Decision {
@@ -61,7 +139,13 @@ export interface Decision {
   options: string[];
 }
 
-export type GameResult = { reason: 'weekLimit'; week: number };
+/** FR-11, FR-12. `scores` are each player's score in basis points (average goal progress, each capped at 100%). */
+export interface GameResult {
+  reason: 'win' | 'weekLimit';
+  week: number;
+  winner: PlayerId;
+  scores: Record<PlayerId, number>;
+}
 
 export type Phase =
   | { kind: 'turn'; player: PlayerId }
@@ -74,6 +158,9 @@ export interface WeekRecord {
   week: number;
   player: PlayerId;
   cash: number;
+  netWorth: number;
+  /** Goal progress in basis points, each capped at 10 000. */
+  progressBp: Record<GoalKey, number>;
 }
 
 export interface GameState {

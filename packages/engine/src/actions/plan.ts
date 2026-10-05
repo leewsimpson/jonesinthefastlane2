@@ -2,11 +2,14 @@
  * Previews and the legal-action list (engine-design §8, FR-03). This is the single legality check: `reduce` refuses
  * anything `previewAction` marks unavailable, so the UI and the rules can't disagree.
  */
-import type { GameContent } from '@fastlane/content';
+import type { GameContent, LocationAction } from '@fastlane/content';
+import { ANYWHERE } from '@fastlane/content/keys';
 import { loopDistance, travelCost } from '../board/board.ts';
+import { price } from '../economy/prices.ts';
 import { applyModifiers, collectModifiers } from '../stats/stats.ts';
-import type { Action, Plan, Preview, RuleErrorCode } from '../types/actions.ts';
+import type { Action, PerformParams, Plan, Preview, RuleErrorCode } from '../types/actions.ts';
 import type { GameState, PlayerState } from '../types/state.ts';
+import { durationOptions } from './common.ts';
 import { HANDLERS } from './handlers.ts';
 
 export function playerById(state: Readonly<GameState>, id: string): PlayerState {
@@ -59,7 +62,7 @@ export function previewAction(
       const modifiers = collectModifiers(content, player, 'travelTime');
       plan = {
         time: applyModifiers(trip.minutes, modifiers),
-        money: trip.money,
+        money: price(state.world, trip.money),
         effects: trip.energy > 0 ? [{ stat: 'energy', delta: -trip.energy }] : [],
         modifiers,
         outcomes: [],
@@ -71,10 +74,16 @@ export function previewAction(
     case 'perform': {
       const def = actions.find((a) => a.id === action.actionId);
       if (!def) return unavailable('UNKNOWN_ACTION');
-      const result = HANDLERS[def.kind].plan({ content, state, player }, def);
+      const params = paramsOf(action);
+      const bad = checkParams(def, params);
+      if (bad) return unavailable(bad);
+      const result = HANDLERS[def.kind].plan({ content, state, player }, def, params);
       if ('code' in result) return unavailable(result.code);
       plan = result;
-      if (def.location !== player.location) return unavailable('WRONG_LOCATION', plan);
+      if (def.location !== ANYWHERE && def.location !== player.location)
+        return unavailable('WRONG_LOCATION', plan);
+      const needs = checkRequires(content, player, def);
+      if (needs) return unavailable(needs, plan);
       break;
     }
     case 'endWeek': {
@@ -89,9 +98,44 @@ export function previewAction(
   return { action, available: true, plan };
 }
 
+/** The `perform` parameters, without the keys that aren't set (state and logs stay plain JSON). */
+export function paramsOf(action: Extract<Action, { type: 'perform' }>): PerformParams {
+  const params: PerformParams = {};
+  if (action.target !== undefined) params.target = action.target;
+  if (action.minutes !== undefined) params.minutes = action.minutes;
+  if (action.amount !== undefined) params.amount = action.amount;
+  return params;
+}
+
+/** Durations must be one the action offers; amounts must be positive whole cents, and only for money actions. */
+function checkParams(def: LocationAction, params: PerformParams): RuleErrorCode | null {
+  if (def.durations ? !def.durations.includes(params.minutes ?? -1) : params.minutes !== undefined)
+    return 'BAD_DURATION';
+  const { amount } = params;
+  if (def.amounts ? !(Number.isInteger(amount) && (amount ?? 0) > 0) : amount !== undefined)
+    return 'BAD_AMOUNT';
+  return null;
+}
+
+/** An action's item and housing requirements. */
+function checkRequires(
+  content: GameContent,
+  player: Readonly<PlayerState>,
+  def: LocationAction,
+): RuleErrorCode | null {
+  if (def.requires?.item && !player.items.includes(def.requires.item)) return 'NEEDS_ITEM';
+  const housing = def.requires?.housing;
+  if (housing) {
+    const tiers = content.city.housing.map((h) => h.id);
+    if (tiers.indexOf(player.housing.tier) < tiers.indexOf(housing)) return 'NEEDS_HOUSING';
+  }
+  return null;
+}
+
 /**
  * Every option for the active player, each marked available or not with a reason, so the UI can grey actions out
- * and say why: travel to every location by every mode, the actions here, and End Week (always available, so no
+ * and say why: travel to every location by every mode, the actions here and anywhere-actions (one option per
+ * target, duration or amount preset), and End Week (always available, so no
  * state is stuck). While a decision is pending, its options are the only ones.
  */
 export function listActions(content: GameContent, state: Readonly<GameState>): Preview[] {
@@ -110,8 +154,15 @@ export function listActions(content: GameContent, state: Readonly<GameState>): P
   for (const loc of board.locations)
     for (const mode of board.transportModes)
       options.push(preview({ type: 'travel', to: loc.id, mode: mode.id }));
-  for (const a of actions)
-    if (a.location === player.location) options.push(preview({ type: 'perform', actionId: a.id }));
+  for (const def of actions) {
+    if (def.location !== player.location && def.location !== ANYWHERE) continue;
+    const handler = HANDLERS[def.kind];
+    const variants = handler.options
+      ? handler.options({ content, state, player }, def)
+      : durationOptions(def);
+    for (const params of variants)
+      options.push(preview({ type: 'perform', actionId: def.id, ...params }));
+  }
   options.push(preview({ type: 'endWeek' }));
   return options;
 }

@@ -21,8 +21,122 @@
   "wardrobeTiers": ["casual", "smart", "business", "founder-hoodie"],
   "restBonusEnergyPerHour": 1,
   "statModifiers": [
-    { "id": "low-energy", "stat": "energy", "below": 25, "target": "workOutput", "bp": -2000 }
+    { "id": "low-energy", "stat": "energy", "below": 25, "target": "workOutput", "bp": -2000 },
+    {
+      "id": "low-energy-study",
+      "stat": "energy",
+      "below": 25,
+      "target": "studyOutput",
+      "bp": -2000
+    }
   ],
   "hungerPenalty": { "energy": -15, "health": -8, "happiness": -3 },
-  "weeklyDrift": { "energy": 35, "happiness": -2, "social": -3 }
+  "weeklyDrift": { "energy": 35, "happiness": -2, "social": -3 },
+  "jobs": {
+    "maxWeeklyMinutes": 2400,
+    "ratingStart": 50,
+    "ratingPerHour": 1,
+    "noShowPenalty": 25,
+    "promotionRating": 60
+  },
+  "aiDisruption": {
+    "baseRateBp": 200,
+    "outcomeWeights": { "hoursCut": 60, "restructure": 30, "layoff": 10 },
+    "hoursCutBp": -2500,
+    "minHoursCapBp": 5000,
+    "restructureWageBp": -1000,
+    "minWageBp": 7000,
+    "track": "ai-tools",
+    "exposureCutPerPointBp": 200,
+    "maxExposureCutBp": 4000,
+    "outputPerPointBp": 100,
+    "maxOutputBp": 1500
+  },
+  "gig": { "deactivationChanceBp": 150, "deactivationWeeks": 2 },
+  "skills": { "tracks": ["ai-tools", "trades", "business", "care"], "pointsScale": 4 },
+  "housing": { "leaseWeeks": 12, "renewalHikeBp": { "min": 0, "max": 800 }, "evictAfterMissed": 2 },
+  "inflation": { "weeklyDriftBp": { "min": 0, "max": 12 }, "wageCatchUpBp": 1000 },
+  "finance": {
+    "savingsWeeklyPpm": 754,
+    "card": {
+      "weeklyPpm": 4145,
+      "limits": [
+        { "minScore": 300, "limit": 50000 },
+        { "minScore": 580, "limit": 100000 },
+        { "minScore": 670, "limit": 200000 },
+        { "minScore": 740, "limit": 500000 }
+      ]
+    },
+    "studentWeeklyPpm": 1121,
+    "minPaymentBp": 300,
+    "minPayment": 2500,
+    "lateFee": 3500,
+    "collectionsAfter": 3,
+    "collectionsFee": 5000,
+    "credit": { "onTime": 2, "missed": -20, "collections": -60, "missedRent": -25, "eviction": -40 }
+  },
+  "market": {
+    "assets": [
+      { "id": "index-fund", "crashChanceBp": 0, "crashBp": 0 },
+      { "id": "crypto", "crashChanceBp": 80, "crashBp": -8500 }
+    ],
+    "regimes": [
+      {
+        "id": "steady",
+        "weight": 40,
+        "weeks": { "min": 4, "max": 12 },
+        "returnsBp": {
+          "index-fund": { "min": -60, "max": 90 },
+          "crypto": { "min": -900, "max": 1000 }
+        }
+      },
+      {
+        "id": "bull",
+        "weight": 25,
+        "weeks": { "min": 3, "max": 8 },
+        "returnsBp": {
+          "index-fund": { "min": -40, "max": 140 },
+          "crypto": { "min": -800, "max": 1400 }
+        }
+      },
+      {
+        "id": "bear",
+        "weight": 20,
+        "weeks": { "min": 3, "max": 8 },
+        "returnsBp": {
+          "index-fund": { "min": -140, "max": 60 },
+          "crypto": { "min": -1400, "max": 800 }
+        }
+      },
+      {
+        "id": "crash",
+        "weight": 5,
+        "weeks": { "min": 1, "max": 2 },
+        "returnsBp": {
+          "index-fund": { "min": -900, "max": -200 },
+          "crypto": { "min": -3000, "max": -500 }
+        }
+      },
+      {
+        "id": "ai-bubble",
+        "weight": 10,
+        "weeks": { "min": 2, "max": 6 },
+        "returnsBp": {
+          "index-fund": { "min": -40, "max": 200 },
+          "crypto": { "min": -1000, "max": 2400 }
+        }
+      }
+    ],
+    "startRegime": "steady"
+  },
+  "goals": {
+    "presets": {
+      "chill": { "wealth": 500000, "wellbeing": 55, "skills": 30, "career": 25 },
+      "standard": { "wealth": 1500000, "wellbeing": 65, "skills": 50, "career": 45 },
+      "hustle-culture": { "wealth": 4000000, "wellbeing": 75, "skills": 80, "career": 70 }
+    },
+    "wellbeingLowPartPenaltyBp": 5000,
+    "careerPointsPerLevel": 20,
+    "stabilityExposureBp": 5000
+  }
 }

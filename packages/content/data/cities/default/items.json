@@ -1,0 +1,135 @@
+[
+  {
+    "id": "laptop",
+    "shop": "circuit-planet",
+    "price": 90000,
+    "resaleBp": 5000,
+    "modifiers": [{ "target": "workOutput", "bp": 500 }, { "target": "studyOutput", "bp": 500 }],
+    "weekly": {}
+  },
+  {
+    "id": "smartphone",
+    "shop": "circuit-planet",
+    "price": 60000,
+    "resaleBp": 4000,
+    "modifiers": [],
+    "weekly": { "social": 1 }
+  },
+  {
+    "id": "noise-cancelling-headphones",
+    "shop": "circuit-planet",
+    "price": 25000,
+    "resaleBp": 4000,
+    "modifiers": [{ "target": "studyOutput", "bp": 1500 }],
+    "weekly": {}
+  },
+  {
+    "id": "e-scooter",
+    "shop": "circuit-planet",
+    "price": 55000,
+    "resaleBp": 5000,
+    "modifiers": [],
+    "weekly": {}
+  },
+  {
+    "id": "fridge",
+    "shop": "circuit-planet",
+    "price": 50000,
+    "resaleBp": 4000,
+    "modifiers": [],
+    "weekly": {}
+  },
+  {
+    "id": "air-fryer",
+    "shop": "circuit-planet",
+    "price": 9000,
+    "resaleBp": 3000,
+    "modifiers": [],
+    "weekly": { "health": 1 }
+  },
+  {
+    "id": "smart-lock",
+    "shop": "circuit-planet",
+    "price": 15000,
+    "resaleBp": 3000,
+    "modifiers": [],
+    "weekly": { "happiness": 1 }
+  },
+  {
+    "id": "game-console",
+    "shop": "circuit-planet",
+    "price": 45000,
+    "resaleBp": 5000,
+    "modifiers": [],
+    "weekly": { "happiness": 2 }
+  },
+  {
+    "id": "espresso-machine",
+    "shop": "circuit-planet",
+    "price": 20000,
+    "resaleBp": 3000,
+    "modifiers": [{ "target": "workOutput", "bp": 300 }],
+    "weekly": { "energy": 2 }
+  },
+  {
+    "id": "groceries",
+    "shop": "freshmart",
+    "price": 3500,
+    "resaleBp": 0,
+    "modifiers": [],
+    "weekly": {},
+    "meals": 7,
+    "requiresItem": "fridge"
+  },
+  {
+    "id": "house-plant",
+    "shop": "freshmart",
+    "price": 2500,
+    "resaleBp": 2000,
+    "modifiers": [],
+    "weekly": { "happiness": 1 }
+  },
+  {
+    "id": "smart-outfit",
+    "shop": "thriftup",
+    "price": 6000,
+    "resaleBp": 3000,
+    "modifiers": [],
+    "weekly": {},
+    "wardrobeTier": 1
+  },
+  {
+    "id": "business-suit",
+    "shop": "thriftup",
+    "price": 25000,
+    "resaleBp": 3000,
+    "modifiers": [],
+    "weekly": {},
+    "wardrobeTier": 2
+  },
+  {
+    "id": "founder-hoodie",
+    "shop": "thriftup",
+    "price": 18000,
+    "resaleBp": 2000,
+    "modifiers": [],
+    "weekly": {},
+    "wardrobeTier": 3
+  },
+  {
+    "id": "running-shoes",
+    "shop": "thriftup",
+    "price": 8000,
+    "resaleBp": 2500,
+    "modifiers": [],
+    "weekly": { "health": 1 }
+  },
+  {
+    "id": "robo-plushie",
+    "shop": "burger-bot",
+    "price": 1500,
+    "resaleBp": 1000,
+    "modifiers": [],
+    "weekly": { "happiness": 1 }
+  }
+]

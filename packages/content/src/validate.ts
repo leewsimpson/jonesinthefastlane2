@@ -3,6 +3,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import type { z } from 'zod';
 import {
   BalanceSchema,
+  CITY_FILES,
   CitySchema,
   checkContent,
   checkStrings,
@@ -42,9 +43,21 @@ if (meta && !cityIds.includes(meta.defaultCity)) {
   console.error(`FAIL meta.json: default city "${meta.defaultCity}" has no cities/ folder`);
 }
 
+const readJson = (relative: string): unknown =>
+  JSON.parse(readFileSync(new URL(relative, dataDir), 'utf8'));
+
 for (const id of cityIds) {
-  const relative = `cities/${id}/city.json`;
-  const city = load(relative, CitySchema);
+  const relative = `cities/${id}/`;
+  // A city profile is a folder: city.json plus one file per section (FR-33).
+  const merged = { ...(readJson(`${relative}city.json`) as object) } as Record<string, unknown>;
+  for (const [field, file] of Object.entries(CITY_FILES)) merged[field] = readJson(relative + file);
+  const result = CitySchema.safeParse(merged);
+  const city = result.success ? result.data : undefined;
+  if (result.success) console.log(`ok   ${relative}`);
+  else {
+    failed = true;
+    console.error(`FAIL ${relative}\n${result.error.message}`);
+  }
   if (!city || !meta || !balance) continue;
   if (city.id !== id) {
     failed = true;

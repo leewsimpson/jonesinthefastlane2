@@ -1,0 +1,37 @@
+[
+  {
+    "id": "parents-basement",
+    "rent": 0,
+    "deposit": 0,
+    "minCreditScore": 300,
+    "weekly": { "happiness": -2 }
+  },
+  {
+    "id": "shared-house",
+    "rent": 15000,
+    "deposit": 30000,
+    "minCreditScore": 500,
+    "weekly": { "energy": 3, "happiness": 1 }
+  },
+  {
+    "id": "studio",
+    "rent": 25000,
+    "deposit": 50000,
+    "minCreditScore": 600,
+    "weekly": { "energy": 5, "happiness": 2 }
+  },
+  {
+    "id": "apartment",
+    "rent": 40000,
+    "deposit": 80000,
+    "minCreditScore": 650,
+    "weekly": { "energy": 6, "happiness": 3, "health": 1 }
+  },
+  {
+    "id": "smart-condo",
+    "rent": 70000,
+    "deposit": 140000,
+    "minCreditScore": 720,
+    "weekly": { "energy": 8, "happiness": 5, "health": 2 }
+  }
+]

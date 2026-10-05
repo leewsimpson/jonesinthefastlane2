@@ -1,5 +1,12 @@
 import balanceJson from '../data/balance.json' with { type: 'json' };
 import defaultCityJson from '../data/cities/default/city.json' with { type: 'json' };
+import defaultCoursesJson from '../data/cities/default/courses.json' with { type: 'json' };
+import defaultHousingJson from '../data/cities/default/housing.json' with { type: 'json' };
+import defaultItemsJson from '../data/cities/default/items.json' with { type: 'json' };
+import defaultJobsJson from '../data/cities/default/jobs.json' with { type: 'json' };
+import defaultSubscriptionsJson from '../data/cities/default/subscriptions.json' with {
+  type: 'json',
+};
 import metaJson from '../data/meta.json' with { type: 'json' };
 import enJson from '../locales/en.json' with { type: 'json' };
 import {
@@ -16,7 +23,15 @@ export * from './schemas.ts';
 
 export const meta = MetaSchema.parse(metaJson);
 export const balance = BalanceSchema.parse(balanceJson);
-export const defaultCity = CitySchema.parse(defaultCityJson);
+/** A city profile is a folder of files (FR-33), merged into one `City`. See `CITY_FILES`. */
+export const defaultCity = CitySchema.parse({
+  ...defaultCityJson,
+  jobs: defaultJobsJson,
+  courses: defaultCoursesJson,
+  housing: defaultHousingJson,
+  items: defaultItemsJson,
+  subscriptions: defaultSubscriptionsJson,
+});
 /** English copy (NFR-06). i18next loads it in Phase 4. */
 export const en = StringsSchema.parse(enJson);
 

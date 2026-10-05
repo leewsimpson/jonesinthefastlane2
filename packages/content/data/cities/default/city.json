@@ -51,6 +51,7 @@
       }
     ]
   },
+  "gigPayPerHour": { "min": 1100, "max": 2800 },
   "actions": [
     {
       "id": "nap",
@@ -77,6 +78,153 @@
       "effects": { "health": -2 }
     },
     {
+      "id": "eat-groceries",
+      "location": "your-place",
+      "kind": "eat-stored",
+      "minutes": 30,
+      "cost": 0,
+      "effects": { "health": 2 }
+    },
+    {
+      "id": "host-friends",
+      "location": "your-place",
+      "kind": "basic",
+      "minutes": 180,
+      "cost": 2500,
+      "effects": { "social": { "min": 5, "max": 10 }, "happiness": 4, "energy": -4 },
+      "requires": { "housing": "shared-house" }
+    },
+    {
+      "id": "wfh",
+      "location": "your-place",
+      "kind": "work-shift",
+      "remote": true,
+      "minutes": 120,
+      "durations": [120, 240, 480],
+      "cost": 0,
+      "effects": { "energy": -2, "social": -1 },
+      "outputTarget": "workOutput",
+      "requires": { "item": "laptop" }
+    },
+    {
+      "id": "study-online",
+      "location": "your-place",
+      "kind": "study",
+      "minutes": 120,
+      "durations": [120, 240, 480],
+      "cost": 0,
+      "effects": { "energy": -2 },
+      "outputTarget": "studyOutput",
+      "requires": { "item": "laptop" }
+    },
+    {
+      "id": "subscribe",
+      "location": "your-place",
+      "kind": "subscribe",
+      "minutes": 15,
+      "cost": 0,
+      "effects": {}
+    },
+    {
+      "id": "unsubscribe",
+      "location": "your-place",
+      "kind": "unsubscribe",
+      "minutes": 15,
+      "cost": 0,
+      "effects": {}
+    },
+    {
+      "id": "subscription-audit",
+      "location": "your-place",
+      "kind": "subscription-audit",
+      "minutes": 15,
+      "cost": 0,
+      "effects": {}
+    },
+    {
+      "id": "gig-shift",
+      "location": "*",
+      "kind": "gig",
+      "minutes": 60,
+      "durations": [60, 120, 240],
+      "cost": 0,
+      "effects": { "energy": -2 },
+      "outputTarget": "workOutput"
+    },
+    {
+      "id": "rent-home",
+      "location": "leaselord",
+      "kind": "rent-home",
+      "minutes": 60,
+      "cost": 0,
+      "effects": {}
+    },
+    {
+      "id": "apply-job",
+      "location": "joblink",
+      "kind": "apply-job",
+      "minutes": 60,
+      "cost": 0,
+      "effects": {}
+    },
+    {
+      "id": "work-joblink",
+      "location": "joblink",
+      "kind": "work-shift",
+      "minutes": 120,
+      "durations": [120, 240, 480],
+      "cost": 0,
+      "effects": { "energy": -2 },
+      "outputTarget": "workOutput"
+    },
+    {
+      "id": "enroll",
+      "location": "upskill-u",
+      "kind": "enroll",
+      "minutes": 60,
+      "cost": 0,
+      "effects": {}
+    },
+    {
+      "id": "enroll-loan",
+      "location": "upskill-u",
+      "kind": "enroll",
+      "loan": true,
+      "minutes": 60,
+      "cost": 0,
+      "effects": {}
+    },
+    {
+      "id": "study",
+      "location": "upskill-u",
+      "kind": "study",
+      "minutes": 120,
+      "durations": [120, 240, 480],
+      "cost": 0,
+      "effects": { "energy": -2 },
+      "outputTarget": "studyOutput"
+    },
+    {
+      "id": "work-upskill-u",
+      "location": "upskill-u",
+      "kind": "work-shift",
+      "minutes": 120,
+      "durations": [120, 240, 480],
+      "cost": 0,
+      "effects": { "energy": -2 },
+      "outputTarget": "workOutput"
+    },
+    {
+      "id": "work-fulfillment",
+      "location": "fulfillment",
+      "kind": "work-shift",
+      "minutes": 120,
+      "durations": [120, 240, 480],
+      "cost": 0,
+      "effects": { "energy": -3 },
+      "outputTarget": "workOutput"
+    },
+    {
       "id": "burger-combo",
       "location": "burger-bot",
       "kind": "eat",
@@ -93,12 +241,120 @@
       "effects": { "social": { "min": 4, "max": 8 }, "happiness": 3, "energy": -3 }
     },
     {
+      "id": "work-burger-bot",
+      "location": "burger-bot",
+      "kind": "work-shift",
+      "minutes": 120,
+      "durations": [120, 240, 480],
+      "cost": 0,
+      "effects": { "energy": -3 },
+      "outputTarget": "workOutput"
+    },
+    {
+      "id": "shop-burger-bot",
+      "location": "burger-bot",
+      "kind": "buy",
+      "minutes": 15,
+      "cost": 0,
+      "effects": {}
+    },
+    {
       "id": "ready-meal",
       "location": "freshmart",
       "kind": "eat",
       "minutes": 60,
       "cost": 900,
       "effects": { "health": 1 }
+    },
+    {
+      "id": "shop-freshmart",
+      "location": "freshmart",
+      "kind": "buy",
+      "minutes": 30,
+      "cost": 0,
+      "effects": {}
+    },
+    {
+      "id": "work-freshmart",
+      "location": "freshmart",
+      "kind": "work-shift",
+      "minutes": 120,
+      "durations": [120, 240, 480],
+      "cost": 0,
+      "effects": { "energy": -2 },
+      "outputTarget": "workOutput"
+    },
+    {
+      "id": "shop-thriftup",
+      "location": "thriftup",
+      "kind": "buy",
+      "minutes": 60,
+      "cost": 0,
+      "effects": {}
+    },
+    {
+      "id": "shop-circuit-planet",
+      "location": "circuit-planet",
+      "kind": "buy",
+      "minutes": 30,
+      "cost": 0,
+      "effects": {}
+    },
+    {
+      "id": "work-circuit-planet",
+      "location": "circuit-planet",
+      "kind": "work-shift",
+      "minutes": 120,
+      "durations": [120, 240, 480],
+      "cost": 0,
+      "effects": { "energy": -2 },
+      "outputTarget": "workOutput"
+    },
+    {
+      "id": "deposit",
+      "location": "neobank",
+      "kind": "deposit",
+      "minutes": 15,
+      "amounts": [5000, 20000, 100000],
+      "cost": 0,
+      "effects": {}
+    },
+    {
+      "id": "withdraw",
+      "location": "neobank",
+      "kind": "withdraw",
+      "minutes": 15,
+      "amounts": [5000, 20000, 100000],
+      "cost": 0,
+      "effects": {}
+    },
+    {
+      "id": "borrow",
+      "location": "neobank",
+      "kind": "borrow",
+      "minutes": 15,
+      "amounts": [5000, 20000, 50000],
+      "cost": 0,
+      "effects": {}
+    },
+    {
+      "id": "repay",
+      "location": "neobank",
+      "kind": "repay",
+      "minutes": 15,
+      "amounts": [5000, 20000, 100000],
+      "cost": 0,
+      "effects": {}
+    },
+    {
+      "id": "work-neobank",
+      "location": "neobank",
+      "kind": "work-shift",
+      "minutes": 120,
+      "durations": [120, 240, 480],
+      "cost": 0,
+      "effects": { "energy": -2 },
+      "outputTarget": "workOutput"
     }
   ]
 }
