@@ -43,9 +43,7 @@ Running ledger of finished phases, deferrals and deviations from [implementation
     promote the build that passed on `main` (CD-03). The API CORS allow-list is in `apps/api/src/app.ts`. Update it when a custom domain lands.
   - Toolchain at start: Node 24 LTS, pnpm 12.9 (Corepack), TypeScript 7.0, Vite 8, Vitest 5, Biome 2.5,
     Tailwind 4.3, React 19.3. pnpm 12 needs build scripts allow-listed in `pnpm-workspace.yaml` (`allowBuilds`).
-  - Ruleset `main`: PR required, linear history, no force-push/deletion, required checks `checks`, `audit`, `deploy`,
-    `analyze (javascript-typescript)`, `analyze (actions)`. No bypass actors. Renaming a job breaks merges until the
-    ruleset is updated.
+  - The `main` ruleset was removed on 2026-10-05 (user decision); current rule: ci-cd.md CI-07.
   - Engine purity is not enforced mechanically yet. That's Phase 1.
 
 ## Phase 1 — Engine core — done 2026-10-05
