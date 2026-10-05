@@ -4,8 +4,8 @@ Design for `packages/engine`, the pure, deterministic rules engine. It covers ev
 [implementation plan](implementation-plan.md) builds, and fixes the shapes that later phases plug into (jobs, events,
 Jones, Daily Run verification), so those phases add code without reworking the core.
 
-**Status:** Phase 1 and Phase 2 implemented (`ENGINE_VERSION` 0.3.0, state schema 2). Decisions and open questions
-are listed in §17.
+**Status:** Phases 1–3 implemented (`ENGINE_VERSION` 0.4.0, state schema 3). Decisions and open questions are
+listed in §17.
 
 ## 1. Constraints
 
@@ -39,6 +39,7 @@ packages/engine/src/
 ├─ board/                 # loop distances, travel cost
 ├─ actions/               # previews, listActions, one handler per kind
 ├─ pipeline/              # step order and the real steps
+├─ hooks/                 # condition matching and news effects for events, quests and the ticker
 ├─ ai/                    # AI policies: random legal, and the utility scorer with personas (§7)
 ├─ money/                 # the ledger: the one write path for money (§10.1)
 ├─ economy/               # prices and wages through the world's indices (FR-50)
@@ -76,7 +77,8 @@ export type ReduceResult =
 ```
 
 - **Content is bound once** in `createEngine`, so every call site doesn't pass it around, and tests can build an engine
-  from a small fixture content set. `options` swaps the pipeline or AI policy for tests and the sim.
+  from a small fixture content set. `options` swaps the pipeline or AI policy for tests and the sim. The default
+  policy is `rivalPolicy`: each AI seat plays the utility scorer with its own persona from `content.ai.rivals` (§7).
 - **`newGame` returns events too.** If AI players come before the first human, the engine plays their turns straight
   away (§7), and the UI needs those events.
 - **Rule violations are values, bugs are exceptions.** Trying to travel without enough time returns
@@ -125,7 +127,9 @@ interface PlayerState {
   mealsThisWeek: number
   items: ItemId[]
   // Phase 2: job, experience per ladder, gig ban, enrolment, credentials, study minutes per track, housing and
-  // lease, holdings (savings and market assets), debts, subscriptions, stored meals. See types/state.ts.
+  // lease, holdings (savings and market assets), debts, subscriptions, stored meals.
+  // Phase 3: AI persona, burnout flag, next week's time adjustment, event and quest cooldowns, active quests.
+  // See types/state.ts.
 }
 ```
 
@@ -197,6 +201,7 @@ streamSeed = cyrb128(`${runSeed}|${streamKey}`)
 | `job` | player | AI-disruption rolls (FR-42) | 2 |
 | `bills` | player | Rent hikes at lease renewal (FR-51) | 2 |
 | `events` | player | Weekend event draws and outcomes | 3 |
+| `quests` | player | Issuing micro-goals (ENG-11); week 0 issues the first ones | 3 |
 | `ai` | AI player | Jones's decisions (tie-breaks, "how often it picks the best move") | 1 (random policy), 3 |
 
 Why key by week as well as by name:
@@ -242,8 +247,12 @@ newGame ─► turn(p1) ─endWeek─► endOfTurn(p1, steps…) ─► turn(p2)
   the available options using the `ai` stream, so a replay recomputes Jones exactly. It also gets the state
   read-only, as a player would see it: the utility scorer (`ai/utility.ts`) values positions from it. This means a client can't submit
   fake Jones moves in a Daily Run. The cost: changing the AI policy changes old replays, which is fine because saves
-  and Daily Runs pin the engine version (§14). A turn longer than 200 AI actions throws, so a buggy policy can't loop
-  forever.
+  and Daily Runs pin the engine version (§14). A turn with more than `weekMinutes / 15 + 1` AI actions throws, so a
+  buggy policy can't loop forever.
+- **Jones (FR-80, FR-83).** Each AI seat has a persona (`PlayerSetup.persona`, by default the rival
+  `content.ai.byDifficulty` names for the game's difficulty). Difficulty is how often it takes its top-scored move
+  (`bestMoveRateBp`) and how many of the next best it picks from otherwise (`runnersUp`); the rules never bend. Event
+  choices are scored the same way, with risk appetite setting where in a rolled range it expects to land.
 - **Players (FR-06).** 1–4 humans plus any number of AI players. A game with no humans must have a week limit,
   because nothing else stops the advance loop (the Phase 3 AI-vs-AI sim uses this).
 - **Turn end (FR-04).** The turn ends when the player sends `endWeek`, or automatically when `timeLeft` reaches 0 or
@@ -290,16 +299,18 @@ A handler is the code for one `kind`, split into two halves:
 
 ```ts
 interface ActionHandler {
-  plan(ctx: PlanCtx, def: LocationAction): Plan | RuleError   // pure, no RNG
-  apply(ctx: PlayerCtx, def: LocationAction, plan: Plan): void // may use ctx.rng
+  options?(ctx: PlanCtx, def: LocationAction): PerformParams[]                     // one per target, length, amount
+  plan(ctx: PlanCtx, def: LocationAction, params: PerformParams): Plan | RuleError  // pure, no RNG
+  apply(ctx: PlayerCtx, def: LocationAction, plan: Plan, params: PerformParams): void // may use ctx.rng
 }
 
 interface Plan {
   time: number                     // minutes
   money: number                    // cents paid up front
   effects: StatDelta[]             // the deterministic part, already scaled by modifiers
-  modifiers: AppliedModifier[]     // e.g. { source: 'low-energy', target: 'workOutput', bp: -2000 }
+  modifiers: AppliedModifier[]     // e.g. { source: 'modifier.low-energy', target: 'workOutput', bp: -2000 }
   outcomes: OutcomeRange[]         // the random part, as ranges ("+4–8 Social")
+  transfers: PlannedTransfer[]     // ledger moves off cash (savings, deposit, a loan, §10.1), so none hides
 }
 
 type Preview =
@@ -317,7 +328,7 @@ type Preview =
   anything the preview marks unavailable, so the UI and the rules can't disagree.
 - **Energy is an effect**, not a separate cost: travel's energy use is an `energy` effect like any other.
 - **Handler kinds:** `basic` (fixed time, cost and effects from data; rest actions are `basic`), `eat`, `eat-stored`,
-  `work-shift`, `gig`, `apply-job`, `enroll`, `study`, `buy`, `rent-home`, `subscribe`, `unsubscribe`,
+  `work-shift`, `gig`, `apply-job`, `enroll`, `drop-course`, `study`, `buy`, `rent-home`, `subscribe`, `unsubscribe`,
   `subscription-audit`, `deposit`, `withdraw`, `borrow` and `repay`. A handler can list its parameter `options` (one
   per job, item, duration or amount preset, plus "all of it"); `listActions` offers each one.
 - **Data rules for every kind:** costs follow the price index (FR-50). For actions with `durations`, effects and cost
@@ -326,7 +337,7 @@ type Preview =
 
 ### 8.3 Modifiers
 
-A modifier changes a target quantity by basis points (FR-21). Its copy key is `modifier.<source>`:
+A modifier changes a target quantity by basis points (FR-21). Its `source` is the copy key of its cause:
 
 ```ts
 interface AppliedModifier { source: string; target: ModifierTarget; bp: number }
@@ -335,10 +346,9 @@ type ModifierTarget = 'workOutput' | 'studyOutput' | 'travelTime'
 
 `collectModifiers(content, player, target)` gathers them from every source in a fixed order: stat thresholds
 (`balance.statModifiers`, e.g. Energy < 25 → work output −20%), then items, then subscriptions, then the AI-tools
-skill (FR-42), then news (Phase 3). A modifier's `source` is the copy key of its cause (`modifier.<id>`, `item.<id>`,
-`subscription.<id>`, `track.<id>`). They are summed in basis points and applied once with `applyBp`, so stacking
-order never changes the result. An action's
-`outputTarget` says which modifiers scale its positive effects; losses are never scaled. Travel time always takes
+skill (FR-42). News adds no modifiers: its effects apply where each quantity is worked out (§11). Sources are
+`modifier.<id>`, `item.<id>`, `subscription.<id>` and `track.<id>`. They are summed in basis points and applied once
+with `applyBp`, so stacking order never changes the result. An action's `outputTarget` says which modifiers scale its positive effects; losses are never scaled. Travel time always takes
 `travelTime` modifiers.
 
 ## 9. Board and travel
@@ -421,13 +431,14 @@ steps, so later phases only fill steps in.
 | P3 | Interest and debt payments | player | stub | **2**: savings and debt interest, payments due, collections |
 | P4 | Job and AI-disruption checks | player | stub | **2**: disruption roll, layoff warning, rating, promotion |
 | P5 | Stat decay and recovery | player | **Real**: basic weekly Energy recovery and drift | **2**: home, item and subscription buffs; 9 (relationships) |
-| P6 | Weekend event | player | stub (can pause) | 3 |
-| P7 | Quest progress | player | stub | 3 |
+| P6 | Weekend event | player | stub (can pause) | **3**: deck draw, burnout cards, choices that pause |
+| P7 | Quest progress | player | stub | **3**: rewards, failures, new quests |
 | R1 | Market move | round | stub | **2**: inflation, regimes, returns, crashes, job openings |
-| R2 | News | round | stub | 3 |
-| R3 | Goal check (may end the game, FR-11/12) | round | week limit only | **2**: win check, overshoot tiebreak, scores |
-| R4 | Next-week teasers | round | stub | 3 |
-| R5 | Roll over: `week + 1`, reset time and location, clear RNG streams | engine | **Real** | — |
+| R2 | News | round | stub | **3**: running stories count down; a new one may break |
+| R3 | Goal check (may end the game, FR-11/12) | round | week limit only | **2**: win check, overshoot tiebreak, scores. **3**: score ties by overshoot, final near misses |
+| R4 | Rival feed | round | — | **3**: standings, overtakes, near misses, Jones's posts |
+| R5 | Next-week teasers | round | stub | **3** |
+| R6 | Roll over: `week + 1`, reset time (plus event adjustments) and location, clear RNG streams | engine | **Real** | — |
 
 ```ts
 interface PipelineStep<Ctx> {
@@ -440,6 +451,16 @@ interface PipelineStep<Ctx> {
 - **Roll over is built in**, not a pipeline step, so a test pipeline can't forget it.
 - **History** gets one `WeekRecord` per player when their end-of-turn steps finish, so the final week is recorded even
   when R3 ends the game.
+- **Weekend events (FR-70).** With `balance.events.chanceBp` a card is drawn from those whose condition holds and
+  whose cooldown has passed; a turn that ended at 0 Energy draws a burnout card instead. Choices the player can't
+  afford or doesn't qualify for are left out. One choice left applies at once; more pause. Each option's plan is
+  stored on the decision (`Decision.plans`), so previewing a `decide` shows it (FR-03).
+- **News (FR-72)** lives in `world.news`. `hooks/news.ts` sums each effect over the running stories, and it is added
+  where the quantity is worked out: the disruption roll (rate and ladder exposure), gig pay, inflation, renewal
+  hikes, savings and card rates, job openings; a story can switch the market regime. Exposure news moves the
+  disruption roll only, not the Career goal's stability, so goal values stay a function of the player alone.
+- **Rival feed and teasers** are read off `state.history` and pending state, so they are pure functions of the state.
+  `WeekRecord` carries what they compare week to week (score, job and level, home, credentials, items, quests done).
 - **Pausing.** A per-player step that needs a choice (weekend events, later partner ultimatums) returns
   `{ pause: decision }`. The engine stores it in `state.pending`, keeps the step index in `phase`, emits
   `decisionRequired` and returns to the caller. While a decision is pending, the only legal action is `decide`, which
@@ -468,12 +489,15 @@ type DomainEvent =
   | { type: 'gameOver'; result: GameResult }
   // Phase 2: moneyMoved (§10.1), jobChanged, gigDeactivated, enrolled, credentialEarned, itemBought, subscribed,
   // unsubscribed, subscriptionAudit, moved, leaseRenewed, rentMissed, evicted, paymentMissed, collections,
-  // marketMoved. See types/events.ts.
+  // marketMoved.
+  // Phase 3: courseDropped, weekendEvent, eventResolved, newsStarted, newsEnded, questIssued, questCompleted,
+  // questFailed, teaser, rivalPost, standings, overtaken, nearMiss. See types/events.ts.
 ```
 
 - Events are in the order things happened, with enough data to animate (`from`/`to`, not just a delta). An action's
   `travelled` or `actionPerformed` comes first, then its `statChanged` events.
-- `cause` (`{ kind: 'action', id }`, `{ kind: 'travel', mode }`, `{ kind: 'restBonus' }`, `{ kind: 'step', id }`) lets
+- `cause` (`{ kind: 'action', id }`, `{ kind: 'travel', mode }`, `{ kind: 'restBonus' }`, `{ kind: 'step', id }`,
+  `{ kind: 'event', id }`, `{ kind: 'quest', id }`) lets
   the UI say *why* a stat moved, and later feeds the run summary.
 - Data the run summary needs after the game (net worth per week, best and worst week) lives in `state.history`, not in
   events, because events aren't saved.
@@ -488,8 +512,10 @@ rules are balance data.
 | `data/meta.json` | Content version, default city |
 | `data/balance.json` | Rules: week minutes, stat ranges and starting values, wardrobe tiers, rest bonus, stat-threshold modifiers, hunger penalty, weekly drift, job and AI-disruption rules, gig risk, skill tracks, leases, inflation, finance rates, market regimes, goal presets |
 | `data/cities/<id>/` | The city profile (FR-33), one folder: `city.json` (board, transport modes, action definitions, gig pay), `jobs.json`, `courses.json`, `housing.json`, `items.json`, `subscriptions.json`, merged into one `City` |
+| `data/events.json`, `data/news.json`, `data/quests.json` | Weekend event deck, news stories and micro-goals: conditions, weights, effects (FR-74) |
+| `data/ai.json` | Utility scorer tuning and Jones's personas by difficulty (FR-80, FR-83) |
 | `locales/en.json` | English copy |
-| `sim/personas.json` | Simulator bot personas (`@fastlane/content/sim`, never in the game bundle) |
+| `sim/personas.json`, `sim/kpi-bands.json` | Simulator bot personas and KPI bands (`@fastlane/content/sim`, never in the game bundle) |
 
 - **Validation.** Zod schemas in `content/src/schemas.ts`. `pnpm content:validate` (CI) and the package's own import
   both validate every file, then run cross-reference checks (unique ids; every action's location exists; one segment
@@ -499,8 +525,11 @@ rules are balance data.
   fixture content and the sim can run balance variants side by side. The engine hashes that object into
   `contentHash`, so the hash always matches what the engine actually runs.
 - **Copy is not content.** Content holds ids only. Copy keys are derived from them (`city.<id>`, `location.<id>`,
-  `transport.<id>`, `action.<id>`, `wardrobe.<tier>`, `modifier.<id>`, `decision.<stepId>.<option>`), and English
-  text lives in `locales/en.json`, ready for `i18next` in Phase 4 (NFR-06).
+  `transport.<id>`, `action.<id>`, `wardrobe.<tier>`, `modifier.<id>`, `decision.<stepId>.<option>`, and the
+  rest that `contentStringKeys` lists), and English text lives in `locales/en.json`, ready for `i18next` in Phase 4
+  (NFR-06). Weekend events use `event.<id>`, `event.<id>.text` and `event.<id>.<choice>`; teasers `teaser.<id>`;
+  Jones's lines are numbered variants `feed.<moment>.<n>` (FR-84). Their `{{slot}}`s are checked against the slots
+  the engine fills (`TEASERS` and `FEED_MOMENTS` in `content/src/keys.ts`).
 
 ## 14. Saves and replay
 
@@ -580,6 +609,9 @@ All done in Phase 1; kept as a record of the dependency order.
 | New command types for jobs, shops and banking? | No; `perform` takes optional `target`, `minutes` and `amount` (§8.1) |
 | How is money conservation defined? | A ledger with a named reason per flow; internal flows keep net worth (§10.1; agreed with the user) |
 | One file for the city profile, or several? | A folder per city, one file per section, merged into one `City` (§13). Still one profile, per FR-33 |
+| Does changing jobs reset the job rating? | No: a new hire keeps the old job's rating (Phase 3; the balance sim found bots re-applying to dodge being let go). Promotions start fresh |
+| Who wins a week-limit tie on score? | The bigger total overshoot, as for a win (FR-11), then seat order (Phase 3) |
+| Where do Jones's personas live? | Game content (`data/ai.json`), so Jones ships with the game; the sim reads them too (§13) |
 
 ### Open
 

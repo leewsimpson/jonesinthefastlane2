@@ -152,22 +152,17 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
 | Micro-goals/quests: 1–3 active, rewards | ENG-11 |
 | Near-miss and rival-progress data exposed as engine events | ENG-13, ENG-14 |
 | `packages/sim`: Jones personas, worker pool, MVP KPIs with bands in content, `sim compare` against the merge base, Markdown summary, throughput benchmark | simulator §5, §7, §8 |
-| CI-04: 2k games per PR with KPI bands, PR comment table; content cross-reference test (all event IDs resolve) | CI-04 |
+| CI-04: 2k games on `main` (and manual dispatch) with KPI bands, table in the job summary; content cross-reference test (all event IDs resolve) | CI-04 |
 
 **Exit criteria**
 - A full game (human-scripted vs Jones) runs headless with events, news and teasers.
 - Balance sim runs in CI under the 8-minute budget and has initial KPI bands.
 
 **Notes**
-- **Ask the user** which model the build-time Jones line generator uses and how generated lines are reviewed before they ship.
+- Decided with the user: Claude writes Jones's lines and the event, news and teaser copy during development; the
+  user reviews them in the PR diff (FR-84).
 - Record the initial KPI bands and the runs they came from in `docs/progress.md`.
 - Check the bots before trusting their numbers: if `balanced` loses to `random` or has high regret, the bot is broken, not the game.
-- The utility scorer (`engine/src/ai/utility.ts`) is greedy per hour with a horizon bonus. In Phase 2 `balanced`
-  scored about 80% on Standard but rarely won: it doesn't plan careers (dress, credentials, experience) ahead. Fix
-  that before setting bands, and move its tuning constants into persona or balance data. It runs at about 0.5 s per
-  game; SIM-02 needs about 25× faster (cache arrival scores, cheaper projections, worker pool).
-- AI disruption has a news hook (`NEWS_DISRUPTION_BP` in `pipeline/jobChecks.ts`) waiting for FR-72; gig surges
-  (FR-44) can come from news too.
 
 ---
 
@@ -201,6 +196,10 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
 - Use placeholder shapes unless art track A2/A3 have landed (check `art/`).
 - Verify in a real browser at phone portrait and desktop landscape: play at least one week and a save/reload.
 - **Human-only:** the full game vs Jones in the exit criterion is played by the user.
+- Weekend-event choices arrive as a pending `Decision` whose `plans` hold each option's preview; the card's copy is
+  `event.<id>`, `event.<id>.text` and `event.<id>.<choice>` (engine-design §11, §13).
+- Jones's posts carry a moment and slot values (`rivalPost`); the UI picks one of the `feed.<moment>.<n>` lines.
+  Teasers, standings, overtakes and near misses are domain events too; show at least the first teaser each week.
 
 ---
 
@@ -233,6 +232,12 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
 - Final art needs art track A2–A5; generate missing assets with the `codex-image` skill and confirm batch sizes with the user first (quota cost).
 - **Human-only:** the first-paycheck exit criterion needs real testers. Instrument time-to-first-paycheck so their runs report it.
 - Fix every no-brainer, trap and dead choice that `sim assess` reports, or record why it stays.
+- Phase 3 left soft-band misses for this balance pass (`docs/progress.md`, Phase 3): Standard is won too early and
+  Standard Jones is too weak, Career is the critical path so `careerist` wins most games, `balanced` almost never
+  hits a setback, and `casual` struggles on Chill. Tune through content (targets, wages, event pressure) and
+  re-run `pnpm sim run --base` to see each change.
+- Still to add to the sim: luck share, week of first goal milestone (simulator §5), `assess`, `sweep`, `trace`.
+- Jones's feed posts about milestones only; a moment for a good weekend event (a viral post) fits the copy pass.
 
 ---
 

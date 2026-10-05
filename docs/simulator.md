@@ -72,9 +72,13 @@ interface Policy {
 Most personas are **one utility scorer with different weights**: the same scorer that powers Jones (FR-80) lives in
 `packages/engine` (`ai/utility.ts`), and Jones's difficulty is how often the bot picks its top-scored move (FR-83). It
 values a position as weighted goal progress plus what the persona expects over its horizon, and scores each option
-by value gained per hour; travel is scored by the best thing to do on arrival. A persona is data, in basis points
-like every other balance value: goal weights, risk appetite, horizon in weeks and best-move rate. The roster and its
-values live in `packages/content/sim/personas.json` (loaded through `@fastlane/content/sim`).
+by value gained per hour; travel is scored by the best thing to do on arrival. Goal value is concave (progress past
+a target is worth less, and the weakest goal earns a bottleneck bonus, because winning needs all four), expected
+progress counts apart from progress made, and a job is valued as it will stand after this week's job check. A
+persona is data, in basis points like every other balance value: goal weights, bottleneck bonus, risk appetite,
+horizon in weeks, best-move rate and how many runners-up it picks from otherwise. Bot personas live in
+`packages/content/sim/personas.json`; Jones's ship with the game in `packages/content/data/ai.json`, with the scorer's
+shared tuning (both loaded through `@fastlane/content/sim`).
 
 | Persona | Plays like | Why it exists |
 |---|---|---|
@@ -82,7 +86,7 @@ values live in `packages/content/sim/personas.json` (loaded through `@fastlane/c
 | `idle` | Ends the week at once, every week | Proves the no-softlock floor (FR-14): Parents' Basement and gig work keep it alive |
 | `balanced` | Weights all four goals evenly | The reference "sensible player"; most bands are set against it |
 | `careerist` / `scholar` / `saver` / `socialite` | Leans on one goal | Each goal must be winnable, but not alone |
-| `gigger` | Only does GigHub work | Gig work must be a floor, not a winning strategy |
+| `gigger` | Only does GigHub work (a scripted bot, not a persona) | Gig work must be a floor, not a winning strategy |
 | `gambler` | High risk appetite: crypto, YOLO choices | Risky play should be swingy, not dominant |
 | `spender` | Buys whatever raises Happiness now | Shows that consumerism and subscription creep hurt (the satire must land) |
 | `casual` | `balanced` with `bestMoveRate` 0.6 and a short horizon | A careless human. Should still finish a Chill game |
@@ -122,8 +126,9 @@ swing > 5× median, and the same action chosen > 80% of the time.
 ## 5. Outcome KPIs
 
 KPIs and their bands live in content (`packages/content/sim/kpi-bands.json`) so they are tuned like any balance
-value (NFR-15). Each band names the persona(s) and settings it applies to. Starting set (the values are placeholders
-until the first Phase 3 runs):
+value (NFR-15). Each band names one KPI by id (`win.<matchup>`, `jonesWin.<matchup>`, `winWeek.<matchup>`, …; see
+`packages/sim/src/runner/kpis.ts`) and records the run it came from. The design targets below are the soft bands;
+the hard bands are wider guard rails:
 
 | KPI | Measures | Example band |
 |---|---|---|
@@ -133,14 +138,15 @@ until the first Phase 3 runs):
 | Dominance | Best persona's win rate − second best | ≤ 15 points. More means one strategy solves the game |
 | Single-goal personas | Each one-goal persona | Wins < 20%. Balanced play must beat specialising |
 | Floor | `gigger`, `idle` | Never a crash or softlock. `gigger` wins < 10% |
-| Hardship | Evictions, collections, burnouts per game | `balanced`: ≥ 1 setback in 30–60% of games (pressure without misery) |
+| Hardship | Evictions, collections, burnouts and layoffs per game | `balanced`: ≥ 1 setback in 30–60% of games (pressure without misery) |
 | Luck share | Variance in final score across seeds for the same persona vs variance across personas | Skill should explain more than luck |
 | Seat fairness | Win rate by turn order | Within ±3 points (FR-05a, FR-11) |
 | Early hook | Week of first paycheck, week of first goal milestone | First paycheck in week 1 for `balanced` (ENG-20) |
 | Content reach | Share of jobs, items, events and event choices used at least once across the run | Unused content is listed in the report |
 | Throughput | Games per second | Regression > 20% fails |
 
-Bands have a **hard** range (CI fails) and an optional **soft** range (a warning in the PR comment).
+Bands have a **hard** range (CI fails) and an optional **soft** range (a warning in the summary). Luck share isn't
+measured yet; throughput shows in every report but has no band, because it depends on the machine.
 
 ## 6. Choice assessment
 
@@ -176,9 +182,10 @@ correlation only, unless the PR touches events or balance values.
   value, job, item or event weight without editing content. Objects merge key by key, arrays of objects with an `id`
   merge by id (new ids are appended), anything else replaces; the result is validated like shipped content.
   Examples live in `packages/sim/overrides/`.
-- **A/B compare.** `sim compare --base <ref|override> --head <ref|override>` runs both on the **same seeds** and reports
-  paired differences with confidence intervals. In CI the base is the PR's merge base, so every PR comment shows
-  "this change moved win rate by +4.1 ± 1.2 points".
+- **A/B compare.** Every matchup's game *i* uses the same seed in every run, so two reports pair up game by game.
+  `sim compare --base <report.json | git ref> --head <report.json>` reports paired differences with 95% intervals ("this
+  change moved win rate by +4.1 ± 1.2 points"); a git ref is run in a temporary worktree first. `sim run --base
+  <report.json>` adds the comparison to its summary. In CI the base is the last green `main` run's report.
 - **Sweep.** `sim sweep --param content.balance.aiDisruption.baseRate --from 0.01 --to 0.05 --steps 9` charts KPIs
   against the value and shows where each band holds. This is how starting values in game-requirements get tuned.
 - **Scenario starts.** Start from a fixed save (e.g. "week 20, evicted, $-2k") to test recovery arcs (FR-14) without
@@ -186,13 +193,14 @@ correlation only, unless the PR touches events or balance values.
 
 ## 8. CLI, CI and reports
 
-Phase 2 ships a single-process subset: `pnpm sim --bots balanced,careerist [--difficulty standard] [--override …]`
-plays each bot solo and prints wins, median win week, mean score and time per game. The commands below arrive with
-the Phase 3 runner.
+Built in Phase 3: `run` and `compare`, plus `random` (the replay check) and `bots` (solo games per bot). `run`
+plays a fixed plan of matchups (`packages/sim/src/runner/plan.ts`): `balanced` against each Jones, every other
+persona and the floors against Standard Jones, and two `balanced` players for seat fairness. The rest are still to
+come (§6, Phase 5).
 
 ```
-pnpm sim run      --games 2000 --personas balanced,careerist,jones-standard --preset standard --weeks 52 --seed 1
-pnpm sim compare  --base origin/main --head HEAD --games 2000
+pnpm sim run      --games 2000 [--seed fastlane] [--workers N] [--override …] [--out sim-out] [--base report.json]
+pnpm sim compare  --base <report.json | git ref> --head <report.json>
 pnpm sim sweep    --param <path> --from <a> --to <b> --steps <n>
 pnpm sim assess   --games 500 --rollouts 32           # choice assessment (§6)
 pnpm sim trace    <seed> [--config run.json]          # readable replay of one game
@@ -206,7 +214,7 @@ matrix, game-length histogram, choice classification table, unused content list)
 | Where | What runs | Gate |
 |---|---|---|
 | Unit tests | Tiny runs (20 games) as Vitest tests: no crash, determinism, money conservation | Fails the test suite |
-| PR (`ci.yml`, CI-04) | `run` across core personas + `compare` against the merge base | Hard bands fail; soft bands and deltas are posted as a sticky comment. Report uploaded as an artifact |
+| `main` and manual dispatch (`ci.yml`, CI-04) | `run` (2k games) + compare against the last green `main` report | Hard bands fail; the band table, soft warnings and deltas go to the job summary. Report uploaded as an artifact |
 | Nightly (`nightly.yml`, OPS-04) | Full game count, all personas, `assess`, `optimizer` exploit search | Opens or updates a GitHub issue when anything is out of band or a new exploit is found |
 | Local | Any command; `report.html` opens in a browser | — |
 
