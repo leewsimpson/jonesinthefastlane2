@@ -4,7 +4,8 @@ Design for `packages/engine`, the pure, deterministic rules engine. It covers ev
 [implementation plan](implementation-plan.md) builds, and fixes the shapes that later phases plug into (jobs, events,
 Jones, Daily Run verification), so those phases add code without reworking the core.
 
-**Status:** implemented in Phase 1 (`ENGINE_VERSION` 0.2.0). Decisions and open questions are listed in §17.
+**Status:** Phase 1 and Phase 2 implemented (`ENGINE_VERSION` 0.3.0, state schema 2). Decisions and open questions
+are listed in §17.
 
 ## 1. Constraints
 
@@ -38,7 +39,11 @@ packages/engine/src/
 ├─ board/                 # loop distances, travel cost
 ├─ actions/               # previews, listActions, one handler per kind
 ├─ pipeline/              # step order and the real steps
-├─ ai/                    # AI policy (Phase 1: random legal; Phase 3: utility)
+├─ ai/                    # AI policies: random legal, and the utility scorer with personas (§7)
+├─ money/                 # the ledger: the one write path for money (§10.1)
+├─ economy/               # prices and wages through the world's indices (FR-50)
+├─ jobs/                  # qualification, pay, AI exposure, ladders
+├─ goals/                 # goal values, progress, score, win and tiebreak (§3, FR-11, FR-12)
 └─ save/                  # save format, migrations (separate entry point, §14)
 ```
 
@@ -93,11 +98,11 @@ cloneable, hashable, storable in IndexedDB and sendable to the Worker.
 interface GameState {
   schemaVersion: number
   seed: string                      // run seed (Daily Run: from GET /daily)
-  config: GameConfig                // week limit, turnLengthWeeks; difficulty and goal targets from Phase 2
+  config: GameConfig                // week limit, turnLengthWeeks, difficulty and goal targets (FR-10)
   week: number                      // 1-based calendar week, shared by all players (FR-05a)
   phase: Phase
   players: PlayerState[]            // in turn order
-  world: WorldState                 // shared; only per-round steps may change it
+  world: WorldState                 // shared: price and wage index, market regime, job openings; round steps only
   rng: Record<string, RngState>     // live stream states for the current week (§6)
   pending: Decision | null          // a choice the active human must make (§11)
   nextId: number                    // deterministic counter for new instance ids
@@ -118,8 +123,9 @@ interface PlayerState {
   timeLeft: number                  // minutes
   stats: Stats                      // §10; cash in cents, wardrobe as a tier index
   mealsThisWeek: number
-  items: ItemId[]                   // Phase 1 only reads it (transport requirements)
-  // Phase 2+ adds: aiProfile, job, housing, accounts, debts, skills, goals progress …
+  items: ItemId[]
+  // Phase 2: job, experience per ladder, gig ban, enrolment, credentials, study minutes per track, housing and
+  // lease, holdings (savings and market assets), debts, subscriptions, stored meals. See types/state.ts.
 }
 ```
 
@@ -134,7 +140,7 @@ Rules:
   no access to the rest of the state, so a player step can't change prices for players who go later (FR-05a). Only
   per-round steps get the writable state. Phase 1's world is empty.
 - **`turnLengthWeeks`** (default 1) is in `config` from day one, so Long Life (FR-91) is a balance change later, not a
-  state migration. Recurring steps multiply by it; Phase 1 only carries the field.
+  state migration. Rent, subscriptions, interest, minimum payments and the disruption chance multiply by it.
 
 ## 5. Numbers and determinism
 
@@ -186,9 +192,10 @@ streamSeed = cyrb128(`${runSeed}|${streamKey}`)
 
 | Stream | Scope | Used for | Phase |
 |---|---|---|---|
-| `world` | round | Inflation, market moves, news, job openings | 2–3 |
-| `action` | player | Random outcomes of the player's own actions (ranged effects, gig pay, thrift finds, exam results) | 1 |
+| `world` | round | Inflation, market moves, news, job openings. Week 0 seeds the starting world | 2–3 |
+| `action` | player | Random outcomes of the player's own actions (ranged effects, gig pay and deactivation, thrift finds, exam results) | 1 |
 | `job` | player | AI-disruption rolls (FR-42) | 2 |
+| `bills` | player | Rent hikes at lease renewal (FR-51) | 2 |
 | `events` | player | Weekend event draws and outcomes | 3 |
 | `ai` | AI player | Jones's decisions (tie-breaks, "how often it picks the best move") | 1 (random policy), 3 |
 
@@ -232,7 +239,8 @@ newGame ─► turn(p1) ─endWeek─► endOfTurn(p1, steps…) ─► turn(p2)
   long list of events (their end of turn, Jones's whole turn, the round end, the next human's `turnStarted`). The UI
   plays them back in order.
 - **AI turns run inside the engine, and the log holds only human actions** (decided, §17). The AI policy picks among
-  the available options using the `ai` stream, so a replay recomputes Jones exactly. This means a client can't submit
+  the available options using the `ai` stream, so a replay recomputes Jones exactly. It also gets the state
+  read-only, as a player would see it: the utility scorer (`ai/utility.ts`) values positions from it. This means a client can't submit
   fake Jones moves in a Daily Run. The cost: changing the AI policy changes old replays, which is fine because saves
   and Daily Runs pin the engine version (§14). A turn longer than 200 AI actions throws, so a buggy policy can't loop
   forever.
@@ -255,8 +263,10 @@ type Action =
 ```
 
 The command set stays this small. New gameplay comes from new **action definitions** in content and new **handler
-kinds** in code, not from new command types. `travel` always names its mode, so the log is explicit. Phase 2 adds an
-optional `minutes` to `perform` for variable-length actions (work shifts, study).
+kinds** in code, not from new command types. `travel` always names its mode, so the log is explicit. `perform` takes
+optional parameters: a `target` (job, course, item, housing tier, subscription, account or debt), `minutes` for
+actions with `durations` (work, gigs, study), and an `amount` in cents for money actions. Unset parameters are left
+out, never `undefined`, so logs stay plain JSON.
 
 ### 8.2 Definitions (content) and handlers (code)
 
@@ -306,9 +316,13 @@ type Preview =
   An unavailable option keeps its plan when it could be worked out ("costs $12, you have $5"). `reduce` refuses
   anything the preview marks unavailable, so the UI and the rules can't disagree.
 - **Energy is an effect**, not a separate cost: travel's energy use is an `energy` effect like any other.
-- **Phase 1 handler kinds:** `basic` (fixed time, cost and effects from data) and `eat` (`basic`, plus it counts a
-  meal). Rest actions are `basic`: they have no rule of their own. Phase 2 adds `work-shift`, `study`, `buy`,
-  `apply-job` and the banking kinds.
+- **Handler kinds:** `basic` (fixed time, cost and effects from data; rest actions are `basic`), `eat`, `eat-stored`,
+  `work-shift`, `gig`, `apply-job`, `enroll`, `study`, `buy`, `rent-home`, `subscribe`, `unsubscribe`,
+  `subscription-audit`, `deposit`, `withdraw`, `borrow` and `repay`. A handler can list its parameter `options` (one
+  per job, item, duration or amount preset, plus "all of it"); `listActions` offers each one.
+- **Data rules for every kind:** costs follow the price index (FR-50). For actions with `durations`, effects and cost
+  are per `minutes` block and scale with the chosen length. `location: "*"` is available everywhere (GigHub).
+  `requires` gates an action on an owned item or a minimum housing tier.
 
 ### 8.3 Modifiers
 
@@ -319,9 +333,11 @@ interface AppliedModifier { source: string; target: ModifierTarget; bp: number }
 type ModifierTarget = 'workOutput' | 'studyOutput' | 'travelTime'
 ```
 
-`collectModifiers(content, player, target)` gathers them from every source in a fixed order: stat thresholds (Phase 1,
-`balance.statModifiers`, e.g. Energy < 25 → work output −20%), then items (Phase 2), then news (Phase 3). They are
-summed in basis points and applied once with `applyBp`, so stacking order never changes the result. An action's
+`collectModifiers(content, player, target)` gathers them from every source in a fixed order: stat thresholds
+(`balance.statModifiers`, e.g. Energy < 25 → work output −20%), then items, then subscriptions, then the AI-tools
+skill (FR-42), then news (Phase 3). A modifier's `source` is the copy key of its cause (`modifier.<id>`, `item.<id>`,
+`subscription.<id>`, `track.<id>`). They are summed in basis points and applied once with `applyBp`, so stacking
+order never changes the result. An action's
 `outputTarget` says which modifiers scale its positive effects; losses are never scaled. Travel time always takes
 `travelTime` modifiers.
 
@@ -341,12 +357,12 @@ The board is part of the city profile (`cities/<id>/city.json`, FR-33):
 - Players can travel either way round the loop, and distance is always the shorter way (decided, §17).
 - Travel time = `minutesBase + distance × minutesPerStep`, then travel-time modifiers. Money =
   `costBase + distance × costPerStep`. Energy = `distance × energyPerStep`.
-- Transport modes are city data, each optionally needing an item (`requiresItem: "e-scooter"`). Item-gated modes stay
-  unavailable until items arrive in Phase 2 (FR-02). The content check requires at least one mode with no item.
+- Transport modes are city data, each optionally needing an item (`requiresItem: "e-scooter"`). The content check
+  requires at least one mode with no item.
 - Travel is illegal if the player can't afford its time or money, or is already there. You can't start a trip you can't
   finish, and `endWeek` is always legal, so this never strands anyone.
 - Everyone starts each week at `home`.
-- GigHub isn't a loop location. Its actions will have `location: '*'` and be available everywhere (FR-44, Phase 2).
+- GigHub isn't a loop location. Its actions have `location: '*'` and are available everywhere (FR-44).
 
 ## 10. Stats
 
@@ -356,24 +372,42 @@ The board is part of the city profile (`cities/<id>/city.json`, FR-33):
 | Time | `timeLeft`, minutes | 0 – budget | Budget is `balance.weekMinutes`; reset each week |
 | Energy | int | 0–100 | 0 ends the turn (forced rest). The burnout event card comes in Phase 3 |
 | Health, Happiness, Social | int | 0–100 | |
-| Credit score | int | 300–850 | Moves only from Phase 2 (debt, rent) |
+| Credit score | int | 300–850 | Moves with debt payments, missed rent, collections and eviction |
 | Hunger | `mealsThisWeek` count | ≥ 0 | 0 at the food check → penalty |
 | Wardrobe | `stats.wardrobe`, tier index | 0 – last tier | Tiers named in `balance.wardrobeTiers`; checked by jobs in Phase 2 |
 
 Ranges, starting values and every number below come from `balance.json`.
 
-- **One write path.** All stat changes go through `changeStat(ctx, player, stat, delta, cause)`. It clamps to the range,
-  emits `statChanged` with the real `from` and `to`, and returns the *applied* delta (which may be smaller than
-  requested). Code never writes `player.stats.x = …` directly, and the range property test (§15) catches any slip.
-- **Cash never goes negative.** Actions you can't afford are unavailable. End-of-week charges that can't be covered go
-  through missed-payment handling in Phase 2 (warning → debt/collections → eviction to Parents' Basement, FR-14), never
-  a negative balance. Clamping cash at 0 would silently create money, so cash is *not* clamped: a change that would
-  make it negative throws.
+- **One write path.** All stat changes except cash go through `changeStat(ctx, player, stat, delta, cause)`. It clamps
+  to the range, emits `statChanged` with the real `from` and `to`, and returns the *applied* delta (which may be
+  smaller than requested). Code never writes `player.stats.x = …` directly, and the range property test (§15) catches
+  any slip. Cash goes through the ledger (§10.1); `changeStat` throws if asked to move it.
+- **Cash never goes negative.** Actions you can't afford are unavailable. End-of-week charges cash can't cover become
+  debt: unpaid rent becomes arrears, missed minimum payments add a late fee, a debt missed `collectionsAfter` weeks in
+  a row goes to collections, and rent missed `evictAfterMissed` weeks in a row evicts to the free first housing tier
+  (FR-14). Unpaid subscriptions are cancelled instead. Clamping cash at 0 would silently create money, so a change
+  that would make it negative throws.
 - **Rest bonus (FR-04):** `floor(leftover minutes × restBonusEnergyPerHour / 60)`, applied when the turn ends.
 - **Food (§4 of the requirements):** `eat` actions count meals. Stored groceries and the fridge come with items in
   Phase 2.
-- **No-softlock floor (FR-14):** Phase 1 has no income yet, so the guarantee is "there is always a legal action"
-  (`endWeek`). Phase 2 adds the money-earning half and its property test.
+- **No-softlock floor (FR-14):** there is always a legal action (`endWeek`), GigHub works anywhere, and the content
+  check requires an entry job that needs nothing and is always open. A property test makes a reachable state broke,
+  jobless and banned from GigHub, and still finds wages or gig pay within this week or the next.
+
+### 10.1 Money ledger
+
+Every change to a player's money is a `transfer(from, to, amount, reason)` between two **places**: `cash`, `deposit`
+(held by LeaseLord), `hold:<id>` (savings and each market asset) and `debt:<kind>` (card, student, arrears), or
+`outside`, the rest of the world. Each transfer emits `moneyMoved`; one touching cash also emits `statChanged`.
+
+- An asset place giving money goes down; a debt place "giving" money means more is owed. So borrowing
+  (`debt:card` → `cash`) and repaying leave net worth unchanged, and only flows to or from `outside` change it.
+- Reasons are named. External: `wage`, `gig`, `income`, `interest`, `market`, `spend`, `travel`, `rent`,
+  `subscription`, `tuition`, `fee`. Internal: `save`, `withdraw`, `borrow`, `repay`, `lease-deposit`.
+- **Money conservation** (the definition agreed in Phase 2): replaying the `moneyMoved` events over the books before an
+  action gives exactly the books after it, for every place; every flow has a reason of the right kind; and financial
+  net worth changes by exactly the external flows. A property test checks this for random legal play on fixture and
+  shipped content. Items are outside the ledger: buying one is `spend`, and goals count it at resale value.
 
 ## 11. End-of-week pipeline
 
@@ -383,15 +417,15 @@ steps, so later phases only fill steps in.
 | # | Step | Scope | Phase 1 | Filled in |
 |---|---|---|---|---|
 | P1 | Food check | player | **Real**: hunger penalty, reset meal count | — |
-| P2 | Bills, rent, subscriptions | player | stub | 2 |
-| P3 | Interest and debt payments | player | stub | 2 |
-| P4 | Job and AI-disruption checks | player | stub | 2 |
-| P5 | Stat decay and recovery | player | **Real**: basic weekly Energy recovery and drift | 2, 9 (relationships) |
+| P2 | Bills, rent, subscriptions | player | stub | **2**: rent, renewal hikes, arrears, eviction, subscriptions |
+| P3 | Interest and debt payments | player | stub | **2**: savings and debt interest, payments due, collections |
+| P4 | Job and AI-disruption checks | player | stub | **2**: disruption roll, layoff warning, rating, promotion |
+| P5 | Stat decay and recovery | player | **Real**: basic weekly Energy recovery and drift | **2**: home, item and subscription buffs; 9 (relationships) |
 | P6 | Weekend event | player | stub (can pause) | 3 |
 | P7 | Quest progress | player | stub | 3 |
-| R1 | Market move | round | stub | 2 |
+| R1 | Market move | round | stub | **2**: inflation, regimes, returns, crashes, job openings |
 | R2 | News | round | stub | 3 |
-| R3 | Goal check (may end the game, FR-11/12) | round | week limit only | 2 |
+| R3 | Goal check (may end the game, FR-11/12) | round | week limit only | **2**: win check, overshoot tiebreak, scores |
 | R4 | Next-week teasers | round | stub | 3 |
 | R5 | Roll over: `week + 1`, reset time and location, clear RNG streams | engine | **Real** | — |
 
@@ -432,6 +466,9 @@ type DomainEvent =
   | { type: 'decisionMade'; decision: Decision; optionId: string }
   | { type: 'roundEnded'; week: number }
   | { type: 'gameOver'; result: GameResult }
+  // Phase 2: moneyMoved (§10.1), jobChanged, gigDeactivated, enrolled, credentialEarned, itemBought, subscribed,
+  // unsubscribed, subscriptionAudit, moved, leaseRenewed, rentMissed, evicted, paymentMissed, collections,
+  // marketMoved. See types/events.ts.
 ```
 
 - Events are in the order things happened, with enough data to animate (`from`/`to`, not just a delta). An action's
@@ -443,14 +480,16 @@ type DomainEvent =
 
 ## 13. Content
 
-Phase 1 content in `packages/content`:
+Content in `packages/content`. The rule of thumb: prices, wages and rents in cents are city data; rates, odds and
+rules are balance data.
 
 | File | Holds |
 |---|---|
 | `data/meta.json` | Content version, default city |
-| `data/balance.json` | Week minutes, stat ranges and starting values, wardrobe tiers, rest bonus rate, stat-threshold modifiers, hunger penalty, weekly drift |
-| `data/cities/<id>/city.json` | The city profile (FR-33): loop order, segment distances, home, transport modes, action definitions |
+| `data/balance.json` | Rules: week minutes, stat ranges and starting values, wardrobe tiers, rest bonus, stat-threshold modifiers, hunger penalty, weekly drift, job and AI-disruption rules, gig risk, skill tracks, leases, inflation, finance rates, market regimes, goal presets |
+| `data/cities/<id>/` | The city profile (FR-33), one folder: `city.json` (board, transport modes, action definitions, gig pay), `jobs.json`, `courses.json`, `housing.json`, `items.json`, `subscriptions.json`, merged into one `City` |
 | `locales/en.json` | English copy |
+| `sim/personas.json` | Simulator bot personas (`@fastlane/content/sim`, never in the game bundle) |
 
 - **Validation.** Zod schemas in `content/src/schemas.ts`. `pnpm content:validate` (CI) and the package's own import
   both validate every file, then run cross-reference checks (unique ids; every action's location exists; one segment
@@ -498,7 +537,7 @@ interface SaveFile {
 | Kind | What |
 |---|---|
 | Unit | Travel costs and distances, previews and rule errors, clamping, rest bonus, food check, turn and round flow, AI turns, week limit, pause/resume, RNG streams, saves |
-| Property (fast-check) | For any seed, player mix and sequence of legal actions: stats stay in range; `timeLeft` and cash never go negative; `replay(setup, log)` gives the same state; `preview` and `listActions` leave state deep-equal (RNG included); `reduce` never mutates its (deep-frozen) input; an available option is accepted and an unavailable one returns `ok: false`; each stat lands inside the previewed range; End Week is always available. Runs on fixture and shipped content |
+| Property (fast-check) | For any seed, player mix and sequence of legal actions: stats stay in range; `timeLeft` and cash never go negative; `replay(setup, log)` gives the same state; `preview` and `listActions` leave state deep-equal (RNG included); `reduce` never mutates its (deep-frozen) input; an available option is accepted and an unavailable one returns `ok: false`; each stat lands inside the previewed range; End Week is always available. Runs on fixture and shipped content; money is conserved (§10.1) and no state softlocks (§10) |
 | Pipeline order | Inline snapshot of the FR-05 step order |
 | Golden | `core/golden.test.ts`: seed + chooser → hash, as inline snapshots. Catch accidental determinism changes. Updated deliberately, with an engine version bump |
 | Source scan | No banned APIs in `packages/engine/src` (§5) |
@@ -537,10 +576,13 @@ All done in Phase 1; kept as a record of the dependency order.
 | Separate content files for board, locations, actions and transport? | No; they are one city profile, per FR-33 (§13) |
 | Content hash from the content build, or computed by the engine? | Computed by `createEngine` from the content object it runs (§13) |
 | 64-bit FNV-1a for the state hash? | No; two cyrb53 hashes, faster and no 64-bit emulation (§14) |
+| Can cash go into overdraft? | No. Shortfalls become arrears, then collections and eviction (§10; decided with the user in Phase 2) |
+| New command types for jobs, shops and banking? | No; `perform` takes optional `target`, `minutes` and `amount` (§8.1) |
+| How is money conservation defined? | A ledger with a named reason per flow; internal flows keep net worth (§10.1; agreed with the user) |
+| One file for the city profile, or several? | A folder per city, one file per section, merged into one `City` (§13). Still one profile, per FR-33 |
 
 ### Open
 
 | # | Question | Proposed | Needed by |
 |---|---|---|---|
-| 1 | Can cash go into overdraft, or does every shortfall become debt? | Never negative; shortfalls go through missed-payment handling | Phase 2 |
 | 2 | How does the server replay a Daily Run after an engine update? | Pin each day's run to an engine + content version | Phase 7 |
