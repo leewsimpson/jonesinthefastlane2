@@ -2,11 +2,12 @@
 
 ## 1. Goals
 
-- Every PR is checked automatically and gets a live preview URL.
+- Checks run automatically on `main` only, to keep GitHub Actions minutes low. PRs run nothing by default: CI can be
+  dispatched manually on a branch, and a PR gets a live preview URL when it carries the `preview` label.
 - `main` is always deployable and auto-deploys to the **preview** environment under a stable `main` alias.
 - Two environments only: **preview** (PRs + `main`) and **production**. There is no separate staging.
 - Production deploys are one click, gated by approval, and easy to roll back.
-- The pipeline is fast: PR checks should finish in **under 8 minutes**.
+- The pipeline is fast: checks should finish in **under 8 minutes**.
 
 ## 2. Targets
 
@@ -24,14 +25,14 @@
 
 | ID | Requirement | Pri |
 |---|---|---|
-| CI-01 | Run on every PR and push to `main`: install (pnpm, cached), Biome lint/format check, `tsc` type-check, content schema validation, unit + property tests, build. | M |
+| CI-01 | Run on every push to `main` (and on manual `workflow_dispatch` for any branch): install (pnpm, cached), Biome lint/format check, `tsc` type-check, content schema validation, unit + property tests, build. | M |
 | CI-02 | Use Turborepo or `pnpm --filter ...[origin/main]` so only affected packages are built and tested. | S |
-| CI-03 | E2E (Playwright, Chromium + mobile WebKit viewport) runs against the PR **preview URL** after it deploys. | M |
-| CI-04 | Balance sim (`packages/sim`, e.g. 2k games on PRs, 10k nightly). Fails if KPIs leave their configured bands. Posts a summary table as a PR comment. | S |
+| CI-03 | E2E (Playwright, Chromium + mobile WebKit viewport) runs against the PR **preview URL** after it deploys (only labelled PRs deploy, CD-01). | M |
+| CI-04 | Balance sim (`packages/sim`, e.g. 2k games on `main`, 10k nightly). Fails if KPIs leave their configured bands. Posts a summary table to the run summary. | S |
 | CI-05 | Bundle size check: fails if the initial JS exceeds 300 KB gzipped (NFR-10). Lighthouse CI on the preview URL with performance/accessibility budgets. | M |
 | CI-06 | Security: CodeQL scanning, `pnpm audit` (high+ fails), Dependabot alerts, secret scanning with push protection on. | M |
-| CI-07 | Status checks are required on `main` through branch protection/rulesets. No direct pushes. Linear history. | M |
-| CD-01 | **Preview:** each PR deploys the web app to a Pages preview (`--branch=pr-<n>`). The URL is posted as a sticky PR comment. The Worker is uploaded with `wrangler versions upload --env preview --preview-alias pr-<n>`, which gives every PR its own Worker preview URL. (A single shared `preview` deploy would let parallel PRs overwrite each other mid-E2E.) The PR's web preview is built with that API URL. | M |
+| CI-07 | The `main` ruleset blocks force-pushes and deletion and requires linear history. Direct pushes are allowed and no status checks are required, because CI runs on `main` itself (CI-01); a red `main` is fixed forward. | M |
+| CD-01 | **Preview (opt-in):** a PR labelled `preview` deploys the web app to a Pages preview (`--branch=pr-<n>`). The URL is posted as a sticky PR comment. The Worker is uploaded with `wrangler versions upload --env preview --preview-alias pr-<n>`, which gives every PR its own Worker preview URL. (A single shared `preview` deploy would let parallel PRs overwrite each other mid-E2E.) The PR's web preview is built with that API URL. | M |
 | CD-02 | **Main:** merging to `main` deploys web + API to the preview environment under the stable `main` alias (Pages `--branch=main`, Worker `--preview-alias main`), runs D1 migrations on the preview DB, runs smoke E2E, and uploads the web build as artifact `web-dist-<sha>` for production to promote. | M |
 | CD-03 | **Production:** triggered by publishing a GitHub Release (tag `v*`) or a manual `workflow_dispatch`. Uses a GitHub **Environment `production`** with required reviewers. Deploys the *same build artifact* that passed on `main` (CD-02) (build once, promote). It doesn't rebuild. The web build must therefore not bake in environment-specific values: the API base URL and similar config are picked at runtime from the hostname or a `/config.json`. | M |
 | CD-04 | D1 migrations run **before** the Worker deploy and must be backward-compatible (expand → migrate → contract) so a rollback is always safe. | M |
@@ -49,8 +50,9 @@
 
 ```
 .github/workflows/
-├─ ci.yml           # PR + main: lint, typecheck, test, build, size, sim (CI-01..06)
-├─ preview.yml      # PR: deploy Pages preview + Worker preview, comment URL, run E2E + Lighthouse
+├─ ci.yml           # main (+ manual): lint, typecheck, test, build, size, sim (CI-01..06)
+├─ codeql.yml       # main + weekly: CodeQL (CI-06)
+├─ preview.yml      # PR labelled `preview`: deploy Pages preview + Worker preview, comment URL, run E2E + Lighthouse
 ├─ main.yml         # push to main: migrate preview D1, deploy `main` alias (Worker + Pages), smoke, upload artifact
 ├─ production.yml   # release published / dispatch: approval gate → migrate → deploy → smoke
 ├─ rollback.yml     # manual: roll back Pages + Worker to a chosen version
@@ -60,8 +62,7 @@
 ### Pipeline flow
 
 ```
-PR opened ─► ci.yml ──────────────┐
-          └► preview.yml ─► Pages preview + Worker preview ─► E2E + Lighthouse ─► PR comment
+PR + `preview` label ─► preview.yml ─► Pages preview + Worker preview ─► E2E + Lighthouse ─► PR comment
                                    │
 merge to main ─► ci.yml ─► main.yml ─► D1 migrate ─► Worker ─► Pages (main alias) ─► smoke ─► artifact
                                    │

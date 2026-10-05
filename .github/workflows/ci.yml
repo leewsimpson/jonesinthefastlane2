@@ -1,17 +1,18 @@
 # CI-01, CI-05, CI-06: lint, typecheck, content validation, tests, build, bundle budget, audit.
 name: ci
 
+# Runs on main only to save Actions minutes; dispatch manually to check a branch before merging.
 on:
-  pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: true
 
 jobs:
   checks:
