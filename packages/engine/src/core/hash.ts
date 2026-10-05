@@ -1,4 +1,4 @@
-/** Stable state hashing for replay checks (NFR-12). Key order never affects the hash. */
+/** Stable state hashing for replay checks (engine-design §14). Key order never affects the hash. */
 
 /** JSON with object keys sorted, so equal values always serialise identically. */
 export function canonicalJson(value: unknown): string {
@@ -24,6 +24,7 @@ function cyrb53(text: string, seed: number): string {
   return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16).padStart(14, '0');
 }
 
+/** Detects divergence; it isn't a security feature (the server re-runs the log rather than trusting a hash). */
 export function hashValue(value: unknown): string {
   const json = canonicalJson(value);
   return cyrb53(json, 0) + cyrb53(json, 1);

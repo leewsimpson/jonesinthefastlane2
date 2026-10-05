@@ -1,5 +1,5 @@
 {
-  "weekHours": 60,
+  "weekMinutes": 3600,
   "statRanges": {
     "cash": { "min": 0, "max": null },
     "energy": { "min": 0, "max": 100 },
@@ -10,7 +10,7 @@
     "wardrobe": { "min": 0, "max": 3 }
   },
   "startingStats": {
-    "cash": 250,
+    "cash": 25000,
     "energy": 80,
     "health": 80,
     "happiness": 60,
@@ -18,9 +18,11 @@
     "creditScore": 640,
     "wardrobe": 0
   },
-  "wardrobeTiers": ["Casual", "Smart", "Business", "Founder Hoodie"],
+  "wardrobeTiers": ["casual", "smart", "business", "founder-hoodie"],
   "restBonusEnergyPerHour": 1,
-  "lowEnergy": { "threshold": 25, "outputMultiplier": 0.8 },
+  "statModifiers": [
+    { "id": "low-energy", "stat": "energy", "below": 25, "target": "workOutput", "bp": -2000 }
+  ],
   "hungerPenalty": { "energy": -15, "health": -8, "happiness": -3 },
   "weeklyDrift": { "energy": 35, "happiness": -2, "social": -3 }
 }

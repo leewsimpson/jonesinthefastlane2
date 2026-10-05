@@ -4,8 +4,10 @@ import {
   balance,
   CitySchema,
   checkContent,
+  checkStrings,
   defaultCity,
   defaultContent,
+  en,
   type GameContent,
   LocationActionSchema,
   MetaSchema,
@@ -46,17 +48,32 @@ describe('content', () => {
   it('rejects starting stats outside their range and a mismatched wardrobe range', () => {
     const bad = { ...balance, startingStats: { ...balance.startingStats, energy: 101 } };
     expect(BalanceSchema.safeParse(bad).success).toBe(false);
-    expect(BalanceSchema.safeParse({ ...balance, wardrobeTiers: ['Casual'] }).success).toBe(false);
+    expect(BalanceSchema.safeParse({ ...balance, wardrobeTiers: ['casual'] }).success).toBe(false);
   });
 
-  it('rejects hours that are not quarter-hours and bad effect ranges', () => {
-    const action = { id: 'x', location: 'your-place', name: 'X', hours: 1, cost: 0, effects: {} };
+  it('rejects minutes that are not quarter-hours, fractional cents and bad effect ranges', () => {
+    const action = {
+      id: 'x',
+      location: 'your-place',
+      kind: 'basic',
+      minutes: 60,
+      cost: 0,
+      effects: {},
+    };
     expect(LocationActionSchema.safeParse(action).success).toBe(true);
-    expect(LocationActionSchema.safeParse({ ...action, hours: 0.1 }).success).toBe(false);
-    expect(LocationActionSchema.safeParse({ ...action, hours: 0 }).success).toBe(false);
+    expect(LocationActionSchema.safeParse({ ...action, minutes: 10 }).success).toBe(false);
+    expect(LocationActionSchema.safeParse({ ...action, minutes: 0 }).success).toBe(false);
+    expect(LocationActionSchema.safeParse({ ...action, cost: 9.5 }).success).toBe(false);
+    expect(LocationActionSchema.safeParse({ ...action, kind: 'teleport' }).success).toBe(false);
     const inverted = { ...action, effects: { social: { min: 5, max: 1 } } };
     expect(LocationActionSchema.safeParse(inverted).success).toBe(false);
     expect(LocationActionSchema.safeParse({ ...action, id: 'Not Kebab' }).success).toBe(false);
+  });
+
+  it('has English copy for every id the content uses (NFR-06)', () => {
+    expect(checkStrings(defaultContent, en)).toEqual([]);
+    const { 'action.nap': _, ...rest } = en;
+    expect(checkStrings(defaultContent, rest)).toEqual(['missing string "action.nap"']);
   });
 
   it('finds broken cross-references', () => {
@@ -70,6 +87,10 @@ describe('content', () => {
     ]);
     const board = { ...defaultCity.board, home: 'atlantis' };
     expect(checkContent(withCity({ board }))).toEqual(['home "atlantis" is not a location']);
+    const short = { ...defaultCity.board, segments: [1] };
+    expect(checkContent(withCity({ board: short }))).toEqual([
+      'the board needs one segment per location',
+    ]);
     const onlyItems = defaultCity.board.transportModes.map((m) => ({ ...m, requiresItem: 'car' }));
     expect(
       checkContent(withCity({ board: { ...defaultCity.board, transportModes: onlyItems } })),

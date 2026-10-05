@@ -79,7 +79,7 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
 | Task | Refs |
 |---|---|
 | Game state model + `reduce(state, action) → { state, events[] }`. No `Math.random`, `Date.now` or DOM | NFR-12, tech-stack §2 |
-| Seeded PRNG stored in state, with named streams (`world`, `events`, `ai`, `gig`…) split from the run seed | NFR-12 |
+| Seeded PRNG stored in state, with named streams split from the run seed (engine-design §6) | NFR-12 |
 | Turn & round model: weekly Time budget (60 h), Energy, turn order, rounds for hotseat | FR-01, FR-05a, FR-06 |
 | Board + travel: data-driven location loop, travel cost by distance and transport mode | FR-02, FR-30 |
 | Action framework: legal-action listing, **side-effect-free previews** (time, money, stat effects, modifiers like "−20% low energy") | FR-03, FR-21 |
@@ -90,7 +90,7 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
 | `packages/content` Zod schemas for locations, actions and balance constants; build fails on invalid content | FR-74, NFR-15 |
 | Save format: versioned schema + migration hook (serialise state + action log) | tech-stack §4 |
 | Tests: unit tests per rule; property tests for "stats stay in range", "replay(seed, actions) is stable", "preview never consumes RNG" | tech-stack §6 |
-| Sim skeleton: `packages/sim` runner, `random` + `idle` policies, `GameRecord`; engine exposes `newGame`, `legalActions`, `preview`, `hash`, cheap state copies | simulator §2, §10 |
+| Sim skeleton: `packages/sim` runner, `random` + `idle` policies, `GameRecord`; engine API per engine-design §3 | simulator §2, §10 |
 
 **Exit criteria**
 - A Node script plays 52 weeks of random legal actions with no crash, and replaying the log gives an identical state hash.

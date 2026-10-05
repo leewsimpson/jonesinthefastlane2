@@ -52,38 +52,25 @@ Running ledger of finished phases, deferrals and deviations from [implementation
 
 - Exit criteria:
   - A Node script plays 52 weeks of random legal actions with no crash, and replaying the log gives an identical
-    state hash: `pnpm sim` (default 20 games × 52 weeks × 2 players, ~20k actions) reports 0 replay mismatches.
-    CI runs it after the tests, and `packages/sim/src/random-play.test.ts` covers the same check.
-- What exists:
-  - `createEngine(content)` → `newGame`, `reduce(state, action) → { state, events }`, `previewAction`,
-    `legalActions`, `replay`, `hash`. `previewAction` is the only legality check, so `reduce` and the UI can't
-    disagree about what's allowed. Illegal actions throw `IllegalActionError`.
-  - xoshiro128** (checked against the reference output) with streams `world`, `events`, `ai`, `gig`, `actions`.
-    Each stream is seeded from `seed:name` on first use and stored in state.
-  - Loop board with the shorter-way-round distance. Transport modes cost base + per-step time, money and energy, and
-    can require an item. End Week, leftover-hour rest bonus, auto-end at 0 hours, burnout at 0 Energy (forced rest).
-  - End-of-week pipeline in FR-05 order. Food check and stat drift are real. Bills, interest, job checks, weekend
-    event, quests, market, news, goal check and teasers are stubs. Steps can be swapped via `createEngine(content,
-    { pipeline })`.
-  - Content: `balance.json` (week hours, stat ranges, starting stats, wardrobe tiers, rest bonus, low-energy
-    modifier, hunger penalty, weekly drift) and `cities/default/city.json` (10 MVP locations, 4 transport modes,
-    6 rest/eat/social actions). `content:validate` checks schemas and cross-references.
-  - Save: `SAVE_VERSION` 1 with setup, action log, state and state hash. `loadSave` runs a migration chain and
-    `verifySave` replays the log.
+    state hash: `pnpm sim` (default 20 games, 1 random human + 1 engine-played AI, 52-week limit) reports 0 replay
+    mismatches. CI runs it after the tests, and `packages/sim/src/random-play.test.ts` covers the same check.
+- What exists: the engine as specified in [engine-design.md](engine-design.md), `ENGINE_VERSION` 0.2.0. The first
+  implementation predated the design doc and was realigned to it the same day: integer minutes, cents and basis
+  points; `reduce` returns rule errors as values; `listActions`/`preview` return plans with availability; handler
+  kinds; streams keyed by name, scope and week; AI turns inside the engine with a human-only log; phase state machine
+  with pausable steps; week limit; save format with engine version and content hash; copy moved to
+  `locales/en.json`. engine-design §17 records where the code's approach was kept instead.
 - Deviations:
   - The engine takes content through `createEngine(content)` instead of a bare `reduce(state, action)`, so content
     stays out of saves and tests can use small fixture content (`src/__fixtures__/content.ts`).
   - Location ID for UpSkill U is `upskill-u` from the start (the art file is still `hitech-u`, per the Phase 6 IP task).
   - GigHub isn't a board location. It's an anywhere-action in Phase 2 (§16 MVP scope).
-  - No Zod schema for saves yet. The structural check and migrations are in place, and the schema comes with Dexie
-    persistence in Phase 4 so the engine stays dependency-free.
-  - Hours must be whole quarter-hours (schema-enforced) so time arithmetic stays exact in floating point.
+  - No Zod schema for saves yet (engine-design §14).
 - Notes for later phases:
-  - Engine purity is enforced by `packages/engine/src/purity.test.ts`: no `Math.random`, `Date`, host globals, Node
-    built-ins, or runtime imports of `@fastlane/content`. Shared constants come from the Zod-free
-    `@fastlane/content/keys` so the client bundle never pulls in Zod through the engine.
-  - Action effects can include `cash` (money earned, net of the upfront `cost`). Actions tagged `output` get the
-    low-energy multiplier on gains only. Phase 2 jobs and study should use that tag.
-  - The weekend event (Phase 3) needs player input mid-pipeline. The pipeline will need a pending-choice state at
-    that point.
-  - The pinned RNG sequence in `rng.test.ts` must never change: saves and Daily Runs depend on it.
+  - Engine purity is enforced by `packages/engine/src/purity.test.ts` (engine-design §5). Shared constants come from
+    the Zod-free `@fastlane/content/keys` so the client bundle never pulls in Zod through the engine.
+  - Phase 2 jobs and study should set `outputTarget: "workOutput"` / `"studyOutput"` so low-energy and later item
+    modifiers apply (engine-design §8.3).
+  - The weekend event (Phase 3) returns `{ pause }` from its step; the mechanism is tested (engine-design §11).
+  - The pinned RNG output in `rng/rng.test.ts` and the golden hashes in `core/golden.test.ts` change only on purpose,
+    with an `ENGINE_VERSION` bump.
