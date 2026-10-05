@@ -1,0 +1,374 @@
+{
+  "frames": {
+    "burger-bot": {
+      "frame": {
+        "x": 1608,
+        "y": 402,
+        "w": 400,
+        "h": 352
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 400,
+        "h": 352
+      },
+      "sourceSize": {
+        "w": 400,
+        "h": 352
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      }
+    },
+    "circuit-planet": {
+      "frame": {
+        "x": 1526,
+        "y": 0,
+        "w": 400,
+        "h": 397
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 400,
+        "h": 397
+      },
+      "sourceSize": {
+        "w": 400,
+        "h": 397
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      }
+    },
+    "freshmart": {
+      "frame": {
+        "x": 1206,
+        "y": 402,
+        "w": 400,
+        "h": 378
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 400,
+        "h": 378
+      },
+      "sourceSize": {
+        "w": 400,
+        "h": 378
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      }
+    },
+    "fulfillment": {
+      "frame": {
+        "x": 1206,
+        "y": 801,
+        "w": 400,
+        "h": 312
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 400,
+        "h": 312
+      },
+      "sourceSize": {
+        "w": 400,
+        "h": 312
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      }
+    },
+    "gighub": {
+      "frame": {
+        "x": 388,
+        "y": 0,
+        "w": 374,
+        "h": 400
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 374,
+        "h": 400
+      },
+      "sourceSize": {
+        "w": 374,
+        "h": 400
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      }
+    },
+    "hitech-u": {
+      "frame": {
+        "x": 402,
+        "y": 402,
+        "w": 400,
+        "h": 394
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 400,
+        "h": 394
+      },
+      "sourceSize": {
+        "w": 400,
+        "h": 394
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      }
+    },
+    "joblink": {
+      "frame": {
+        "x": 402,
+        "y": 801,
+        "w": 400,
+        "h": 347
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 400,
+        "h": 347
+      },
+      "sourceSize": {
+        "w": 400,
+        "h": 347
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      }
+    },
+    "leaselord": {
+      "frame": {
+        "x": 0,
+        "y": 402,
+        "w": 400,
+        "h": 397
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 400,
+        "h": 397
+      },
+      "sourceSize": {
+        "w": 400,
+        "h": 397
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      }
+    },
+    "neobank": {
+      "frame": {
+        "x": 804,
+        "y": 402,
+        "w": 400,
+        "h": 388
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 400,
+        "h": 388
+      },
+      "sourceSize": {
+        "w": 400,
+        "h": 388
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      }
+    },
+    "thriftup": {
+      "frame": {
+        "x": 804,
+        "y": 801,
+        "w": 400,
+        "h": 329
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 400,
+        "h": 329
+      },
+      "sourceSize": {
+        "w": 400,
+        "h": 329
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      }
+    },
+    "your-place-1": {
+      "frame": {
+        "x": 0,
+        "y": 801,
+        "w": 400,
+        "h": 350
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 400,
+        "h": 350
+      },
+      "sourceSize": {
+        "w": 400,
+        "h": 350
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      }
+    },
+    "your-place-2": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 386,
+        "h": 400
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 386,
+        "h": 400
+      },
+      "sourceSize": {
+        "w": 386,
+        "h": 400
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      }
+    },
+    "your-place-3": {
+      "frame": {
+        "x": 1309,
+        "y": 0,
+        "w": 215,
+        "h": 400
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 215,
+        "h": 400
+      },
+      "sourceSize": {
+        "w": 215,
+        "h": 400
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      }
+    },
+    "your-place-4": {
+      "frame": {
+        "x": 764,
+        "y": 0,
+        "w": 312,
+        "h": 400
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 312,
+        "h": 400
+      },
+      "sourceSize": {
+        "w": 312,
+        "h": 400
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      }
+    },
+    "your-place-5": {
+      "frame": {
+        "x": 1078,
+        "y": 0,
+        "w": 229,
+        "h": 400
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 229,
+        "h": 400
+      },
+      "sourceSize": {
+        "w": 229,
+        "h": 400
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      }
+    }
+  },
+  "meta": {
+    "app": "@fastlane/web scripts/sprites",
+    "image": "locations.webp",
+    "format": "RGBA8888",
+    "size": {
+      "w": 2008,
+      "h": 1151
+    },
+    "scale": 2
+  }
+}

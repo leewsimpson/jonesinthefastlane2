@@ -274,7 +274,7 @@ Follows art-direction §7. Each step needs review against the §8 checklist befo
 | A3 | MVP locations (15 buildings incl. 5 housing tiers) | Phase 4 |
 | A4 | Items + outfits (12), event category cards (7) | Phase 5 |
 | A5 | Backdrop + 5 Your Place interiors | Phase 5 |
-| A6 | Sprite pipeline script (`key-sprites`, WebP, spritesheet pack) | Before A2 lands in code |
+| A6 | Sprite pipeline script (`pnpm sprites`: key, WebP, spritesheet pack) | Before A2 lands in code |
 | v1.0 | NPC owner busts, Jones variants, new location buildings | Phase 8 |
 
 ~55 images for the MVP plus retries; confirm batch sizes before generating (quota cost per image).

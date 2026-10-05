@@ -16,7 +16,8 @@
     "build": "pnpm -r build",
     "size": "pnpm --filter @fastlane/web size",
     "dev": "pnpm -r --parallel dev",
-    "sim": "pnpm --filter @fastlane/sim sim"
+    "sim": "pnpm --filter @fastlane/sim sim",
+    "sprites": "pnpm --filter @fastlane/web sprites"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

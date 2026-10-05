@@ -7,8 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -p tsconfig.json",
-    "size": "size-limit"
+    "typecheck": "tsc -p tsconfig.json && tsc -p scripts/tsconfig.json",
+    "size": "size-limit",
+    "sprites": "node scripts/sprites/build.ts"
   },
   "size-limit": [
     {
@@ -31,6 +32,7 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.1",
+    "sharp": "0.35.5",
     "size-limit": "14.1.0",
     "tailwindcss": "4.3.3",
     "vite": "8.3.2"
