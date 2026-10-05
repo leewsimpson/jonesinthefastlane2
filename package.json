@@ -15,7 +15,8 @@
     "content:validate": "pnpm --filter @fastlane/content validate",
     "build": "pnpm -r build",
     "size": "pnpm --filter @fastlane/web size",
-    "dev": "pnpm -r --parallel dev"
+    "dev": "pnpm -r --parallel dev",
+    "sim": "pnpm --filter @fastlane/sim sim"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

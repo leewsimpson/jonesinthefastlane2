@@ -1,0 +1,114 @@
+{
+  "id": "default",
+  "name": "Fast Lane City",
+  "board": {
+    "home": "your-place",
+    "locations": [
+      { "id": "your-place", "name": "Your Place" },
+      { "id": "leaselord", "name": "LeaseLord" },
+      { "id": "joblink", "name": "JobLink Hub" },
+      { "id": "upskill-u", "name": "UpSkill U Online" },
+      { "id": "fulfillment", "name": "Fulfillment Center" },
+      { "id": "burger-bot", "name": "Burger Bot" },
+      { "id": "freshmart", "name": "FreshMart" },
+      { "id": "thriftup", "name": "ThriftUp" },
+      { "id": "circuit-planet", "name": "Circuit Planet" },
+      { "id": "neobank", "name": "NeoBank" }
+    ],
+    "transportModes": [
+      {
+        "id": "walk",
+        "name": "Walk",
+        "hoursBase": 0,
+        "hoursPerStep": 1,
+        "costBase": 0,
+        "costPerStep": 0,
+        "energyPerStep": 1
+      },
+      {
+        "id": "transit",
+        "name": "Transit",
+        "hoursBase": 0.5,
+        "hoursPerStep": 0.5,
+        "costBase": 3,
+        "costPerStep": 0,
+        "energyPerStep": 0
+      },
+      {
+        "id": "rideshare",
+        "name": "Rideshare",
+        "hoursBase": 0.25,
+        "hoursPerStep": 0.25,
+        "costBase": 6,
+        "costPerStep": 2,
+        "energyPerStep": 0
+      },
+      {
+        "id": "e-scooter",
+        "name": "E-scooter",
+        "hoursBase": 0,
+        "hoursPerStep": 0.5,
+        "costBase": 0,
+        "costPerStep": 0,
+        "energyPerStep": 0,
+        "requiresItem": "e-scooter"
+      }
+    ]
+  },
+  "actions": [
+    {
+      "id": "nap",
+      "location": "your-place",
+      "name": "Take a nap",
+      "hours": 2,
+      "cost": 0,
+      "effects": { "energy": 10 },
+      "tags": ["rest"]
+    },
+    {
+      "id": "binge-stream",
+      "location": "your-place",
+      "name": "Binge a streaming series",
+      "hours": 3,
+      "cost": 0,
+      "effects": { "energy": 4, "happiness": 4, "social": -1 },
+      "tags": ["rest"]
+    },
+    {
+      "id": "instant-noodles",
+      "location": "your-place",
+      "name": "Instant noodles",
+      "hours": 0.5,
+      "cost": 3,
+      "effects": { "health": -2 },
+      "tags": ["eat"]
+    },
+    {
+      "id": "burger-combo",
+      "location": "burger-bot",
+      "name": "Robo combo meal",
+      "hours": 1,
+      "cost": 12,
+      "effects": { "health": -1, "happiness": 2 },
+      "tags": ["eat"]
+    },
+    {
+      "id": "hang-out",
+      "location": "burger-bot",
+      "name": "Hang out with friends",
+      "hours": 3,
+      "cost": 18,
+      "effects": { "social": { "min": 4, "max": 8 }, "happiness": 3, "energy": -3 },
+      "tags": ["social"]
+    },
+    {
+      "id": "ready-meal",
+      "location": "freshmart",
+      "name": "Deli ready meal",
+      "hours": 1,
+      "cost": 9,
+      "effects": { "health": 1 },
+      "tags": ["eat"]
+    }
+  ]
+}

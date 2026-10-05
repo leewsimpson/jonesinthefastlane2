@@ -33,6 +33,8 @@ jobs:
         run: pnpm content:validate
       - name: Unit and property tests
         run: pnpm test
+      - name: Random-play replay check (52 weeks)
+        run: pnpm sim -- --games 20 --weeks 52
       - name: Build
         run: pnpm build
       - name: Bundle size (initial JS ≤ 300 KB gz)
