@@ -1,0 +1,59 @@
+# CI-01, CI-05, CI-06: lint, typecheck, content validation, tests, build, bundle budget, audit.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Lint and format check
+        run: pnpm lint
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Validate content
+        run: pnpm content:validate
+      - name: Unit and property tests
+        run: pnpm test
+      - name: Build
+        run: pnpm build
+      - name: Bundle size (initial JS ≤ 300 KB gz)
+        run: |
+          set -o pipefail
+          pnpm size 2>&1 | tee size.txt
+          {
+            echo '### Bundle size'
+            echo '```'
+            sed -n '/Size limit/,$p' size.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      - name: Dependency audit (high and above fails)
+        run: pnpm audit --audit-level high

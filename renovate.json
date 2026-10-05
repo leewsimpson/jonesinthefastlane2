@@ -1,0 +1,13 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests", ":pinAllExceptPeerDependencies"],
+  "schedule": ["before 6am on monday"],
+  "lockFileMaintenance": { "enabled": true },
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "matchCurrentVersion": "!/^0/",
+      "groupName": "non-major dependencies"
+    }
+  ]
+}
