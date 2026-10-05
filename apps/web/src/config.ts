@@ -1,6 +1,6 @@
 /**
  * Runtime config (CD-03). The build contains no environment-specific values: each deploy writes its own
- * `/config.json` next to the same build artifact, so staging and production promote one build.
+ * `/config.json` next to the same build artifact, so production promotes the build that passed on `main`.
  */
 export type RuntimeConfig = {
   environment: string;

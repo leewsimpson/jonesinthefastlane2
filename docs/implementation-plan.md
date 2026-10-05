@@ -25,7 +25,7 @@ This plan turns [game-requirements.md](game-requirements.md), [tech-stack.md](te
 | 3 | Jones, events & hooks | AI rival, weekend events, news, teasers, quests, balance sim in CI | — |
 | 4 | Playable client | React + Pixi client playing the full MVP loop, saves, hotseat | Internal alpha |
 | 5 | Polish & content | Juice, final art, tutorial, run summary, a11y, PWA, full MVP content | Closed beta |
-| 6 | MVP hardening & launch | Staging/prod pipeline, E2E, perf, playtest balance, IP check | **MVP** |
+| 6 | MVP hardening & launch | Main/prod pipeline, E2E, perf, playtest balance, IP check | **MVP** |
 | 7 | Online: Daily Run | Worker API, replay verification, leaderboard, share card | v1.0 |
 | 8 | Depth & retention | Meta-progression, achievements, backgrounds, new locations, side hustles, audio | v1.0 |
 | 9 | Life stages & relationships | Ageing, dating, partners, marriage, homes, pets, divorce | **v1.0** |
@@ -197,8 +197,8 @@ Phases 7, 8 and 9 are independent of each other and can run in parallel or in an
 
 | Task | Refs |
 |---|---|
-| `staging.yml`: deploy on merge to `main`, D1 migrations first, smoke E2E; upload `web-dist-<sha>` artifact | CD-02, CD-04 |
-| `production.yml`: release-triggered, approval gate, promote the staging artifact (no rebuild), smoke test | CD-03, CD-06 |
+| `main.yml`: deploy on merge to `main` to the preview env's `main` alias, D1 migrations first, smoke E2E; upload `web-dist-<sha>` artifact | CD-02, CD-04 |
+| `production.yml`: release-triggered, approval gate, promote the `main` artifact (no rebuild), smoke test | CD-03, CD-06 |
 | `rollback.yml` + runbook | CD-05 |
 | Security headers (CSP, HSTS) via `_headers`, SPA fallback via `_redirects`; Cloudflare Web Analytics | ci-cd §5 |
 | Full E2E matrix (Chromium + mobile WebKit), visual snapshots light/dark | CI-03, tech-stack §6 |
@@ -211,7 +211,7 @@ Phases 7, 8 and 9 are independent of each other and can run in parallel or in an
 | Ethical guardrail review against ENG-30…33 | §13.3 |
 
 **Exit criteria**
-- Production deploy and rollback both rehearsed on staging.
+- Production deploy and rollback both rehearsed (rollback first on the preview env's `main` alias).
 - All **M** requirements in game-requirements, ci-cd and tech-stack are met or explicitly deferred with a reason.
 
 ---
