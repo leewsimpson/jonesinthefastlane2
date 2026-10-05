@@ -1,0 +1,19 @@
+STYLE: Bold flat 2D vector illustration for a satirical life-sim board game set in 2026.
+Clean geometric shapes with soft rounded corners. Every shape has a uniform thick dark outline
+in #1F1B2E (about 6 px at 1024 px canvas width, same weight everywhere). Flat colour fills with
+at most one hard-edged cel-shadow tone per surface, light from the top-left. No gradients, no
+textures, no grain, no noise, no glow, no photorealism, no 3D render, no pixel art.
+Chunky, toy-like proportions: characters are about 3 heads tall with simple friendly faces
+(dot eyes, clear eyebrows, expressive mouths); buildings look like sturdy board-game pieces.
+Restricted palette: cream #FFF6E9, ink #1F1B2E, coral #FF5A4E, mustard #FFC23D, teal #1FB5A8,
+sky #5EB8FF, lilac #8E7CF0, mint #7EE0A1, blush #FFB3A7, slate #5B5872, plus natural diverse
+skin tones. Robots and AI devices are always lilac. Money and gold are always mustard.
+Tone: looks like a cheerful, optimistic fintech-app illustration, with small satirical details.
+ABSOLUTELY NO text, letters, numbers, logos or brand marks anywhere. Signs, screens and posters
+are blank coloured panels or simple pictograms.
+
+SUBJECT: Event card illustration for "Rent Hike": an over-friendly landlord in a fleece vest sliding a blank note with a big upward arrow pictogram under the player's apartment door.
+Mood: uneasy, satirical. The player character is a generic young adult in a coral hoodie.
+
+FRAMING: Full-bleed scene filling the whole canvas, no border, no frame, no rounded corners.
+Keep the important action in the central 70% so the card can be cropped for mobile.
