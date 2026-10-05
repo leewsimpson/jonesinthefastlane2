@@ -1,0 +1,302 @@
+{
+  "frames": {
+    "item-ai-assistant": {
+      "frame": {
+        "x": 516,
+        "y": 258,
+        "w": 256,
+        "h": 185
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 185
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 185
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "item-air-fryer": {
+      "frame": {
+        "x": 744,
+        "y": 0,
+        "w": 233,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 233,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 233,
+        "h": 256
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "item-e-scooter": {
+      "frame": {
+        "x": 979,
+        "y": 0,
+        "w": 226,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 226,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 226,
+        "h": 256
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "item-fridge": {
+      "frame": {
+        "x": 1207,
+        "y": 0,
+        "w": 170,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 170,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 170,
+        "h": 256
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "item-headphones": {
+      "frame": {
+        "x": 0,
+        "y": 258,
+        "w": 256,
+        "h": 242
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 242
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 242
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "item-laptop": {
+      "frame": {
+        "x": 258,
+        "y": 258,
+        "w": 256,
+        "h": 225
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 225
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 225
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "item-phone": {
+      "frame": {
+        "x": 258,
+        "y": 0,
+        "w": 242,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 242,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 242,
+        "h": 256
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "item-smart-lock": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 256,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 256,
+        "h": 256
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "outfit-business": {
+      "frame": {
+        "x": 1379,
+        "y": 0,
+        "w": 163,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 163,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 163,
+        "h": 256
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "outfit-casual": {
+      "frame": {
+        "x": 1690,
+        "y": 0,
+        "w": 136,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 136,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 136,
+        "h": 256
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "outfit-founder-hoodie": {
+      "frame": {
+        "x": 502,
+        "y": 0,
+        "w": 240,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 240,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 240,
+        "h": 256
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "outfit-smart": {
+      "frame": {
+        "x": 1544,
+        "y": 0,
+        "w": 144,
+        "h": 256
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 256
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    }
+  },
+  "meta": {
+    "app": "@fastlane/web scripts/sprites",
+    "image": "items.webp",
+    "format": "RGBA8888",
+    "size": {
+      "w": 1826,
+      "h": 500
+    },
+    "scale": 2
+  }
+}

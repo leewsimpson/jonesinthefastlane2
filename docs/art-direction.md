@@ -268,17 +268,33 @@ Save the full prompt next to each image as `<id>.prompt.txt`, so any asset can b
 ```
 prompt (.prompt.txt) ─► codex exec ─► art/src/<category>/<id>.png  (raw, 1024–1536 px)
         ─► review against checklist (§8)
-        ─► key out #FF00FF, trim, resize to 2× display size (script)
-        ─► apps/web/public/assets/<category>/<id>.webp  ─► spritesheet pack
+        ─► pnpm sprites: key out #FF00FF, trim, resize to 2× display size, pack
+        ─► apps/web/public/assets/atlases/<atlas>.{webp,json}   (sprites, Pixi v8 spritesheets)
+            apps/web/public/assets/<events|backgrounds>/<id>.webp (scenes)
 ```
 
 - **Background removal:** image generation does not reliably return transparency, so sprites come back on flat
-  magenta. A script (`apps/web/scripts/key-sprites`, using `sharp`) removes `#FF00FF` within a tolerance, then removes
-  the magenta fringe from anti-aliased edges. The thick ink outline means the edge next to the key colour is always
-  dark, which makes this clean.
+  magenta. `pnpm sprites` (`apps/web/scripts/sprites/`, using `sharp`) scores each pixel by `min(R, B) − G`. That
+  score is 255 on the key and at most ~20 for every palette colour and skin tone. Edge pixels in between get partial
+  alpha, and the key colour is un-mixed out of them, which removes the magenta fringe. The thick ink outline means the
+  edge next to the key colour is always dark, which makes this clean.
+- **Atlases** (each stored at 2× display size, with `meta.scale: 2` so frames draw at 1×):
+
+  | Atlas | Frames | Fit (2×) | Anchor |
+  |---|---|---|---|
+  | `characters` | full bodies, by ID (`player-01`, `jones`) | 320 × 480 | bottom centre |
+  | `busts` | emotion-sheet cells, `<character>/<emotion>` | 192 × 192 | centre |
+  | `locations` | buildings, by ID | 400 × 400 | bottom centre |
+  | `items` | items and outfits, by ID | 256 × 256 | centre |
+
+  Emotion names are `neutral`, `happy`, `stressed`, `exhausted`, `shocked`, `proud`. Jones's sheet maps onto them:
+  humble-brag → `proud`, rattled → `stressed`, "posting through it" → `exhausted`. Sheets are sliced at the emptiest
+  gutter near each grid line, so slightly uneven generations still split cleanly.
+- **Scenes** (event cards, backdrop, interiors) are full-bleed, so they are only re-encoded as WebP.
 - **File names match content IDs** (`burger-bot`, `item-air-fryer`, `npc-leaselord`, `event-rent-hike`), so the
   content JSON can reference art by ID.
-- `art/src/` holds the raw generations and prompts (Git LFS). Only processed files ship.
+- `art/src/` holds the raw generations and prompts (Git LFS). Only processed files ship. The processed files are
+  committed, so CI and builds don't need LFS or `sharp`. Re-run `pnpm sprites` and commit the output whenever art changes.
 
 ---
 
