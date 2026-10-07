@@ -376,6 +376,10 @@
   "feed.quest-done.1": "Another goal crushed ✔️ Discipline is just consistency with a ring light.",
   "feed.quest-done.2": "Set a goal, hit a goal. It is honestly that simple.",
   "feed.quest-done.3": "Small wins add up. Today I won a small thing. Again.",
+  "feed.went-viral.1": "Woke up to 40k notifications. Not to brag, but the algorithm and I are close now.",
+  "feed.went-viral.2": "Going viral was never the goal. (It was the goal.) Link in bio 🔗",
+  "feed.went-viral.3": "Some people call it a pile-on. I call it reach. Thank you for engaging! 🙏",
+  "feed.went-viral.4": "Trending again. Brands, my DMs are open and so is my heart.",
   "feed.quiet-week.1": "Took a slow week to recharge. Rest is productive too 🧘",
   "feed.quiet-week.2": "Low-key week. Journalling, matcha, gratitude. You know the vibe.",
   "feed.quiet-week.3": "Grateful for the quiet weeks. They are where the magic plans itself.",
@@ -401,5 +405,14 @@
   "feed.fell-behind.1": "Okay {{player}}, you are ahead for now. Respect. Watch this space.",
   "feed.fell-behind.2": "Well played {{player}}. This is just my comeback arc loading.",
   "feed.fell-behind.3": "{{player}} pulled ahead?! Fine. Time to lock in.",
-  "event.old-friend.raincheck": "Raincheck"
+  "event.old-friend.raincheck": "Raincheck",
+  "action.air-fryer-dinner": "Air-fry something green",
+  "event.porch-pirate": "Your parcel has left the porch",
+  "event.porch-pirate.text": "The doorbell camera you don't own would have caught them. Your new headphones are someone else's now.",
+  "event.porch-pirate.replace": "Buy them again, sigh",
+  "event.porch-pirate.chase": "File a report and chase the courier",
+  "event.wallet-lifted": "Lighter than you left",
+  "event.wallet-lifted.text": "You were carrying a fat wad of cash, and now someone else is. NeoBank would like you to know it has an app.",
+  "event.wallet-lifted.cancel-cards": "Cancel everything, pay the replacement fees",
+  "event.wallet-lifted.retrace": "Retrace your steps all weekend"
 }

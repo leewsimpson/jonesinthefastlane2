@@ -1026,5 +1026,64 @@
         }
       }
     ]
+  },
+  {
+    "id": "porch-pirate",
+    "category": "housing",
+    "weight": 4,
+    "when": {
+      "housing": ["parents-basement", "shared-house", "studio"],
+      "stats": {
+        "cash": {
+          "min": 40000
+        }
+      },
+      "notItems": ["smart-lock"]
+    },
+    "choices": [
+      {
+        "id": "replace",
+        "cost": 6000,
+        "effects": {
+          "happiness": -2
+        }
+      },
+      {
+        "id": "chase",
+        "effects": {
+          "happiness": -4
+        },
+        "nextWeekMinutes": -120
+      }
+    ]
+  },
+  {
+    "id": "wallet-lifted",
+    "category": "money",
+    "weight": 3,
+    "when": {
+      "stats": {
+        "cash": {
+          "min": 80000
+        }
+      }
+    },
+    "choices": [
+      {
+        "id": "cancel-cards",
+        "cost": 5000,
+        "effects": {
+          "happiness": -3
+        }
+      },
+      {
+        "id": "retrace",
+        "effects": {
+          "happiness": -5,
+          "energy": -10
+        },
+        "nextWeekMinutes": -180
+      }
+    ]
   }
 ]

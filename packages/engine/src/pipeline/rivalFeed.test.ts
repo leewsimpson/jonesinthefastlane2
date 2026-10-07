@@ -1,3 +1,4 @@
+import { WeekendEventSchema } from '@fastlane/content';
 import { describe, expect, it } from 'vitest';
 import { fixtureContent } from '../__fixtures__/content.ts';
 import { edit, endWeek, eventsOf, harness, human, perform } from '../__fixtures__/play.ts';
@@ -94,5 +95,27 @@ describe("Jones's highlight reel and rival tension (FR-82, ENG-13, ENG-14)", () 
     expect(eventsOf(events, 'rivalPost')).toContainEqual(
       expect.objectContaining({ moment: 'overtook', about: 'p1' }),
     );
+  });
+});
+
+describe("Jones's viral moment (FR-82)", () => {
+  it('posts about going viral when its weekend card was a viral one', () => {
+    const viral = {
+      ...fixtureContent,
+      events: WeekendEventSchema.array().parse([
+        {
+          id: 'trend',
+          category: 'viral' as const,
+          weight: 1,
+          choices: [{ id: 'ride-it', effects: { happiness: 2 } }],
+        },
+      ]),
+    };
+    const { start: begin, play: go } = harness(viral);
+    const { events } = go(begin({ seed: 'viral', players: [human('Ada'), jones] }), endWeek);
+    const own = eventsOf(events, 'rivalPost').filter((p) => p.about === null);
+    expect(own).toEqual([
+      { type: 'rivalPost', player: 'p2', moment: 'went-viral', about: null, params: {} },
+    ]);
   });
 });

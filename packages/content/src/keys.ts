@@ -101,6 +101,8 @@ export const FEED_MOMENTS = {
   bought: ['item'],
   'net-worth-up': ['amount'],
   'quest-done': [],
+  /** Jones drew a viral weekend card: it spins any attention as a win (FR-82). */
+  'went-viral': [],
   'quiet-week': [],
   'react-hired': ['player', 'job'],
   'react-promoted': ['player', 'job'],
