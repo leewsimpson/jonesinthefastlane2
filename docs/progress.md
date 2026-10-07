@@ -286,3 +286,57 @@ Client-only changes, with no engine rule or content change, so sim KPIs and save
 - Not done (still Phase 5): first-paycheck timing with testers (ENG-20 exit criterion), and the walk cost
   (`transportModes` in `city.json`) that makes Walk a poor default. That is a balance change, so it goes through
   `pnpm sim run --base`.
+
+### Client polish — 2026-10-07
+
+The client half of Phase 5 (user decision: client polish first, sim tooling and the content fill next). PR branch
+`phase-5-client-polish`.
+
+- **Juice (ENG-01):** `src/fx/map.ts` maps a batch of domain events to pop-ups, a coin count, a shake level and a
+  "moment" (hired, promoted, first paycheck, credential, quest, moved, laid off, evicted). `FxLayer` plays it over the
+  board with Motion: floating number chips, a banner with confetti, a light shake. The board bursts coins from the
+  player's token on a Pixi `ParticleContainer`. HUD cash springs to its new value.
+- **Reveals (ENG-03):** the weekend card flips from its back to its face with the category art; news, market moves,
+  promotions and credentials stamp or rise in. All finish within `REVEAL_MAX_S` and a click on the page skips them.
+- **Paper-puppet motion (art-direction §4):** idle bob, squash on arrival, a pop on every face change; the active
+  token shows the proud or shocked bust for a moment after good or bad news.
+- **Art (art-direction §6, §9):** event-card art on the weekend page, item and outfit art on shop rows and in
+  details, the home interior above the sheet at Your Place, the skyline behind the board. App icons are cut from the
+  locations atlas (`scripts/icons/build.ts`; the art sources are in Git LFS).
+- **Dark theme (art-direction §4):** a colour-matrix night grade on the board, lit windows, labels drawn above the
+  grade so they stay readable.
+- **Week-1 coach (ENG-20):** five steps from a new game to the first paycheck (`game/coach.ts`, derived from state,
+  so it follows clicks, keys and reloads), with the control it means outlined. It carries its own Go button, so it
+  never points at a hint that goes elsewhere. Skip ends it for the game; Settings turns it off.
+- **Instrumentation (ENG-20, ENG-02):** `game/pace.ts` records active play time (idle gaps capped at `IDLE_CAP_MS`)
+  to each human's first paycheck and per week, saved next to the slot (never in engine state). The run summary shows
+  it to testers.
+- **Smart defaults (ENG-02):** `engine.smartDefaults(state)` (engine-design §3) offers eat-if-hungry, the longest
+  shift and the longest study; the sheet shows them as a quick bar on Q, W and R ("Work full shift · 8h").
+- **Run summary (ENG-21):** `game/review.ts` builds a timeline, best and worst week, peak net worth and a short story
+  from `state.history`; best and worst weeks are marked on the net-worth chart.
+- **Accessibility (NFR-04):** settings for theme, motion and text size (`src/settings`, on `<html>`); `good`/`bad`
+  text tokens darken teal and coral on light surfaces to pass AA; `e2e/a11y.spec.ts` runs axe (WCAG 2.2 A/AA) on
+  title, setup, game, details, settings, end-week check and wrap-up in both themes.
+- **PWA (NFR-11):** vite-plugin-pwa precaches the app and all art (69 files, about 5.7 MB); `config.json` is
+  network-first because deploys write it after the build. The service worker registers from a lazy chunk; the title
+  screen offers "Install app" when the browser allows it.
+- **Lighthouse (CI-05, deferred from Phase 0):** `preview.yml` runs Lighthouse CI on the PR preview after E2E, with
+  budgets in `lighthouserc.json`, and writes the scores to the job summary.
+- Evidence: `pnpm lint`, `typecheck`, `test` (288 tests), `build`, `content:validate` pass. `pnpm size`: 85.9 kB
+  gzipped initial JS. Lighthouse on the local production build (3 runs): performance 96–97, accessibility 100, best
+  practices 100. E2E (`play-a-week`, `first-paycheck`, `a11y`) passes locally on desktop Chromium and on the iPhone 15
+  viewport in Chromium; WebKit isn't installed in this container, so mobile WebKit runs in CI. Offline: after one
+  online load, a reload with the network off starts a game with all art.
+- Deviations:
+  - Lighthouse CI runs through `pnpm dlx @lhci/cli@0.15.1`, not as a dependency: its tree carries high audit
+    advisories that would fail CI-06.
+  - `pnpm-workspace.yaml` overrides `sharp@<0.35.5` to 0.35.5. Wrangler's miniflare pinned a release with a high
+    advisory, which already failed `pnpm audit --audit-level high` on `main`.
+  - The coach is UI state over engine state, not engine content; its copy is UI copy (`coach.*`).
+  - Stat icons keep the palette colours; only text uses the darker `good`/`bad` tokens.
+- Not done (still Phase 5): first-paycheck time with real testers (**human-only**: the summary's "Play time" line is
+  what they report); copy pass on content strings and Jones's viral-post moment (NFR-07: content strings are in the
+  content hash, so they go with the content fill); sim `assess`/`sweep`/`trace`, the content fill and the balance pass;
+  analytics and Sentry (deferred by the user: no accounts yet); the walk cost from the playability pass. Unlocks on
+  the run summary (ENG-21) wait for meta-progression in Phase 8.
