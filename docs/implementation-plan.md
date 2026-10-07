@@ -246,10 +246,8 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
 - UI copy lives in `apps/web/src/i18n/ui.en.json`; game copy stays in `packages/content/locales/en.json`. Event
   category names are UI copy for now (`category.<id>`).
 - Jones's feed posts about milestones only; a moment for a good weekend event (a viral post) fits the copy pass.
-- Client polish landed first (2026-10-07, `docs/progress.md`). Left for this phase: the sim tooling and content fill
-  with the balance pass, the content copy pass, opt-in analytics and Sentry (needs PostHog and Sentry accounts:
-  **human-only**), and tester runs for the first-paycheck criterion. New juice plugs into `src/fx/map.ts`; one-tap
-  moves come from `engine.smartDefaults`; the summary's play-time line is the tester report.
+- Done 2026-10-07 (`docs/progress.md`): client polish, then the sim tooling, content, copy and balance pass. The
+  first-paycheck tester criterion moved to Phase 6's playtest rounds.
 
 ---
 
@@ -281,6 +279,13 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
 - **Human-only:** production reviewers, playtest rounds, legal/IP review, privacy notice wording, ad provider choice.
 - Record the staging rehearsal run links as evidence for the deploy and rollback exit criterion.
 - The save migration test needs a real beta save: capture one from the Phase 5 build before changing the schema.
+- Built early, in the Phase 5 branch (user decision: deploy to production now): `main.yml`, `production.yml`,
+  `rollback.yml`, the runbook (ci-cd.md §6) and `_headers`. Left from those rows: the deploy and rollback rehearsal,
+  and Cloudflare Web Analytics (**human-only**: turn it on in the dashboard; the CSP already allows its beacon).
+- Phase 5 left for the playtest rounds: first paycheck in under 3 minutes with new testers (ENG-20), hardship (the
+  bots dodge every setback), the one-goal persona and gambler bands, and the overlap between `balanced`'s band and
+  Standard Jones's (`docs/progress.md`, Phase 5). Weekend choices are mostly flat in `sim assess`: decide with
+  playtesters whether they should bite harder.
 
 ---
 
