@@ -354,13 +354,15 @@ function Windows({ layout, count }: { layout: BoardLayout; count: number }) {
   return <pixiGraphics draw={draw} blendMode="add" />;
 }
 
-/** The night grade for the dark theme: darker, cooler, a little less saturated. */
+/** The night grade for the dark theme: darker, cooler, a little less saturated. One shared filter for the app. */
+let night: ColorMatrixFilter | null = null;
 function nightFilter(): ColorMatrixFilter {
-  const f = new ColorMatrixFilter();
-  f.brightness(0.62, false);
-  f.saturate(-0.15, true);
-  f.tint(0x9fa8ff, true);
-  return f;
+  if (night) return night;
+  night = new ColorMatrixFilter();
+  night.brightness(0.62, false);
+  night.saturate(-0.15, true);
+  night.tint(0x9fa8ff, true);
+  return night;
 }
 
 /**
@@ -385,7 +387,7 @@ function Scene({
   const { t } = useTranslation();
   const reduced = useReducedMotion();
   const dark = useDarkTheme();
-  const night = useMemo(() => (dark ? [nightFilter()] : []), [dark]);
+  const filters = useMemo(() => (dark ? [nightFilter()] : []), [dark]);
   // A moment's face shows for a while, then the token goes back to its mood.
   const [face, setFace] = useState<string | null>(null);
   useEffect(() => {
@@ -445,7 +447,7 @@ function Scene({
 
   return (
     <pixiContainer>
-      <pixiContainer filters={night}>
+      <pixiContainer filters={filters}>
         <Road layout={layout} />
         {order.map(({ id, index }) => (
           <Pad

@@ -13,6 +13,7 @@ import type {
 } from '@fastlane/engine';
 import { createStore, useStore } from 'zustand';
 import { type Fx, fxFor, isFirstWage, NO_FX } from '../fx/map.ts';
+import { hasWorked } from '../game/coach.ts';
 import { engine } from '../game/engine.ts';
 import {
   markTurnStart,
@@ -131,11 +132,9 @@ export function createGameStore(save: Saver = () => {}, now: () => number = () =
         const inTurn = end < 0 ? events : events.slice(0, end);
         let fx = NO_FX;
         if (!report && player !== null) {
-          const firstPay = isFirstWage(
-            inTurn,
-            player,
-            session.pace.firstPayMs[player] !== undefined,
-          );
+          // From the game state, not the pace record: saves from before Phase 5 have no pace.
+          const was = before.players.find((p) => p.id === player);
+          const firstPay = isFirstWage(inTurn, player, !!was && hasWorked(was));
           if (firstPay) pace = recordFirstPay(pace, player);
           fx = fxFor(inTurn, player, { firstPay });
           if (end >= 0) pace = recordTurnEnd(pace, player, before.week);

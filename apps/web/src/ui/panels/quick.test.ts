@@ -1,8 +1,11 @@
 import type { GameState, SmartDefault } from '@fastlane/engine';
 import { describe, expect, it } from 'vitest';
 import { content, engine } from '../../game/engine.ts';
+import { i18n } from '../../i18n/i18n.ts';
 import { rowKey } from '../common/hotkeys.ts';
 import { groupActions, quickLabel } from './ActionSheet.tsx';
+
+const t = i18n.t;
 
 const at = (location: string, patch: (s: GameState) => void = () => {}): GameState => {
   const { state } = engine.newGame({
@@ -30,13 +33,13 @@ describe('quick moves (ENG-02)', () => {
     const groups = groupActions(engine.listActions(state), rowKey);
     const [work] = engine.smartDefaults(state);
     expect(work?.kind).toBe('work');
-    expect(quickLabel(work as SmartDefault, groups)).toMatch(/^Work full shift · /);
+    expect(quickLabel(t, work as SmartDefault, groups)).toMatch(/^Work full shift · /);
   });
 
   it('offers a meal first when the player has not eaten', () => {
     const state = at('burger-bot');
     const smart = engine.smartDefaults(state);
     expect(smart[0]?.kind).toBe('eat');
-    expect(quickLabel(smart[0] as SmartDefault, [])).toMatch(/^Eat now: /);
+    expect(quickLabel(t, smart[0] as SmartDefault, [])).toMatch(/^Eat now: /);
   });
 });

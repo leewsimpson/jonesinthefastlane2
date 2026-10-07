@@ -5,12 +5,12 @@
  */
 import { ANYWHERE } from '@fastlane/content/keys';
 import type { Action, Preview, SmartDefault, WorldState } from '@fastlane/engine';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { buildingFrame } from '../../board/frames.ts';
 import { targetInfo, targetLabel } from '../../game/copy.ts';
 import { content } from '../../game/engine.ts';
 import { duration, money } from '../../i18n/format.ts';
-import { t } from '../../i18n/i18n.ts';
 import { BuildingArt, ItemArt, interiorFor, itemFrame } from '../common/AtlasArt.tsx';
 import { KEY_END_WEEK, KEY_TRAVEL, QUICK_KEYS } from '../common/hotkeys.ts';
 import { PlanChips } from '../common/PlanChips.tsx';
@@ -70,7 +70,7 @@ export function ownerLine(location: string, week: number): string {
 const OWNER_LINES = 3;
 
 /** The label for a one-tap default: "Work full shift" when it is the longest shift on offer. */
-export function quickLabel(d: SmartDefault, groups: readonly ActionGroup[]): string {
+export function quickLabel(t: TFunction, d: SmartDefault, groups: readonly ActionGroup[]): string {
   const { action } = d.preview;
   if (action.type !== 'perform') return '';
   const time = action.minutes === undefined ? '' : duration(action.minutes);
@@ -116,7 +116,7 @@ function QuickBar({
           >
             <span className="flex w-full items-center gap-2">
               {key && <kbd>{key.toUpperCase()}</kbd>}
-              <span className="flex-1 text-left font-bold">{quickLabel(d, groups)}</span>
+              <span className="flex-1 text-left font-bold">{quickLabel(tr, d, groups)}</span>
             </span>
             <PlanChips plan={d.preview.plan} />
           </button>

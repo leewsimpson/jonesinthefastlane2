@@ -9,7 +9,7 @@ import type { Action, DomainEvent, GameState } from '@fastlane/engine';
 import * as Dialog from '@radix-ui/react-dialog';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlipCard, Rise, SkipReveal, Stamp } from '../../fx/Reveal.tsx';
+import { FlipCard, REVEAL_MAX_S, Rise, SkipReveal, Stamp } from '../../fx/Reveal.tsx';
 import { feedLine, playerName, slotValues } from '../../game/copy.ts';
 import { content } from '../../game/engine.ts';
 import {
@@ -127,7 +127,7 @@ function SummaryPage({ report, state }: { report: WeekReport; state: GameState }
           // biome-ignore lint/suspicious/noArrayIndexKey: a static list
           <li key={i}>
             {l.headline ? (
-              <Stamp delay={0.2 + i * 0.1}>
+              <Stamp delay={Math.min(0.2 + i * 0.1, REVEAL_MAX_S - 0.6)}>
                 <span className="font-bold font-display text-bad text-lg">{l.text}</span>
               </Stamp>
             ) : (

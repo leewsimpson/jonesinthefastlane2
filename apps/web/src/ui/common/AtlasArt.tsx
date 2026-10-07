@@ -26,7 +26,10 @@ function loadAtlas(name: AtlasName): Promise<Atlas> {
   let p = atlases.get(name);
   if (!p) {
     p = fetch(`${BASE}${name}.json`)
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`${name} atlas: HTTP ${r.status}`);
+        return r.json();
+      })
       .then(
         (d: {
           frames: Record<string, { frame: Frame }>;
@@ -37,6 +40,8 @@ function loadAtlas(name: AtlasName): Promise<Atlas> {
           frames: Object.fromEntries(Object.entries(d.frames).map(([k, v]) => [k, v.frame])),
         }),
       );
+    // A failed load is forgotten, so the next art that needs this atlas tries again.
+    p.catch(() => atlases.delete(name));
     atlases.set(name, p);
   }
   return p;

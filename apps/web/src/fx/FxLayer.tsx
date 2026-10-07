@@ -53,26 +53,29 @@ export function FxLayer({
   const [shown, setShown] = useState<{ id: number; fx: Fx } | null>(null);
   const [banner, setBanner] = useState<{ id: number; moment: Moment } | null>(null);
 
-  // One run per batch id: fx changes with it.
+  // One run per batch id: fx changes with it. A batch with nothing to show leaves the last one to finish.
   // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on the batch id
   useEffect(() => {
     if (fx.pops.length === 0 && !fx.moment) return;
     setShown({ id, fx });
-    const timer = setTimeout(() => setShown(null), POP_MS);
-    let bannerTimer: ReturnType<typeof setTimeout> | undefined;
-    if (fx.moment) {
-      setBanner({ id, moment: fx.moment });
-      bannerTimer = setTimeout(() => setBanner(null), BANNER_MS);
-    }
+    if (fx.moment) setBanner({ id, moment: fx.moment });
     if (!reduced && shakeTarget && fx.shake !== 'none') {
       const a = fx.shake === 'big' ? 8 : 4;
       animate(shakeTarget, { x: [0, -a, a, -a / 2, a / 2, 0] }, { duration: 0.35 });
     }
-    return () => {
-      clearTimeout(timer);
-      if (bannerTimer) clearTimeout(bannerTimer);
-    };
   }, [id]);
+
+  // Each shown batch and banner clears itself; a newer one restarts its own timer.
+  useEffect(() => {
+    if (!shown) return;
+    const timer = setTimeout(() => setShown(null), POP_MS);
+    return () => clearTimeout(timer);
+  }, [shown]);
+  useEffect(() => {
+    if (!banner) return;
+    const timer = setTimeout(() => setBanner(null), BANNER_MS);
+    return () => clearTimeout(timer);
+  }, [banner]);
 
   return (
     <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden" aria-hidden="true">

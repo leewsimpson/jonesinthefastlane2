@@ -36,6 +36,20 @@ describe('coachStep (ENG-20)', () => {
     expect(coachStep(content, s, me(s), true)).toMatchObject({ id: 'paid', target: 'end', n: 5 });
   });
 
+  it('sends a remote worker home to work', () => {
+    const remote = content.city.jobs.find((j) => j.remote);
+    if (!remote) return;
+    const s = fresh();
+    me(s).location = 'joblink';
+    me(s).job = { id: remote.id } as never;
+    expect(coachStep(content, s, me(s), false)).toMatchObject({
+      id: 'goWork',
+      location: content.city.board.home,
+    });
+    me(s).location = content.city.board.home;
+    expect(coachStep(content, s, me(s), false)?.id).toBe('work');
+  });
+
   it('keeps coaching into week 2 until paid, then stops', () => {
     const s = fresh();
     s.week = 2;

@@ -10,22 +10,28 @@ import { COACH_STEPS, type CoachStep } from '../../game/coach.ts';
 export function Coach({
   step,
   compact = false,
+  canGo,
+  onGo,
   onSkip,
 }: {
   step: CoachStep;
   /** In the sheet on small boards: tighter, no drop shadow. */
   compact?: boolean;
+  /** Whether the step's destination can be reached now. */
+  canGo: boolean;
+  onGo(location: string): void;
   onSkip(): void;
 }) {
   const { t } = useTranslation();
 
+  // Declarative: CSS outlines `[data-coach=<target>]` while the root names it, including controls that mount later.
   useEffect(() => {
-    const els = document.querySelectorAll(`[data-coach="${step.target}"]`);
-    for (const el of els) el.classList.add('coach-target');
+    const root = document.documentElement;
+    root.dataset.coachStep = step.target;
     return () => {
-      for (const el of els) el.classList.remove('coach-target');
+      delete root.dataset.coachStep;
     };
-  });
+  }, [step.target]);
 
   return (
     <aside
@@ -50,6 +56,17 @@ export function Coach({
           location: step.location ? t(`location.${step.location}`) : '',
         })}
       </p>
+      {step.target === 'go' && step.location && (
+        <button
+          type="button"
+          className="btn btn-sm btn-primary self-start"
+          disabled={!canGo}
+          onClick={() => step.location && onGo(step.location)}
+          data-coach="go"
+        >
+          {t('week.go', { location: t(`location.${step.location}`) })}
+        </button>
+      )}
     </aside>
   );
 }
