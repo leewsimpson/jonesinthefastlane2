@@ -1,6 +1,6 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { boardLayout, loopDelta, pointAt, stepToward } from './layout.ts';
+import { boardLayout, buildingBox, innerRect, loopDelta, pointAt, stepToward } from './layout.ts';
 
 const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
   Math.hypot(a.x - b.x, a.y - b.y);
@@ -57,5 +57,26 @@ describe('token motion', () => {
         return pos === to;
       }),
     );
+  });
+});
+
+describe('innerRect', () => {
+  it('stays inside the loop, clear of every building, and leaves real room on common boards', () => {
+    for (const [w, h, minW, minH] of [
+      [630, 800, 230, 250],
+      [590, 720, 230, 250],
+      [1920, 1080, 400, 400],
+      [393, 330, 0, 0],
+    ] as const) {
+      const layout = boardLayout(w, h, 10);
+      const r = innerRect(layout);
+      expect(r.w).toBeGreaterThanOrEqual(minW);
+      expect(r.h).toBeGreaterThanOrEqual(minH);
+      for (let i = 0; i < 10; i++) {
+        const b = buildingBox(layout, i);
+        const clear = b.r <= r.x || b.l >= r.x + r.w || b.b <= r.y || b.t >= r.y + r.h;
+        expect(clear).toBe(true);
+      }
+    }
   });
 });

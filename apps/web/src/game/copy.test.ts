@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { i18n } from '../i18n/i18n.ts';
 import { createGameStore } from '../store/game.ts';
-import { groupActions, optionLabel } from '../ui/panels/ActionSheet.tsx';
+import { groupActions, optionLabel, ownerLine, sharedReason } from '../ui/panels/ActionSheet.tsx';
 import { modeKeys } from '../ui/panels/TravelDialog.tsx';
 import { feedLine, slotValues, targetInfo, targetLabel } from './copy.ts';
-import { engine } from './engine.ts';
+import { content, engine } from './engine.ts';
 
 /** A value the test needs, or a clear failure. */
 function must<T>(value: T | null | undefined, what = 'value'): T {
@@ -46,14 +47,27 @@ describe('copy (NFR-06)', () => {
     expect(targetInfo('apply-job', 'picker', state().world)).toContain('$18/h');
   });
 
-  it('gives every action option on screen a unique shortcut, local actions first', () => {
+  it('gives every action that can be taken a unique shortcut, local actions first', () => {
     const s = state();
     const groups = groupActions(engine.listActions(s), (n) => `k${n}`);
-    const keys = groups.flatMap((g) => g.rows.map((r) => r.key));
+    const rows = groups.flatMap((g) => g.rows);
+    const keys = rows.flatMap((r) => (r.key ? [r.key] : []));
     expect(new Set(keys).size).toBe(keys.length);
+    // Only rows that can be taken get a shortcut.
+    for (const r of rows) expect(r.key !== undefined).toBe(r.preview.available);
     expect(groups.findIndex((g) => g.anywhere)).toBeGreaterThan(0);
     const work = groups.find((g) => g.actionId === 'wfh');
     expect(work?.rows.map((r) => optionLabel(r.preview.action))).toEqual(['2h', '4h', '8h']);
+    // Without a remote job every row is blocked for the same reason, so the group shows as one line.
+    expect(sharedReason(must(work, 'wfh group'))).toBe('NO_JOB');
+    expect(
+      groups.filter((g) => g.rows.some((r) => r.preview.available)).map(sharedReason),
+    ).not.toContain('NO_JOB');
+  });
+
+  it('has an owner line for every location and week', () => {
+    for (const { id } of content.city.board.locations)
+      for (let week = 1; week <= 6; week++) expect(i18n.exists(ownerLine(id, week))).toBe(true);
   });
 
   it('gives each transport mode its own letter', () => {

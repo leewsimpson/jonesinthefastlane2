@@ -42,7 +42,16 @@ test('play a week vs Jones, then reload and continue', async ({ page }) => {
   await sheet.getByRole('button', { name: /Picker/ }).click();
   await expect(sheet).toContainText('Hired as Picker');
 
+  // The week guide points at the new job; its Go button travels in one click.
+  await expect(page.getByTestId('next-step').first()).toContainText('Fulfillment Center');
+  await page.getByRole('button', { name: 'Go to Fulfillment Center' }).first().click();
+  await expect(sheet).toContainText("You're at Fulfillment Center");
+
+  // Ending the week without a meal asks first.
   await page.getByRole('button', { name: /^End week/ }).click();
+  const confirm = page.getByRole('dialog', { name: 'End the week now?' });
+  await expect(confirm).toContainText("You haven't eaten this week");
+  await confirm.getByRole('button', { name: 'End week anyway' }).click();
   await finishWeek(page, 2);
   await expect(page.getByText('Week 2', { exact: false }).first()).toBeVisible();
 
