@@ -23,3 +23,11 @@ export function useDarkTheme(): boolean {
   const theme = useSettings((s) => s.theme);
   return darkTheme(theme, useMedia('(prefers-color-scheme: dark)'));
 }
+
+/** The landscape layout's query (NFR-02), shared with the `wide` CSS variant in index.css. */
+export const WIDE_LAYOUT = '(orientation: landscape) and (min-width: 768px)';
+
+/** True on the landscape layout; false on phones, where the page scrolls (index.css). */
+export function useWideLayout(): boolean {
+  return useMedia(WIDE_LAYOUT);
+}

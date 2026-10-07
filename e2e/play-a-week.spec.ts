@@ -40,7 +40,8 @@ test('play a week vs Jones, then reload and continue', async ({ page }) => {
     .click();
   await expect(sheet).toContainText("You're at JobLink Hub");
   await sheet.getByRole('button', { name: /Picker/ }).click();
-  await expect(sheet).toContainText('Hired as Picker');
+  // The ticker sits in the Travel / End week dock, under the sheet.
+  await expect(page.locator('.dock')).toContainText('Hired as Picker');
 
   // The week guide points at the new job; its Go button travels in one click.
   await expect(page.getByTestId('next-step').first()).toContainText('Fulfillment Center');

@@ -27,6 +27,7 @@ import { useTranslation } from 'react-i18next';
 import type { Moment } from '../fx/map.ts';
 import { content } from '../game/engine.ts';
 import { useDarkTheme, useReducedMotion } from '../settings/hooks.ts';
+import { useSettings } from '../settings/settings.ts';
 import { seatOf } from '../ui/common/stats.ts';
 import { type Coin, spawn, step } from './coins.ts';
 import { buildingFrame } from './frames.ts';
@@ -164,28 +165,38 @@ function Pad({
   );
 }
 
-/** Building names, drawn above the night grade so they stay readable (NFR-04). */
+/**
+ * Building names, drawn above the night grade so they stay readable (NFR-04). They follow the text-size setting,
+ * and a long name wraps to the building's width rather than running into its neighbours.
+ */
 function Label({
   layout,
   index,
   text,
   dark,
+  scale,
 }: {
   layout: BoardLayout;
   index: number;
   text: string;
   dark: boolean;
+  /** The text-size setting, as a factor. */
+  scale: number;
 }) {
   const { x, y } = pointAt(layout, index);
   const { cell } = layout;
+  const fontSize = Math.round(Math.max(14, Math.min(17, cell * 0.16)) * scale);
   return (
     <pixiText
       text={text}
       x={x}
-      y={y + cell * 0.16}
+      y={y + cell * 0.14}
       style={{
         ...LABEL_STYLE,
-        fontSize: Math.max(11, Math.min(14, cell * 0.13)),
+        fontSize,
+        lineHeight: fontSize * 1.1,
+        wordWrap: true,
+        wordWrapWidth: Math.max(cell * 1.15, fontSize * 5),
         ...(dark ? { fill: CREAM, stroke: { color: INK, width: 4, join: 'round' } } : {}),
       }}
       anchor={{ x: 0.5, y: 0 }}
@@ -390,6 +401,7 @@ function Scene({
   const { t } = useTranslation();
   const reduced = useReducedMotion();
   const dark = useDarkTheme();
+  const textScale = useSettings((s) => s.textSize) / 100;
   const filters = useMemo(() => (dark ? [nightFilter()] : []), [dark]);
   // A moment's face shows for a while, then the token goes back to its mood.
   const [face, setFace] = useState<string | null>(null);
@@ -492,7 +504,14 @@ function Scene({
       </pixiContainer>
       {dark && <Windows layout={layout} count={locations.length} />}
       {order.map(({ id, index }) => (
-        <Label key={id} layout={layout} index={index} text={t(`location.${id}`)} dark={dark} />
+        <Label
+          key={id}
+          layout={layout}
+          index={index}
+          text={t(`location.${id}`)}
+          dark={dark}
+          scale={textScale}
+        />
       ))}
       {!reduced && (
         <Coins

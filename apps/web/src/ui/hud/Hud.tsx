@@ -49,7 +49,7 @@ function Bar({
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="tabular w-14 text-right text-sm">{text}</span>
+      <span className="tabular w-16 text-right text-sm">{text}</span>
     </div>
   );
 }
@@ -92,107 +92,113 @@ export function Hud({
   const limit = state.config.weekLimit;
 
   return (
-    <header className="hud flex flex-col gap-2 border-ink border-b-2 bg-surface-raised p-2 sm:p-3 dark:border-cream/30">
-      <div className="flex items-center gap-2">
-        <span
-          className="flex size-8 items-center justify-center rounded-full border-2 border-ink font-bold text-ink"
-          style={{ background: seat.colour }}
-          aria-hidden="true"
-        >
-          {seat.shape}
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="truncate font-bold font-display leading-tight">{me.name}</div>
-          <div className="text-fg-muted text-xs">
-            {limit
-              ? t('hud.weekOf', { week: state.week, limit })
-              : t('hud.week', { week: state.week })}
-            {' · '}
-            {t('hud.at', { location: t(`location.${me.location}`) })}
+    // Portrait: the header dissolves (`contents`) so its top bar sticks to the page, not to the header.
+    <header className="hud contents wide:flex wide:flex-col wide:gap-2 wide:p-3">
+      <div className="sticky top-0 z-30 flex flex-col gap-2 border-ink border-b-2 bg-surface-raised px-3 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2 wide:static wide:border-0 wide:bg-transparent wide:p-0 dark:border-cream/30">
+        <div className="flex items-center gap-2">
+          <span
+            className="flex size-9 shrink-0 items-center justify-center rounded-full border-2 border-ink font-bold text-ink"
+            style={{ background: seat.colour }}
+            aria-hidden="true"
+          >
+            {seat.shape}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="truncate font-bold font-display text-lg leading-tight">{me.name}</div>
+            <div className="truncate text-fg-muted text-sm">
+              {limit
+                ? t('hud.weekOf', { week: state.week, limit })
+                : t('hud.week', { week: state.week })}
+              {' · '}
+              {t('hud.at', { location: t(`location.${me.location}`) })}
+            </div>
           </div>
-        </div>
-        <div className="text-right">
-          <div className="tabular font-bold font-display text-good text-xl leading-none">
+          <div className="tabular shrink-0 font-bold font-display text-2xl text-good leading-none">
             <span className="sr-only">{t('stat.cash')} </span>
             <Counter value={me.stats.cash} format={money} />
           </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-x-3 gap-y-2 wide:grid-cols-1">
+          <Bar
+            label={t('hud.time')}
+            icon={STAT_ICON.time}
+            tone={STAT_TONE.time}
+            value={me.timeLeft}
+            max={weekMinutes}
+            text={duration(me.timeLeft)}
+          />
+          <Bar
+            label={t('stat.energy')}
+            icon={STAT_ICON.energy}
+            tone={STAT_TONE.energy}
+            value={me.stats.energy}
+            max={100}
+            text={String(me.stats.energy)}
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2 border-ink/20 border-b-2 bg-surface-raised px-3 py-2 wide:border-0 wide:bg-transparent wide:p-0 dark:border-cream/20">
+        <div className="flex flex-wrap gap-1.5">
+          <Stat stat="health" value={me.stats.health} />
+          <Stat stat="happiness" value={me.stats.happiness} />
+          <Stat stat="social" value={me.stats.social} />
+          <Stat stat="creditScore" value={me.stats.creditScore} />
+          <span className="chip" title={t('stat.meals')}>
+            <span aria-hidden="true">{STAT_ICON.meals}</span>
+            <span className="sr-only">{t('stat.meals')}</span>
+            <span className="tabular">{me.mealsThisWeek}</span>
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={onDetails}
+          className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg text-left"
+          aria-label={t('hud.details')}
+        >
+          <GoalRings progress={mine.progress} size={40} />
+          <span className="flex flex-col gap-1">
+            <span className="tabular font-bold">
+              {t('hud.score', { score: percent(mine.score) })}
+            </span>
+            {rivals.map((r) => {
+              const s = standingOf(state, r);
+              const rs = seatOf(state.players, r.id);
+              return (
+                <span key={r.id} className="flex items-center gap-1 text-sm">
+                  <Ring
+                    bp={s.score}
+                    colour={rs.colour}
+                    size={24}
+                    label={`${r.name} ${percent(s.score)}`}
+                  >
+                    <span className="text-xs">{rs.shape}</span>
+                  </Ring>
+                  <span className="max-w-28 truncate">{r.name}</span>
+                  <span className="tabular text-fg-muted">{percent(s.score)}</span>
+                </span>
+              );
+            })}
+          </span>
+        </button>
+
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            className="text-fg-muted text-xs underline"
+            className="btn btn-sm flex-1"
             onClick={onDetails}
             aria-keyshortcuts={KEY_DETAILS}
           >
             {t('hud.details')} <kbd>{KEY_DETAILS.toUpperCase()}</kbd>
           </button>
-          <SettingsButton className="ml-2 text-fg-muted text-xs underline" />
-          <button type="button" className="ml-2 text-fg-muted text-xs underline" onClick={onQuit}>
+          <SettingsButton className="btn btn-sm flex-1" />
+          <button type="button" className="btn btn-sm flex-1" onClick={onQuit}>
             {t('menu.quit')}
           </button>
         </div>
       </div>
-
-      <div className="grid grid-cols-2 gap-x-3 gap-y-2 wide:grid-cols-1">
-        <Bar
-          label={t('hud.time')}
-          icon={STAT_ICON.time}
-          tone={STAT_TONE.time}
-          value={me.timeLeft}
-          max={weekMinutes}
-          text={duration(me.timeLeft)}
-        />
-        <Bar
-          label={t('stat.energy')}
-          icon={STAT_ICON.energy}
-          tone={STAT_TONE.energy}
-          value={me.stats.energy}
-          max={100}
-          text={String(me.stats.energy)}
-        />
-      </div>
-
-      <div className="flex flex-wrap gap-1">
-        <Stat stat="health" value={me.stats.health} />
-        <Stat stat="happiness" value={me.stats.happiness} />
-        <Stat stat="social" value={me.stats.social} />
-        <Stat stat="creditScore" value={me.stats.creditScore} />
-        <span className="chip" title={t('stat.meals')}>
-          <span aria-hidden="true">{STAT_ICON.meals}</span>
-          <span className="sr-only">{t('stat.meals')}</span>
-          <span className="tabular">{me.mealsThisWeek}</span>
-        </span>
-      </div>
-
-      <button
-        type="button"
-        onClick={onDetails}
-        className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg text-left"
-        aria-label={t('hud.details')}
-      >
-        <GoalRings progress={mine.progress} size={34} />
-        <span className="flex flex-col gap-1">
-          <span className="tabular font-bold text-sm">
-            {t('hud.score', { score: percent(mine.score) })}
-          </span>
-          {rivals.map((r) => {
-            const s = standingOf(state, r);
-            const rs = seatOf(state.players, r.id);
-            return (
-              <span key={r.id} className="flex items-center gap-1 text-sm">
-                <Ring
-                  bp={s.score}
-                  colour={rs.colour}
-                  size={22}
-                  label={`${r.name} ${percent(s.score)}`}
-                >
-                  <span className="text-[9px]">{rs.shape}</span>
-                </Ring>
-                <span className="max-w-24 truncate">{r.name}</span>
-                <span className="tabular text-fg-muted">{percent(s.score)}</span>
-              </span>
-            );
-          })}
-        </span>
-      </button>
     </header>
   );
 }

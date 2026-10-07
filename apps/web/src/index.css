@@ -85,44 +85,104 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Landscape layout (NFR-02): board in the middle, side panels. Portrait keeps the board on top. */
+/* Landscape layout (NFR-02): board in the middle, side panels. The query is WIDE_LAYOUT in settings/hooks.ts. */
 @custom-variant wide (@media (orientation: landscape) and (min-width: 768px));
 
+/* Portrait (phones): one page that scrolls like any other, so a swipe anywhere moves it and Safari's toolbars can
+   collapse. The HUD's top bar sticks to the top, the Travel / End week dock sticks to the bottom, and between them
+   sit the rest of the HUD, the board and the action sheet. */
 .game-layout {
   position: relative;
-  overflow: hidden;
-  display: grid;
-  height: 100dvh;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr) minmax(0, 40dvh);
-  grid-template-areas: "hud" "board" "sheet";
-}
-.hud-area {
-  grid-area: hud;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
 }
 .board-backdrop {
   background-image: url("/assets/backgrounds/backdrop-day.webp");
   mask-image: linear-gradient(to bottom, black 40%, transparent);
 }
 .board-area {
-  grid-area: board;
+  flex: none;
+  /* Tall enough that the buildings and their names don't overlap; short enough that the sheet peeks in below. */
+  height: clamp(340px, 135vw, calc(100svh - 13rem));
 }
-.sheet {
-  grid-area: sheet;
+/* Pixi sets touch-action: none on its canvas, which would trap the page's scroll over the board. Vertical swipes
+   scroll; a tap still picks a building. */
+.board-area canvas {
+  /* biome-ignore lint/complexity/noImportantStyles: beats the inline style Pixi sets */
+  touch-action: pan-y !important;
+}
+.dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 30;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.fx-layer {
+  /* Pops and banners stay in view wherever the page is scrolled. */
+  position: fixed;
+  z-index: 35;
 }
 
 @media (orientation: landscape) and (min-width: 768px) {
   .game-layout {
+    display: grid;
+    overflow: hidden;
+    height: 100dvh;
     grid-template-columns: minmax(220px, 24%) minmax(0, 1fr) minmax(280px, 30%);
-    grid-template-rows: minmax(0, 1fr);
-    grid-template-areas: "hud board sheet";
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas: "hud board sheet" "hud board dock";
   }
   .hud-area {
+    grid-area: hud;
     border-right: 2px solid color-mix(in srgb, var(--fg) 25%, transparent);
   }
-  .sheet {
+  .board-area {
+    grid-area: board;
+    height: auto;
+  }
+  .sheet,
+  .dock {
     border-top: 0;
     border-left: 2px solid color-mix(in srgb, var(--fg) 25%, transparent);
+  }
+  .sheet {
+    grid-area: sheet;
+  }
+  .dock {
+    grid-area: dock;
+    position: static;
+  }
+  .fx-layer {
+    position: absolute;
+    z-index: 20;
+  }
+}
+
+/* Phone-sized screens (NFR-04): every text step one notch up, so the smallest text is 14px. The text-size setting
+   scales the root font size on top of this. */
+@media (max-width: 767px) {
+  :root {
+    --text-xs: 0.875rem;
+    --text-sm: 0.9375rem;
+    --text-base: 1.0625rem;
+  }
+}
+
+/* Touch screens: no keyboard hints, and controls at least 44px tall (WCAG 2.5.5). Inputs stay at 16px or more so
+   iOS doesn't zoom the page when one takes focus. */
+@media (hover: none) and (pointer: coarse) {
+  kbd {
+    display: none;
+  }
+  .btn,
+  .input,
+  .chip-toggle {
+    min-height: 2.75rem;
+  }
+  .input,
+  select {
+    font-size: max(1rem, 16px);
   }
 }
 
@@ -168,7 +228,7 @@ body {
     @apply fixed inset-0 z-40 bg-ink/50;
   }
   .dialog-content {
-    @apply fixed inset-x-0 bottom-0 z-50 max-h-[90dvh] overflow-y-auto rounded-t-2xl border-2 border-ink bg-surface-raised p-4 shadow-xl sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:w-[min(36rem,92vw)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl dark:border-cream/40;
+    @apply fixed inset-x-0 bottom-0 z-50 max-h-[90dvh] overflow-y-auto overscroll-contain rounded-t-2xl border-2 border-ink bg-surface-raised p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-xl sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:w-[min(36rem,92vw)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl dark:border-cream/40;
   }
   kbd {
     @apply inline-flex min-w-5 items-center justify-center rounded border border-current/40 px-1 font-mono text-[11px] leading-4 opacity-80;

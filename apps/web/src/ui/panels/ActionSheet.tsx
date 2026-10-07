@@ -157,7 +157,7 @@ function Row({
       onClick={() => onPick(preview.action)}
       aria-keyshortcuts={key}
     >
-      <span className="flex w-full items-center gap-2">
+      <span className="flex w-full flex-wrap items-center gap-x-2 gap-y-0.5">
         {key && <kbd>{key.toUpperCase()}</kbd>}
         {target !== undefined && itemFrame(target) && <ItemArt id={target} size={32} />}
         <span className="flex-1 text-left font-bold">
@@ -182,8 +182,6 @@ export function ActionSheet({
   smart = [],
   canAct,
   onPick,
-  onTravel,
-  onEndWeek,
   children,
 }: {
   location: string;
@@ -194,8 +192,6 @@ export function ActionSheet({
   smart?: readonly SmartDefault[];
   canAct: boolean;
   onPick(a: Action): void;
-  onTravel(): void;
-  onEndWeek(): void;
   children?: React.ReactNode;
 }) {
   const { t } = useTranslation();
@@ -207,7 +203,7 @@ export function ActionSheet({
     if (reason)
       return (
         <li key={g.actionId}>
-          <div className="flex items-center gap-2 rounded-xl border-2 border-ink/15 border-dashed px-2 py-1.5 text-fg-muted text-sm dark:border-cream/20">
+          <div className="flex flex-wrap items-center gap-x-2 rounded-xl border-2 border-ink/15 border-dashed px-2 py-1.5 text-fg-muted text-sm dark:border-cream/20">
             <span className="flex-1 font-bold">{t(`action.${g.actionId}`)}</span>
             <span className="text-bad text-xs">{t(`error.${reason}`)}</span>
           </div>
@@ -226,6 +222,7 @@ export function ActionSheet({
 
   return (
     <section
+      id="sheet"
       className="sheet flex min-h-0 flex-col border-ink border-t-2 bg-surface-raised dark:border-cream/30"
       aria-labelledby="sheet-heading"
     >
@@ -249,7 +246,10 @@ export function ActionSheet({
       </div>
       {children}
       {canAct && <QuickBar smart={smart} groups={groups} onPick={onPick} />}
-      <div className="relative min-h-0 flex-1 overflow-y-auto px-3 pb-2" data-coach="actions">
+      <div
+        className="relative px-3 pt-1 pb-4 wide:min-h-0 wide:flex-1 wide:overflow-y-auto wide:pb-2"
+        data-coach="actions"
+      >
         {local.length === 0 && anywhere.length === 0 && (
           <p className="text-fg-muted">{t('sheet.nothing')}</p>
         )}
@@ -263,7 +263,31 @@ export function ActionSheet({
           </>
         )}
       </div>
-      <div className="flex gap-2 border-ink/20 border-t-2 p-2 dark:border-cream/20">
+    </section>
+  );
+}
+
+/**
+ * Travel and End week, with what the last action did above them (FR-03). Portrait sticks it to the bottom of the
+ * screen, so both stay in reach wherever the page is scrolled; landscape docks it under the action sheet.
+ */
+export function ActionDock({
+  canAct,
+  onTravel,
+  onEndWeek,
+  children,
+}: {
+  canAct: boolean;
+  onTravel(): void;
+  onEndWeek(): void;
+  /** The ticker. */
+  children?: React.ReactNode;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="dock flex flex-col border-ink border-t-2 bg-surface-raised shadow-[0_-4px_12px_rgb(0_0_0/0.08)] dark:border-cream/30">
+      <div className="max-h-24 overflow-y-auto pt-1">{children}</div>
+      <div className="flex gap-2 px-3 pt-1 pb-2">
         <button
           type="button"
           className="btn flex-1"
@@ -284,6 +308,6 @@ export function ActionSheet({
           {t('sheet.endWeek')} <kbd>{KEY_END_WEEK.toUpperCase()}</kbd>
         </button>
       </div>
-    </section>
+    </div>
   );
 }

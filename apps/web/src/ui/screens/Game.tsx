@@ -1,10 +1,10 @@
 /**
- * The game screen. Layout (NFR-02): portrait stacks HUD, board and action sheet; landscape puts the HUD and the
- * action sheet either side of the board. Keyboard (NFR-03): E ends the week, T travels, D opens details, and the
+ * The game screen. Layout (NFR-02): portrait stacks HUD, board and action sheet in one scrolling page, with the HUD's
+ * top bar and the Travel / End week dock pinned; landscape puts the HUD and the action sheet either side of the board. Keyboard (NFR-03): E ends the week, T travels, D opens details, and the
  * action rows take the number and letter keys shown on them.
  */
 import type { Action, Preview } from '@fastlane/engine';
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { boardLayout, innerRect } from '../../board/layout.ts';
 import { FxLayer } from '../../fx/FxLayer.tsx';
@@ -12,6 +12,7 @@ import { coachStep, hasWorked } from '../../game/coach.ts';
 import { content, engine } from '../../game/engine.ts';
 import { nextHint, pickTrip, weekNeeds } from '../../game/guide.ts';
 import { activeHuman } from '../../game/report.ts';
+import { useReducedMotion, useWideLayout } from '../../settings/hooks.ts';
 import { useSettings } from '../../settings/settings.ts';
 import { useApp } from '../../store/app.ts';
 import { gameStore, useGame } from '../../store/game.ts';
@@ -24,13 +25,13 @@ import {
   useHotkeys,
 } from '../common/hotkeys.ts';
 import { Hud } from '../hud/Hud.tsx';
-import { ActionSheet, groupActions } from '../panels/ActionSheet.tsx';
+import { ActionDock, ActionSheet, groupActions } from '../panels/ActionSheet.tsx';
 import { Coach } from '../panels/Coach.tsx';
 import { DetailsDialog } from '../panels/DetailsDialog.tsx';
 import { EndWeekDialog, endWeekWarnings } from '../panels/EndWeekDialog.tsx';
 import { Ticker } from '../panels/Ticker.tsx';
 import { TravelDialog } from '../panels/TravelDialog.tsx';
-import { WeekPanel } from '../panels/WeekPanel.tsx';
+import { Clock, WeekPanel } from '../panels/WeekPanel.tsx';
 import { Handoff } from '../week/Handoff.tsx';
 import { WeekSequence } from '../week/WeekSequence.tsx';
 
@@ -41,6 +42,8 @@ const Summary = lazy(() => import('./Summary.tsx'));
 const PANEL_MIN = { w: 230, h: 250 };
 /** Past this the panel stops growing (Tailwind max-w-80). */
 const PANEL_MAX = { w: 320, h: 420 };
+/** Portrait keeps the week panel in the sheet; the loop's middle shows just the clock when it fits. */
+const CLOCK_MIN = 96;
 const MODE_KEY = 'fastlane.travelMode';
 const DEFAULT_MODE = 'transit';
 
@@ -68,6 +71,25 @@ function useSize(): [(el: HTMLElement | null) => void, { w: number; h: number }]
   return [setEl, size];
 }
 
+/**
+ * Portrait only: when the player arrives somewhere, bring that place's actions into view under the HUD's pinned bar,
+ * since the board that was tapped sits above them.
+ */
+function useScrollToSheet(location: string | undefined, player: string | undefined, wide: boolean) {
+  const reduced = useReducedMotion();
+  const last = useRef({ location, player });
+  useEffect(() => {
+    const prev = last.current;
+    last.current = { location, player };
+    if (wide || !location || prev.player !== player || prev.location === location) return;
+    const sheet = document.getElementById('sheet');
+    if (!sheet) return;
+    const bar = document.querySelector<HTMLElement>('.hud > div');
+    const top = sheet.getBoundingClientRect().top + window.scrollY - (bar?.offsetHeight ?? 0);
+    window.scrollTo({ top, behavior: reduced ? 'auto' : 'smooth' });
+  }, [location, player, wide, reduced]);
+}
+
 /** Action kinds per action id, to tell whether a meal or study is on offer where the player stands. */
 const KIND = new Map(content.city.actions.map((a) => [a.id, a.kind]));
 
@@ -92,6 +114,7 @@ export function Game() {
   const [mode, setModeState] = useState(storedMode);
   const [hover, setHover] = useState<string | null>(null);
   const [boardRef, boardSize] = useSize();
+  const wide = useWideLayout();
 
   const state = session?.state;
   const canAct = !!state && state.phase.kind === 'turn' && !state.pending && !report && !handoff;
@@ -126,6 +149,7 @@ export function Game() {
     () => (state && meNow ? weekNeeds(content, state, meNow) : null),
     [state, meNow],
   );
+  useScrollToSheet(meNow?.location, meNow?.id, wide);
 
   /** One click on the board goes straight there (FR-02), like the original; the dialog only when no mode can. */
   const goTo = (dest: string) => {
@@ -200,7 +224,8 @@ export function Game() {
     boardLayout(boardSize.w, boardSize.h, content.city.board.locations.length),
     PANEL_MAX,
   );
-  const roomy = inner.w >= PANEL_MIN.w && inner.h >= PANEL_MIN.h;
+  const roomy = wide && inner.w >= PANEL_MIN.w && inner.h >= PANEL_MIN.h;
+  const clockSize = Math.min(inner.w, inner.h, 140);
   const panelProps = {
     state,
     me,
@@ -217,7 +242,7 @@ export function Game() {
 
   return (
     <div className="game-layout">
-      <div className="hud-area min-h-0 overflow-y-auto">
+      <div className="hud-area contents wide:block wide:min-h-0 wide:overflow-y-auto">
         <Hud state={state} me={me} onDetails={() => setDetails(true)} onQuit={quit} />
         <div className="hidden px-3 py-2 text-fg-muted text-xs wide:block">
           <p>{t('menu.help')}</p>
@@ -251,6 +276,16 @@ export function Game() {
             />
           </div>
         )}
+        {!roomy && clockSize >= CLOCK_MIN && (
+          <div
+            className="pointer-events-none absolute z-10 flex items-center justify-center"
+            style={{ left: inner.x, top: inner.y, width: inner.w, height: inner.h }}
+          >
+            <div className="rounded-full bg-surface-raised/80 shadow-[0_3px_0_var(--color-ink)]">
+              <Clock left={me.timeLeft} total={content.balance.weekMinutes} size={clockSize} />
+            </div>
+          </div>
+        )}
         {roomy && (
           <div
             className="pointer-events-none absolute z-10 flex items-center justify-center"
@@ -271,8 +306,6 @@ export function Game() {
         smart={smart}
         canAct={canAct}
         onPick={dispatch}
-        onTravel={() => setTravel({ dest: null })}
-        onEndWeek={endWeek}
       >
         {coach && !roomy && (
           <Coach
@@ -284,8 +317,10 @@ export function Game() {
           />
         )}
         {!roomy && <WeekPanel {...panelProps} compact />}
-        <Ticker events={lastEvents} state={state} player={me.id} error={error} />
       </ActionSheet>
+      <ActionDock canAct={canAct} onTravel={() => setTravel({ dest: null })} onEndWeek={endWeek}>
+        <Ticker events={lastEvents} state={state} player={me.id} error={error} />
+      </ActionDock>
 
       <TravelDialog
         open={travel !== null}
