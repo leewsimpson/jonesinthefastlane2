@@ -77,6 +77,27 @@ function evict(ctx: PlayerCtx): void {
   ctx.emit({ type: 'evicted', player: player.id, from });
 }
 
+/**
+ * The subscriptions this week's bills will pay: rent comes first, then each subscription in content order while
+ * cash covers it. The food check runs before the bills (FR-05) and uses this, so a meal subscription about to be
+ * cancelled for non-payment delivers nothing (FR-52).
+ */
+export function subscriptionsPaid(ctx: PlayerCtx): Set<string> {
+  const { player, content, world, config } = ctx;
+  let cash =
+    player.stats.cash - Math.min(player.stats.cash, player.housing.rent * config.turnLengthWeeks);
+  const paid = new Set<string>();
+  for (const sub of content.city.subscriptions) {
+    if (!player.subscriptions.includes(sub.id)) continue;
+    const cost = price(world, sub.weeklyCost) * config.turnLengthWeeks;
+    if (cost <= cash) {
+      cash -= cost;
+      paid.add(sub.id);
+    }
+  }
+  return paid;
+}
+
 /** Each subscription charges weekly; one cash can't cover is cancelled rather than going into debt (FR-52). */
 function chargeSubscriptions(ctx: PlayerCtx): void {
   const { player, content, world, config } = ctx;

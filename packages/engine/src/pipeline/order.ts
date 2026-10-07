@@ -5,7 +5,7 @@
 import type { PlayerCtx } from '../core/context.ts';
 import { changeStats } from '../stats/stats.ts';
 import type { Cause } from '../types/events.ts';
-import { bills } from './bills.ts';
+import { bills, subscriptionsPaid } from './bills.ts';
 import { interestAndDebt } from './debts.ts';
 import { goalCheck } from './goalCheck.ts';
 import { jobChecks } from './jobChecks.ts';
@@ -19,14 +19,17 @@ import { weekendEvent } from './weekendEvent.ts';
 
 const done = { done: true } as const;
 
-/** P1: penalise a week without a meal (§4 Hunger), then reset the count. Delivered meals count (FR-52). */
+/**
+ * P1: penalise a week without a meal (§4 Hunger), then reset the count. Delivered meals count (FR-52) when this
+ * week's bills will pay for them.
+ */
 export const foodCheck: PipelineStep<PlayerCtx> = {
   id: 'food-check',
   run(ctx) {
     const { player, content } = ctx;
     let meals = player.mealsThisWeek;
-    for (const sub of content.city.subscriptions)
-      if (player.subscriptions.includes(sub.id)) meals += sub.meals ?? 0;
+    const paid = subscriptionsPaid(ctx);
+    for (const sub of content.city.subscriptions) if (paid.has(sub.id)) meals += sub.meals ?? 0;
     if (meals === 0) {
       ctx.emit({ type: 'mealSkipped', player: player.id });
       changeStats(ctx, player, content.balance.hungerPenalty, { kind: 'step', id: 'food-check' });
