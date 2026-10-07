@@ -164,7 +164,7 @@ function Row({
           {label || t(`action.${preview.action.actionId}`)}
         </span>
         {!preview.available && (
-          <span className="text-coral text-xs">{t(`error.${preview.reason.code}`)}</span>
+          <span className="text-bad text-xs">{t(`error.${preview.reason.code}`)}</span>
         )}
       </span>
       {info && <span className="text-fg-muted text-xs">{info}</span>}
@@ -207,9 +207,9 @@ export function ActionSheet({
     if (reason)
       return (
         <li key={g.actionId}>
-          <div className="flex items-center gap-2 rounded-xl border-2 border-ink/15 border-dashed px-2 py-1.5 text-sm opacity-70 dark:border-cream/20">
+          <div className="flex items-center gap-2 rounded-xl border-2 border-ink/15 border-dashed px-2 py-1.5 text-fg-muted text-sm dark:border-cream/20">
             <span className="flex-1 font-bold">{t(`action.${g.actionId}`)}</span>
-            <span className="text-coral text-xs">{t(`error.${reason}`)}</span>
+            <span className="text-bad text-xs">{t(`error.${reason}`)}</span>
           </div>
         </li>
       );

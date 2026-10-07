@@ -112,7 +112,7 @@ export function Hud({
           </div>
         </div>
         <div className="text-right">
-          <div className="tabular font-bold font-display text-teal text-xl leading-none">
+          <div className="tabular font-bold font-display text-good text-xl leading-none">
             <span className="sr-only">{t('stat.cash')} </span>
             <Counter value={me.stats.cash} format={money} />
           </div>

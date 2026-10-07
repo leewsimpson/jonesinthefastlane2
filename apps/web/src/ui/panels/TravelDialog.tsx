@@ -140,9 +140,7 @@ export function TravelDialog({
                             {t(`transport.${p.action.mode}`)}
                           </span>
                           {!p.available && (
-                            <span className="text-coral text-xs">
-                              {t(`error.${p.reason.code}`)}
-                            </span>
+                            <span className="text-bad text-xs">{t(`error.${p.reason.code}`)}</span>
                           )}
                         </span>
                         {p.plan && <PlanChips plan={p.plan} />}

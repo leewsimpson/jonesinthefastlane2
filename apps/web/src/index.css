@@ -28,6 +28,9 @@
   --color-surface-raised: var(--surface-raised);
   --color-fg: var(--fg);
   --color-fg-muted: var(--fg-muted);
+  /* Text in the palette's good/bad colours, darkened on light surfaces for WCAG AA (NFR-04). */
+  --color-good: var(--good);
+  --color-bad: var(--bad);
 
   --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Atkinson Hyperlegible Next Variable", ui-sans-serif, system-ui, sans-serif;
@@ -50,6 +53,8 @@
   --surface-raised: #ffffff;
   --fg: #1f1b2e;
   --fg-muted: #5b5872;
+  --good: #0f7d74;
+  --bad: #c7362c;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -58,6 +63,8 @@
     --surface-raised: #1f1b2e;
     --fg: #fff6e9;
     --fg-muted: #c9c4dc;
+    --good: #1fb5a8;
+    --bad: #ff5a4e;
   }
 }
 
@@ -66,6 +73,8 @@
   --surface-raised: #1f1b2e;
   --fg: #fff6e9;
   --fg-muted: #c9c4dc;
+  --good: #1fb5a8;
+  --bad: #ff5a4e;
 }
 
 body {

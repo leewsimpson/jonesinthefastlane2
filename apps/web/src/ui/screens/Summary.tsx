@@ -170,7 +170,7 @@ export default function Summary({
     <main className="mx-auto flex min-h-dvh max-w-xl flex-col gap-5 p-4 sm:p-6">
       <h1 className="font-display font-extrabold text-4xl">{t('summary.title')}</h1>
       <div>
-        <p className="font-bold font-display text-2xl text-coral">
+        <p className="font-bold font-display text-2xl text-bad">
           {t('summary.won', { name: playerName(state, result.winner) })}
         </p>
         <p className="text-fg-muted">

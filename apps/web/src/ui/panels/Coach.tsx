@@ -38,7 +38,7 @@ export function Coach({
       data-testid="coach"
     >
       <div className="flex items-center justify-between gap-2">
-        <h2 id="coach-heading" className="font-bold text-coral text-xs uppercase tracking-wide">
+        <h2 id="coach-heading" className="font-bold text-bad text-xs uppercase tracking-wide">
           {t('coach.step', { n: step.n, total: COACH_STEPS.length })}
         </h2>
         <button type="button" className="text-fg-muted text-xs underline" onClick={onSkip}>

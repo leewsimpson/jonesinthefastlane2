@@ -105,7 +105,7 @@ export function DetailsDialog({
                   hours: duration(me.job.minutesThisWeek),
                 })}
                 {me.job.layoffWarning && (
-                  <span className="ml-2 font-bold text-coral">{t('details.layoffWarning')}</span>
+                  <span className="ml-2 font-bold text-bad">{t('details.layoffWarning')}</span>
                 )}
               </p>
             ) : (

@@ -134,7 +134,7 @@ export function FxLayer({
                 }),
               )}
             <m.p
-              className={`card max-w-xs px-4 py-3 text-center font-bold font-display text-xl shadow-[0_4px_0_var(--color-ink)] ${good(banner.moment) ? '' : 'text-coral'}`}
+              className={`card max-w-xs px-4 py-3 text-center font-bold font-display text-xl shadow-[0_4px_0_var(--color-ink)] ${good(banner.moment) ? '' : 'text-bad'}`}
               initial={reduced ? false : { scale: 0.6, rotate: -4 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ type: 'spring', stiffness: 380, damping: 16 }}

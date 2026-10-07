@@ -29,7 +29,7 @@
 | CI-02 | Use Turborepo or `pnpm --filter ...[origin/main]` so only affected packages are built and tested. | S |
 | CI-03 | E2E (Playwright, Chromium + mobile WebKit viewport) runs against the PR **preview URL** after it deploys (only labelled PRs deploy, CD-01). | M |
 | CI-04 | Balance sim (`packages/sim`, 2k games on `main` and manual dispatch, 10k nightly), in a job parallel to the checks. Fails if KPIs leave their hard bands. Posts the band table, with a paired comparison against the last green `main` run's report, to the job summary, and uploads the report as an artifact. | S |
-| CI-05 | Bundle size check: fails if the initial JS exceeds 300 KB gzipped (NFR-10). Lighthouse CI on the preview URL with performance/accessibility budgets. | M |
+| CI-05 | Bundle size check: fails if the initial JS exceeds 300 KB gzipped (NFR-10). Lighthouse CI on the preview URL with performance/accessibility budgets (in `lighthouserc.json`). | M |
 | CI-06 | Security: CodeQL scanning, `pnpm audit` (high+ fails), Dependabot alerts, secret scanning with push protection on. | M |
 | CI-07 | `main` has no ruleset or branch protection (removed 2026-10-05, user decision). Direct pushes are allowed and no status checks are required, because CI runs on `main` itself (CI-01); a red `main` is fixed forward. | M |
 | CD-01 | **Preview (opt-in):** a PR labelled `preview` deploys the web app to a Pages preview (`--branch=pr-<n>`). The URL is posted as a sticky PR comment. The Worker is uploaded with `wrangler versions upload --env preview --preview-alias pr-<n>`, which gives every PR its own Worker preview URL. (A single shared `preview` deploy would let parallel PRs overwrite each other mid-E2E.) The PR's web preview is built with that API URL. | M |

@@ -128,7 +128,7 @@ function SummaryPage({ report, state }: { report: WeekReport; state: GameState }
           <li key={i}>
             {l.headline ? (
               <Stamp delay={0.2 + i * 0.1}>
-                <span className="font-bold font-display text-coral text-lg">{l.text}</span>
+                <span className="font-bold font-display text-bad text-lg">{l.text}</span>
               </Stamp>
             ) : (
               <Rise index={i}>{l.text}</Rise>
@@ -144,7 +144,7 @@ function SummaryPage({ report, state }: { report: WeekReport; state: GameState }
               <li key={reason} className="flex justify-between">
                 <span>{t(`reason.${reason}`)}</span>
                 <span
-                  className={`tabular ${v.internal ? '' : v.amount > 0 ? 'text-teal' : 'text-coral'}`}
+                  className={`tabular ${v.internal ? '' : v.amount > 0 ? 'text-good' : 'text-bad'}`}
                 >
                   {v.internal ? money(v.amount) : signedMoney(v.amount)}
                 </span>
@@ -337,7 +337,7 @@ function GoalsPage({ report, state }: { report: WeekReport; state: GameState }) 
         })}
       </ul>
       {eventsFor(report.events, 'nearMiss').map((e) => (
-        <p key={`${e.player}-${e.goal}`} className="font-bold text-coral">
+        <p key={`${e.player}-${e.goal}`} className="font-bold text-bad">
           {t('week.nearMiss', {
             name: playerName(state, e.player),
             short: e.goal === 'wealth' ? money(e.short) : e.short,
@@ -357,7 +357,7 @@ function RivalPage({ report, state }: { report: WeekReport; state: GameState }) 
   return (
     <div className="flex flex-col gap-3">
       {overtakes.map((e) => (
-        <p key={`${e.player}-${e.by}`} className="font-bold font-display text-coral text-lg">
+        <p key={`${e.player}-${e.by}`} className="font-bold font-display text-bad text-lg">
           {t('week.overtaken', { by: playerName(state, e.by), name: playerName(state, e.player) })}
         </p>
       ))}
