@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SlotSummary } from '../../persistence/saves.ts';
+import { SettingsButton } from '../../settings/SettingsButton.tsx';
 import { useApp } from '../../store/app.ts';
 
 type Slots = { state: 'loading' } | { state: 'ok'; slots: SlotSummary[] } | { state: 'error' };
@@ -59,6 +60,7 @@ export function Title() {
         >
           {t('title.newGame')}
         </button>
+        <SettingsButton />
       </div>
       <section className="w-full text-left" aria-labelledby="saves-heading">
         <h2 id="saves-heading" className="mb-2 font-display font-bold text-xl">

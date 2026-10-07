@@ -1,8 +1,11 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './i18n/i18n.ts';
+import { applySettings, useSettings } from './settings/settings.ts';
 import { App } from './ui/App.tsx';
 import './index.css';
+
+applySettings(useSettings.getState());
 
 const root = document.getElementById('root');
 if (!root) throw new Error('#root missing');

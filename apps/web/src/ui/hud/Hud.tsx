@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { content } from '../../game/engine.ts';
 import { standingOf } from '../../game/standing.ts';
 import { duration, money, percent } from '../../i18n/format.ts';
+import { SettingsButton } from '../../settings/SettingsButton.tsx';
 import { KEY_DETAILS } from '../common/hotkeys.ts';
 import { STAT_ICON, STAT_TONE, seatOf } from '../common/stats.ts';
 import { GoalRings, Ring } from './GoalRings.tsx';
@@ -122,6 +123,7 @@ export function Hud({
           >
             {t('hud.details')} <kbd>{KEY_DETAILS.toUpperCase()}</kbd>
           </button>
+          <SettingsButton className="ml-2 text-fg-muted text-xs underline" />
           <button type="button" className="ml-2 text-fg-muted text-xs underline" onClick={onQuit}>
             {t('menu.quit')}
           </button>

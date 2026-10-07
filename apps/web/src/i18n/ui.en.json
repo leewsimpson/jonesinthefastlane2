@@ -34,6 +34,18 @@
   "setup.start": "Start",
   "setup.back": "Back",
 
+  "settings.title": "Settings",
+  "settings.theme": "Theme",
+  "settings.theme.system": "Match device",
+  "settings.theme.light": "Light",
+  "settings.theme.dark": "Dark",
+  "settings.motion": "Motion",
+  "settings.motion.system": "Match device",
+  "settings.motion.reduce": "Reduced",
+  "settings.motion.full": "Full",
+  "settings.textSize": "Text size",
+  "settings.tutorial": "Coach me through week 1",
+
   "player.jones": "Jones",
 
   "hud.week": "Week {{week}}",
