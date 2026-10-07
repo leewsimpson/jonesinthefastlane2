@@ -38,7 +38,7 @@ export {
 } from './goals/goals.ts';
 export { meets } from './hooks/conditions.ts';
 export { newsEffect, newsExposure } from './hooks/news.ts';
-export { effectiveExposure, qualification } from './jobs/jobs.ts';
+export { effectiveExposure, qualification, weeklyCap } from './jobs/jobs.ts';
 export { balanceOf, financialNetWorth, type Place, places, totalDebt } from './money/ledger.ts';
 export { scores } from './pipeline/goalCheck.ts';
 export { defaultPipeline } from './pipeline/order.ts';

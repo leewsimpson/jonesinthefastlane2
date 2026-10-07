@@ -2,7 +2,8 @@
  * The Pixi board (art-direction §4, NFR-04): a code-drawn ring road with location pads from the palette, the
  * generated buildings on the pads, and a token per player: a bust in a player-colour ring with the seat's shape.
  * Tokens glide along the road to where the engine says they are (FR-02); reduced motion jumps instead. Pixi owns
- * only the canvas: the DOM travel dialog is the accessible way to move (tech-stack §2).
+ * only the canvas: a click on a building travels there at once, and the DOM travel dialog is the accessible way to
+ * move (tech-stack §2).
  */
 import type { GameState } from '@fastlane/engine';
 import { Application, extend, useTick } from '@pixi/react';
@@ -20,6 +21,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { content } from '../game/engine.ts';
 import { seatOf } from '../ui/common/stats.ts';
+import { buildingFrame } from './frames.ts';
 import { type BoardLayout, boardLayout, pointAt, stepToward } from './layout.ts';
 
 extend({ Container, Graphics, Sprite, Text });
@@ -32,9 +34,6 @@ const MUSTARD = 0xffc23d;
 
 /** Steps of the loop a token covers per second. */
 const TOKEN_SPEED = 5;
-
-/** Building art per location id. UpSkill U's art is still named after its old placeholder (`hitech-u`). */
-const BUILDING_FRAME: Record<string, string> = { 'upskill-u': 'hitech-u' };
 
 interface Sheets {
   locations: Spritesheet;
@@ -112,6 +111,7 @@ function Pad({
   texture,
   label,
   onSelect,
+  onHover,
 }: {
   layout: BoardLayout;
   index: number;
@@ -119,6 +119,7 @@ function Pad({
   texture: Texture | undefined;
   label: string;
   onSelect(): void;
+  onHover(on: boolean): void;
 }) {
   const { x, y } = pointAt(layout, index);
   const { cell } = layout;
@@ -136,7 +137,15 @@ function Pad({
   );
   const scale = texture ? cell / texture.width : 1;
   return (
-    <pixiContainer x={x} y={y} eventMode="static" cursor="pointer" onPointerTap={onSelect}>
+    <pixiContainer
+      x={x}
+      y={y}
+      eventMode="static"
+      cursor={here ? 'default' : 'pointer'}
+      onPointerTap={onSelect}
+      onPointerOver={() => onHover(true)}
+      onPointerOut={() => onHover(false)}
+    >
       <pixiGraphics draw={drawPad} />
       {texture && (
         <pixiSprite texture={texture} anchor={{ x: 0.5, y: 1 }} y={cell * 0.08} scale={scale} />
@@ -242,11 +251,13 @@ function Scene({
   state,
   active,
   onSelect,
+  onHover,
 }: {
   container: React.RefObject<HTMLDivElement | null>;
   state: GameState;
   active: string | null;
   onSelect(location: string): void;
+  onHover(location: string | null): void;
 }) {
   const { t } = useTranslation();
   const reduced = useReducedMotion();
@@ -284,12 +295,7 @@ function Scene({
   if (size.w === 0) return null;
 
   const me = state.players.find((p) => p.id === active) ?? state.players[0];
-  const homeTier = Math.max(
-    0,
-    content.city.housing.findIndex((h) => h.id === me?.housing.tier),
-  );
-  const frameFor = (id: string) =>
-    id === content.city.board.home ? `your-place-${homeTier + 1}` : (BUILDING_FRAME[id] ?? id);
+  const frameFor = (id: string) => buildingFrame(id, me?.housing.tier);
 
   // Draw the far side of the loop first, so nearer buildings overlap it.
   const order = locations
@@ -312,6 +318,7 @@ function Scene({
           texture={sheets?.locations.textures[frameFor(id)]}
           label={t(`location.${id}`)}
           onSelect={() => onSelect(id)}
+          onHover={(on) => onHover(on ? id : null)}
         />
       ))}
       {state.players
@@ -344,10 +351,12 @@ export default function Board({
   state,
   active,
   onSelect,
+  onHover = () => {},
 }: {
   state: GameState;
   active: string | null;
   onSelect(location: string): void;
+  onHover?(location: string | null): void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   return (
@@ -359,7 +368,13 @@ export default function Board({
         autoDensity
         resolution={Math.min(2, window.devicePixelRatio || 1)}
       >
-        <Scene container={ref} state={state} active={active} onSelect={onSelect} />
+        <Scene
+          container={ref}
+          state={state}
+          active={active}
+          onSelect={onSelect}
+          onHover={onHover}
+        />
       </Application>
     </div>
   );

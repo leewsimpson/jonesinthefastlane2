@@ -4,9 +4,11 @@
  * action rows take the number and letter keys shown on them.
  */
 import type { Action, Preview } from '@fastlane/engine';
-import { lazy, Suspense, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { engine } from '../../game/engine.ts';
+import { boardLayout, innerRect } from '../../board/layout.ts';
+import { content, engine } from '../../game/engine.ts';
+import { nextHint, pickTrip, weekNeeds } from '../../game/guide.ts';
 import { activeHuman } from '../../game/report.ts';
 import { useApp } from '../../store/app.ts';
 import { gameStore, useGame } from '../../store/game.ts';
@@ -14,13 +16,49 @@ import { KEY_DETAILS, KEY_END_WEEK, KEY_TRAVEL, rowKey, useHotkeys } from '../co
 import { Hud } from '../hud/Hud.tsx';
 import { ActionSheet, groupActions } from '../panels/ActionSheet.tsx';
 import { DetailsDialog } from '../panels/DetailsDialog.tsx';
+import { EndWeekDialog, endWeekWarnings } from '../panels/EndWeekDialog.tsx';
 import { Ticker } from '../panels/Ticker.tsx';
 import { TravelDialog } from '../panels/TravelDialog.tsx';
+import { WeekPanel } from '../panels/WeekPanel.tsx';
 import { Handoff } from '../week/Handoff.tsx';
 import { WeekSequence } from '../week/WeekSequence.tsx';
 
 const Board = lazy(() => import('../../board/Board.tsx'));
 const Summary = lazy(() => import('./Summary.tsx'));
+
+/** The week panel needs at least this much open ground in the loop; smaller boards show it in the sheet. */
+const PANEL_MIN = { w: 230, h: 250 };
+/** Past this the panel stops growing (Tailwind max-w-80). */
+const PANEL_MAX = { w: 320, h: 420 };
+const MODE_KEY = 'fastlane.travelMode';
+const DEFAULT_MODE = 'transit';
+
+/** A per-viewer convenience: storage can be missing or throw (private windows), so the default always works. */
+function storedMode(): string {
+  try {
+    return localStorage.getItem(MODE_KEY) ?? DEFAULT_MODE;
+  } catch {
+    return DEFAULT_MODE;
+  }
+}
+
+/** An element's size, for placing the week panel inside the loop. A callback ref, so it follows the element. */
+function useSize(): [(el: HTMLElement | null) => void, { w: number; h: number }] {
+  const [el, setEl] = useState<HTMLElement | null>(null);
+  const [size, setSize] = useState({ w: 0, h: 0 });
+  useEffect(() => {
+    if (!el) return;
+    const measure = () => setSize({ w: el.clientWidth, h: el.clientHeight });
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [el]);
+  return [setEl, size];
+}
+
+/** Action kinds per action id, to tell whether a meal or study is on offer where the player stands. */
+const KIND = new Map(content.city.actions.map((a) => [a.id, a.kind]));
 
 export function Game() {
   const { t } = useTranslation();
@@ -33,6 +71,10 @@ export function Game() {
   const error = useGame((s) => s.error);
   const [travel, setTravel] = useState<{ dest: string | null } | null>(null);
   const [details, setDetails] = useState(false);
+  const [confirmEnd, setConfirmEnd] = useState(false);
+  const [mode, setModeState] = useState(storedMode);
+  const [hover, setHover] = useState<string | null>(null);
+  const [boardRef, boardSize] = useSize();
 
   const state = session?.state;
   const canAct = !!state && state.phase.kind === 'turn' && !state.pending && !report && !handoff;
@@ -45,6 +87,38 @@ export function Game() {
   const dispatch = (a: Action) => {
     const ok = gameStore().getState().dispatch(a);
     if (ok && a.type === 'travel') setTravel(null);
+    if (ok && a.type === 'endWeek') setConfirmEnd(false);
+  };
+
+  const setMode = (m: string) => {
+    setModeState(m);
+    try {
+      localStorage.setItem(MODE_KEY, m);
+    } catch {
+      // Not remembered this time; the choice still holds for this session.
+    }
+  };
+
+  const meId = state ? (activeHuman(state) ?? report?.player ?? state.players[0]?.id) : undefined;
+  const meNow = state?.players.find((p) => p.id === meId) ?? state?.players[0];
+  const needs = useMemo(
+    () => (state && meNow ? weekNeeds(content, state, meNow) : null),
+    [state, meNow],
+  );
+
+  /** One click on the board goes straight there (FR-02), like the original; the dialog only when no mode can. */
+  const goTo = (dest: string) => {
+    if (!canAct || !meNow || dest === meNow.location) return;
+    const trip = pickTrip(previews, dest, mode);
+    if (trip) dispatch(trip.action);
+    else setTravel({ dest });
+  };
+
+  const endWeek = () => {
+    if (!canAct || !needs) return;
+    const warn = endWeekWarnings(needs);
+    if (warn.hungry || warn.rentShort) setConfirmEnd(true);
+    else dispatch({ type: 'endWeek' });
   };
 
   const rowHandlers: Record<string, () => void> = {};
@@ -54,14 +128,14 @@ export function Game() {
   useHotkeys(
     {
       ...rowHandlers,
-      [KEY_END_WEEK]: () => dispatch({ type: 'endWeek' }),
+      [KEY_END_WEEK]: endWeek,
       [KEY_TRAVEL]: () => setTravel({ dest: null }),
       [KEY_DETAILS]: () => setDetails(true),
     },
-    canAct && !travel && !details,
+    canAct && !travel && !details && !confirmEnd,
   );
 
-  if (!session || !state) return null;
+  if (!session || !state || !needs) return null;
 
   const quit = () => {
     gameStore().getState().close();
@@ -82,9 +156,35 @@ export function Game() {
       </Suspense>
     );
 
-  const active = activeHuman(state) ?? report?.player ?? state.players[0]?.id ?? 'p1';
-  const me = state.players.find((p) => p.id === active) ?? state.players[0];
+  const me = meNow;
   if (!me) return null;
+
+  const here = { canEat: false, canStudy: false };
+  for (const p of previews)
+    if (p.available && p.action.type === 'perform') {
+      const kind = KIND.get(p.action.actionId);
+      if (kind === 'eat' || kind === 'eat-stored') here.canEat = true;
+      if (kind === 'study') here.canStudy = true;
+    }
+  const hint = nextHint(content, state, me, here);
+  const inner = innerRect(
+    boardLayout(boardSize.w, boardSize.h, content.city.board.locations.length),
+    PANEL_MAX,
+  );
+  const roomy = inner.w >= PANEL_MIN.w && inner.h >= PANEL_MIN.h;
+  const panelProps = {
+    state,
+    me,
+    previews,
+    needs,
+    hint,
+    mode,
+    hover,
+    canAct,
+    onMode: setMode,
+    onGo: goTo,
+    onEndWeek: endWeek,
+  };
 
   return (
     <div className="game-layout">
@@ -94,26 +194,33 @@ export function Game() {
           <p>{t('menu.help')}</p>
         </div>
       </div>
-      <div className="board-area relative min-h-0">
+      <div ref={boardRef} className="board-area relative min-h-0">
         <Suspense fallback={null}>
-          <Board
-            state={state}
-            active={me.id}
-            onSelect={(id) => {
-              if (canAct && id !== me.location) setTravel({ dest: id });
-            }}
-          />
+          <Board state={state} active={me.id} onSelect={goTo} onHover={setHover} />
         </Suspense>
+        {roomy && (
+          <div
+            className="pointer-events-none absolute z-10 flex items-center justify-center"
+            style={{ left: inner.x, top: inner.y, width: inner.w, height: inner.h }}
+          >
+            <div className="pointer-events-auto flex max-h-full w-full max-w-80">
+              <WeekPanel {...panelProps} />
+            </div>
+          </div>
+        )}
       </div>
       <ActionSheet
         location={me.location}
+        week={state.week}
+        housingTier={me.housing.tier}
         world={state.world}
         groups={groups}
         canAct={canAct}
         onPick={dispatch}
         onTravel={() => setTravel({ dest: null })}
-        onEndWeek={() => dispatch({ type: 'endWeek' })}
+        onEndWeek={endWeek}
       >
+        {!roomy && <WeekPanel {...panelProps} compact />}
         <Ticker events={lastEvents} state={state} player={me.id} error={error} />
       </ActionSheet>
 
@@ -124,6 +231,13 @@ export function Game() {
         previews={previews}
         onClose={() => setTravel(null)}
         onPick={dispatch}
+      />
+      <EndWeekDialog
+        open={confirmEnd}
+        needs={needs}
+        timeLeft={me.timeLeft}
+        onKeep={() => setConfirmEnd(false)}
+        onEnd={() => dispatch({ type: 'endWeek' })}
       />
       <DetailsDialog open={details} state={state} me={me} onClose={() => setDetails(false)} />
       {report && (

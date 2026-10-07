@@ -91,3 +91,51 @@ export function stepToward(pos: number, target: number, step: number, count: num
   if (Math.abs(d) <= step) return target;
   return (((pos + Math.sign(d) * step) % count) + count) % count;
 }
+
+/** What a building covers around its pad point: the art rises above it, the pad and label sit below. */
+export function buildingBox(layout: BoardLayout, index: number) {
+  const { x, y } = pointAt(layout, index);
+  const { cell } = layout;
+  // Tokens stand just left of the pad (Board.tsx), so the box reaches further on that side.
+  return { l: x - cell * 0.66, r: x + cell * 0.5, t: y - cell * 0.82, b: y + cell * 0.32 };
+}
+
+/**
+ * The open ground inside the loop, clear of the buildings and their labels: where the week panel sits, the way the
+ * original game used the middle of its board for the clock and messages. The loop is mirror-symmetric, so the
+ * rectangle is centred: each half-width that stops at a building's edge is tried, the buildings it still spans set
+ * its top and bottom, and the one with the most usable room wins. Room counts only up to `want`, the panel's size.
+ */
+export function innerRect(
+  layout: BoardLayout,
+  want: { w: number; h: number } = { w: Number.POSITIVE_INFINITY, h: Number.POSITIVE_INFINITY },
+): { x: number; y: number; w: number; h: number } {
+  const { cx, cy, rx, ry, count } = layout;
+  const gap = 6;
+  const boxes = Array.from({ length: count }, (_, i) => buildingBox(layout, i));
+  const halves = new Set([rx]);
+  for (const box of boxes) {
+    if (box.r < cx) halves.add(cx - box.r - gap);
+    if (box.l > cx) halves.add(box.l - gap - cx);
+  }
+  let best = { x: cx, y: cy, w: 0, h: 0 };
+  let bestRoom = -1;
+  for (const half of halves) {
+    if (half <= 0) continue;
+    let t = cy - ry;
+    let b = cy + ry;
+    for (const box of boxes) {
+      if (box.r <= cx - half || box.l >= cx + half) continue;
+      if ((box.t + box.b) / 2 < cy) t = Math.max(t, box.b + gap);
+      else b = Math.min(b, box.t - gap);
+    }
+    const h = b - t;
+    if (h <= 0) continue;
+    const room = Math.min(2 * half, want.w) * Math.min(h, want.h);
+    if (room > bestRoom) {
+      bestRoom = room;
+      best = { x: cx - half, y: t, w: 2 * half, h };
+    }
+  }
+  return best;
+}

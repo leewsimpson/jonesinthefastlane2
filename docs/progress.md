@@ -245,3 +245,44 @@ Running ledger of finished phases, deferrals and deviations from [implementation
     window listener before the same key press reaches it.
   - Root `devDependencies` link `@fastlane/engine` and `@fastlane/content` so E2E tests can replay in Node.
 
+## Phase 5 — Polish & content — in progress
+
+### Playability pass — 2026-10-07
+
+Compared the Phase 4 client with the original *Jones in the Fast Lane* (1990). In the original you click a building
+and walk there; the board's centre holds the clock and messages; each shop shows a talking owner beside its menu.
+Reviews' main complaint is hidden mechanics nobody explains. Playing a Phase 4 week turned up four problems:
+
+- Every trip needed a dialog and a choice from four transport modes.
+- Nothing warned before hunger, so week 1 usually ended with the hunger penalty.
+- There was no hint of what to do next.
+- Blocked rows ("You don't work here" ×3) crowded the action list.
+
+Client-only changes, with no engine rule or content change, so sim KPIs and save hashes are untouched:
+
+- **One-click travel (FR-02):** clicking a building goes there at once by the player's chosen mode (remembered per
+  browser, default Transit). If that mode can't go, the cheapest mode that can is used; if none can, the travel dialog
+  opens with the reasons. The T dialog stays for keyboard users and for comparing modes. Hovering a building shows the
+  trip's time and fare.
+- **Week panel in the board's centre (ENG-20, FR-03):** a clock for hours left, this week's needs (meal, rent due vs
+  cash, shift hours left) and one suggested next step with a Go button (`game/guide.ts`). The step order is: get a
+  job, then eat if food is on offer here or the week is nearly out (`HUNGRY_BY`), then work, rest, rent, study. On
+  boards too small for the panel (phone portrait), a one-line version sits above the action list. The panel's spot
+  comes from `innerRect` in `board/layout.ts`, which clears every building, label and token.
+- **End-week check (FR-04):** ending the week with no meal, or with rent short, asks first and shows the hunger
+  penalty from `balance.json`.
+- **Location header (FR-32):** building art plus an owner line that rotates by week.
+- **Action list:** a group whose rows are all blocked for one reason collapses to one line. Number keys go only to
+  rows that can be taken, so 1–9 always do something.
+- Evidence: unit tests for the guide, trip picking, shortcuts, owner lines and `innerRect`; `e2e/play-a-week` now
+  travels with the Go button and confirms the hunger warning. It passes on desktop Chromium locally; WebKit isn't
+  installed in that container, so mobile WebKit runs in CI. Initial JS is 90 kB gzipped.
+- Deviations:
+  - Owner lines are UI copy (`owner.<location>.<n>` in `ui.en.json`), not content. Content strings are part of the
+    content hash, so adding them there would refuse existing saves and move the sim baseline. They move to content
+    with the FR-84 copy pass. Owner busts stay art-track work (art-direction §6, `npc-<location>`); the header uses
+    building art until then.
+  - `weeklyCap` is now exported from `@fastlane/engine` so the guide reads shift hours left from the rule itself.
+- Not done (still Phase 5): first-paycheck timing with testers (ENG-20 exit criterion), and the walk cost
+  (`transportModes` in `city.json`) that makes Walk a poor default. That is a balance change, so it goes through
+  `pnpm sim run --base`.
