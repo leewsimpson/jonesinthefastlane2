@@ -58,3 +58,9 @@ export const SaveFileSchema = z.object({
   snapshot: SnapshotSchema,
   snapshotHash: z.string(),
 });
+
+/**
+ * A game to watch on the debug replay route (simulator §4): `{ setup, log }` from `pnpm sim trace --replay`. A save
+ * file has both fields too, so a player's save loads as is.
+ */
+export const ReplayFileSchema = z.object({ setup: SetupSchema, log: z.array(ActionSchema) });

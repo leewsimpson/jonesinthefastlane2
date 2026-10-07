@@ -16,7 +16,11 @@ setSaver((session) => {
   saves.write(session).catch((e: unknown) => console.error('autosave failed', e));
 });
 
-export default function GameRoot({ screen }: { screen: Exclude<Screen, { name: 'title' }> }) {
+export default function GameRoot({
+  screen,
+}: {
+  screen: Exclude<Screen, { name: 'title' } | { name: 'replay' }>;
+}) {
   const { t } = useTranslation();
   const go = useApp((s) => s.go);
   const sessionId = useGame((s) => s.session?.id);
