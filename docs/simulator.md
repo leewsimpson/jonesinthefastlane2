@@ -13,7 +13,7 @@ previews and no DOM. The simulator adds no rules of its own. It only chooses act
 | ID | Goal | Pri |
 |---|---|---|
 | SIM-01 | Play complete games (Sprint/Standard, 1–4 players + Jones) headless with no UI and no I/O in the hot loop. | M |
-| SIM-02 | **Fast:** ≥ 50 full 52-week, 2-player games per second per CPU core with utility bots. Parallel across cores with `worker_threads`. The PR run (CI-04) finishes in under 2 minutes on a GitHub runner. | M |
+| SIM-02 | **Fast:** ≥ 50 full 52-week, 2-player games per second per CPU core with utility bots. Parallel across cores with `worker_threads`. A 2k-game run (CI-04) finishes in under 2 minutes. | M |
 | SIM-03 | **Reproducible:** every game is fully described by `{engineVersion, contentHash, seed, settings, botConfigs}`. Any game can be replayed exactly, in the sim or in the client. | M |
 | SIM-04 | **Bot personas:** a roster of strategies that cover how real players behave, from optimal to careless (§3). | M |
 | SIM-05 | **Outcome KPIs** with configured bands. CI fails when a KPI leaves its band (CI-04) (§5). | M |
@@ -213,7 +213,7 @@ matrix, game-length histogram, choice classification table, unused content list)
 | Where | What runs | Gate |
 |---|---|---|
 | Unit tests | Tiny runs (20 games) as Vitest tests: no crash, determinism, money conservation | Fails the test suite |
-| `main` and manual dispatch (`ci.yml`, CI-04) | `run` (2k games) + compare against the last green `main` report | Hard bands fail; the band table, soft warnings and deltas go to the job summary. Report uploaded as an artifact |
+| Locally, before merging a rules or content change (CI-04: not in CI) | `run` (2k games) + `--base` against an earlier report | Hard bands fail; the band table, soft warnings and deltas go to `summary.md` |
 | Nightly (`nightly.yml`, OPS-04) | Full game count, all personas, `assess`, `optimizer` exploit search | Opens or updates a GitHub issue when anything is out of band or a new exploit is found |
 | Local | Any command; `report.html` opens in a browser | — |
 

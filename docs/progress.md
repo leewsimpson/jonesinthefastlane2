@@ -335,6 +335,8 @@ The client half of Phase 5 (user decision: client polish first, sim tooling and 
     advisory, which already failed `pnpm audit --audit-level high` on `main`.
   - The coach is UI state over engine state, not engine content; its copy is UI copy (`coach.*`).
   - Stat icons keep the palette colours; only text uses the darker `good`/`bad` tokens.
+  - The `balance` job is gone from `ci.yml` (user decision: too many Actions minutes). The balance sim now runs
+    locally (ci-cd.md CI-04); the 20-game random-play replay check stays in `checks`.
 - Not done (still Phase 5): first-paycheck time with real testers (**human-only**: the summary's "Play time" line is
   what they report); copy pass on content strings and Jones's viral-post moment (NFR-07: content strings are in the
   content hash, so they go with the content fill); sim `assess`/`sweep`/`trace`, the content fill and the balance pass;

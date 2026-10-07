@@ -28,7 +28,7 @@
 | CI-01 | Run on every push to `main` (and on manual `workflow_dispatch` for any branch): install (pnpm, cached), Biome lint/format check, `tsc` type-check, content schema validation, unit + property tests, build. | M |
 | CI-02 | Use Turborepo or `pnpm --filter ...[origin/main]` so only affected packages are built and tested. | S |
 | CI-03 | E2E (Playwright, Chromium + mobile WebKit viewport) runs against the PR **preview URL** after it deploys (only labelled PRs deploy, CD-01). | M |
-| CI-04 | Balance sim (`packages/sim`, 2k games on `main` and manual dispatch, 10k nightly), in a job parallel to the checks. Fails if KPIs leave their hard bands. Posts the band table, with a paired comparison against the last green `main` run's report, to the job summary, and uploads the report as an artifact. | S |
+| CI-04 | Balance sim (`packages/sim`): **not in CI** (removed 2026-10-07, user decision: it cost too many Actions minutes). Run it locally before merging a rules or content change: `pnpm sim run --games 2000`, with `--base <report.json>` for a paired comparison. Hard KPI bands fail the run. The random-play replay check (20 games) stays in the `checks` job. | S |
 | CI-05 | Bundle size check: fails if the initial JS exceeds 300 KB gzipped (NFR-10). Lighthouse CI on the preview URL with performance/accessibility budgets (in `lighthouserc.json`). | M |
 | CI-06 | Security: CodeQL scanning, `pnpm audit` (high+ fails), Dependabot alerts, secret scanning with push protection on. | M |
 | CI-07 | `main` has no ruleset or branch protection (removed 2026-10-05, user decision). Direct pushes are allowed and no status checks are required, because CI runs on `main` itself (CI-01); a red `main` is fixed forward. | M |
@@ -50,7 +50,7 @@
 
 ```
 .github/workflows/
-├─ ci.yml           # main (+ manual): lint, typecheck, test, build, size, sim (CI-01..06)
+├─ ci.yml           # main (+ manual): lint, typecheck, test, build, size, audit (CI-01, CI-05, CI-06)
 ├─ codeql.yml       # main + weekly: CodeQL (CI-06)
 ├─ preview.yml      # PR labelled `preview`: deploy Pages preview + Worker preview, comment URL, run E2E + Lighthouse
 ├─ main.yml         # push to main: migrate preview D1, deploy `main` alias (Worker + Pages), smoke, upload artifact
