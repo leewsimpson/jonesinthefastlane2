@@ -91,6 +91,10 @@ body {
 .hud-area {
   grid-area: hud;
 }
+.board-backdrop {
+  background-image: url("/assets/backgrounds/backdrop-day.webp");
+  mask-image: linear-gradient(to bottom, black 40%, transparent);
+}
 .board-area {
   grid-area: board;
 }

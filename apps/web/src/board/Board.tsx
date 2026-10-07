@@ -118,7 +118,6 @@ function Pad({
   index,
   here,
   texture,
-  label,
   onSelect,
   onHover,
 }: {
@@ -126,7 +125,6 @@ function Pad({
   index: number;
   here: boolean;
   texture: Texture | undefined;
-  label: string;
   onSelect(): void;
   onHover(on: boolean): void;
 }) {
@@ -159,14 +157,37 @@ function Pad({
       {texture && (
         <pixiSprite texture={texture} anchor={{ x: 0.5, y: 1 }} y={cell * 0.08} scale={scale} />
       )}
-      <pixiText
-        text={label}
-        style={{ ...LABEL_STYLE, fontSize: Math.max(11, Math.min(14, cell * 0.13)) }}
-        anchor={{ x: 0.5, y: 0 }}
-        y={cell * 0.16}
-        resolution={2}
-      />
     </pixiContainer>
+  );
+}
+
+/** Building names, drawn above the night grade so they stay readable (NFR-04). */
+function Label({
+  layout,
+  index,
+  text,
+  dark,
+}: {
+  layout: BoardLayout;
+  index: number;
+  text: string;
+  dark: boolean;
+}) {
+  const { x, y } = pointAt(layout, index);
+  const { cell } = layout;
+  return (
+    <pixiText
+      text={text}
+      x={x}
+      y={y + cell * 0.16}
+      style={{
+        ...LABEL_STYLE,
+        fontSize: Math.max(11, Math.min(14, cell * 0.13)),
+        ...(dark ? { fill: CREAM, stroke: { color: INK, width: 4, join: 'round' } } : {}),
+      }}
+      anchor={{ x: 0.5, y: 0 }}
+      resolution={2}
+    />
   );
 }
 
@@ -433,7 +454,6 @@ function Scene({
             index={index}
             here={me?.location === id}
             texture={sheets?.locations.textures[frameFor(id)]}
-            label={t(`location.${id}`)}
             onSelect={() => onSelect(id)}
             onHover={(on) => onHover(on ? id : null)}
           />
@@ -466,6 +486,9 @@ function Scene({
           })}
       </pixiContainer>
       {dark && <Windows layout={layout} count={locations.length} />}
+      {order.map(({ id, index }) => (
+        <Label key={id} layout={layout} index={index} text={t(`location.${id}`)} dark={dark} />
+      ))}
       {!reduced && (
         <Coins
           burst={fx}

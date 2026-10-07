@@ -10,7 +10,7 @@ import { buildingFrame } from '../../board/frames.ts';
 import { targetInfo, targetLabel } from '../../game/copy.ts';
 import { content } from '../../game/engine.ts';
 import { duration, money } from '../../i18n/format.ts';
-import { BuildingArt } from '../common/BuildingArt.tsx';
+import { BuildingArt, ItemArt, interiorFor, itemFrame } from '../common/AtlasArt.tsx';
 import { KEY_END_WEEK, KEY_TRAVEL } from '../common/hotkeys.ts';
 import { PlanChips } from '../common/PlanChips.tsx';
 
@@ -101,6 +101,7 @@ function Row({
     >
       <span className="flex w-full items-center gap-2">
         {key && <kbd>{key.toUpperCase()}</kbd>}
+        {target !== undefined && itemFrame(target) && <ItemArt id={target} size={32} />}
         <span className="flex-1 text-left font-bold">
           {label || t(`action.${preview.action.actionId}`)}
         </span>
@@ -168,6 +169,13 @@ export function ActionSheet({
       className="sheet flex min-h-0 flex-col border-ink border-t-2 bg-surface-raised dark:border-cream/30"
       aria-labelledby="sheet-heading"
     >
+      {location === content.city.board.home && (
+        <div
+          aria-hidden="true"
+          className="h-16 shrink-0 bg-center bg-cover dark:brightness-75"
+          style={{ backgroundImage: `url(${interiorFor(housingTier)})` }}
+        />
+      )}
       <div className="flex items-end gap-2 px-3 pt-2">
         <BuildingArt frame={buildingFrame(location, housingTier)} width={56} />
         <div className="flex min-w-0 flex-1 flex-col gap-1">

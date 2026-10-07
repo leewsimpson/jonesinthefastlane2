@@ -235,7 +235,7 @@
   "week.statChanges": "Stat changes",
   "week.newsStarted": "Breaking",
   "week.newsEnded": "Over: {{news}}",
-  "week.market": "Market: {{regime}} · prices {{prices}} · wages {{wages}}",
+  "week.marketIndex": "Prices {{prices}} · wages {{wages}}",
   "week.nearMiss": "{{name}} is {{short}} short of the {{goal}} goal.",
   "week.overtaken": "{{by}} overtook {{name}}!",
   "week.noPosts": "Jones is suspiciously quiet.",

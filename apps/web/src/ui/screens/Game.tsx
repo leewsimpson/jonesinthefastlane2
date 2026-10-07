@@ -198,7 +198,12 @@ export function Game() {
           <p>{t('menu.help')}</p>
         </div>
       </div>
-      <div ref={boardRef} className="board-area relative min-h-0">
+      <div ref={boardRef} className="board-area relative min-h-0 overflow-hidden">
+        {/* The skyline backdrop (art-direction §9.5), faded so the board reads first; darker at night. */}
+        <div
+          aria-hidden="true"
+          className="board-backdrop pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-center bg-cover opacity-30 dark:opacity-20 dark:brightness-50"
+        />
         <div ref={setShakeEl} className="absolute inset-0">
           <Suspense fallback={null}>
             <Board
