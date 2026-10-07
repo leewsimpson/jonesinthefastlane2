@@ -24,7 +24,8 @@
  *     One value across a range (simulator §7): a balance run per step on the same seeds, KPIs and bands per value.
  *     Paths address arrays of objects by id: `city.housing[studio].rent`.
  *
- *   `run`, `assess` and `trace` take `--scenario scenarios/<id>.json` to start every game from a set position.
+ *   `run`, `assess` and `trace` take `--scenario scenarios/<id>.json` to start every game from a set position;
+ *   `run` and `sweep` take `--matchups a,b` to play only some of the CI plan.
  *
  *   pnpm sim trace <seed> [--matchup balanced-standard] [--file traces/<game>.jsonl.gz] [--replay game.json]
  *     A readable week-by-week log of one game (simulator §4), replayed from its seed or read from a trace file.
@@ -81,6 +82,7 @@ const { values, positionals } = parseArgs({
     horizon: { type: 'string', default: '8' },
     'assess-rate': { type: 'string', default: '0.25' },
     scenario: { type: 'string' },
+    matchups: { type: 'string' },
     param: { type: 'string' },
     from: { type: 'string' },
     to: { type: 'string' },
@@ -191,7 +193,11 @@ function gitCommit(): string | null {
 }
 
 /** The plan's matchups, each starting from `--scenario` when one is given (simulator §7). */
-function planWithScenario(plan: MatchupPlan): MatchupPlan {
+function planWithScenario(full: MatchupPlan): MatchupPlan {
+  // `--matchups a,b` plays only those, for a quick look at one part of the curve; bands for the rest show as missing.
+  const only = values.matchups?.split(',');
+  const plan = only ? full.filter((m) => only.includes(m.matchup.id)) : full;
+  if (only && plan.length === 0) throw new Error(`no matchups match ${values.matchups}`);
   if (!values.scenario) return plan;
   const start = loadScenario(fromCwd(values.scenario));
   return plan.map((m) => ({ ...m, matchup: { ...m.matchup, start } }));
@@ -256,7 +262,7 @@ async function balanceReport(options: {
       contentVersion: used.meta.contentVersion,
       contentHash: createEngine(used).contentHash,
       seed,
-      plan: values.scenario ? `ci+${values.scenario}` : 'ci',
+      plan: [values.matchups ?? 'ci', values.scenario].filter(Boolean).join('+'),
       games: records.length,
       workers,
       seconds,
@@ -287,8 +293,8 @@ async function runBalance(): Promise<number> {
   writeFileSync(join(out, 'summary.md'), summary);
   writeFileSync(join(out, 'report.html'), htmlReport(report, deltas));
   console.log(`\n${summary}\nwrote ${out} (open report.html in a browser)`);
-  // Bands describe games from a normal start; a scenario run is read, not gated.
-  if (values.scenario) return 0;
+  // Bands describe full runs from a normal start; a scenario or partial run is read, not gated.
+  if (values.scenario || values.matchups) return 0;
   const failed = report.bands.filter((b) => b.status === 'hard' || b.status === 'missing');
   for (const b of failed)
     console.error(`FAIL ${b.kpi} = ${b.value} (hard band ${JSON.stringify(b.band.hard)})`);

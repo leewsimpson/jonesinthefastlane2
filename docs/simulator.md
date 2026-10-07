@@ -119,7 +119,7 @@ event: Landlord sells building → chose *Negotiate* (+$0, −5 Happiness)"). Th
 `{seed, settings, actionLog}` and replays it on the board, so a strange game can be *watched*.
 
 **Anomalies** flagged per game and always traced: crash or invariant failure, a stat out of range, money not
-conserved, a game that hits the week limit with a score < 10%, an eviction loop (≥ 3 evictions), a weekly cash
+conserved, a game that hits the week limit with a score < 10%, an eviction loop (≥ 3 evictions), a weekly net-worth
 swing > 5× median, and the same action chosen > 80% of the time.
 
 ## 5. Outcome KPIs

@@ -186,14 +186,15 @@ export function anomaliesOf(
         if (total >= 20 && n * 10 > total * 8 && kind !== 'endWeek')
           found.push(`${p.id}: ${kind} is ${Math.round((n * 100) / total)}% of actions`);
     }
-    const cash = state.history.filter((r) => r.player === p.id).map((r) => r.cash);
-    const swings = cash.slice(1).map((c, k) => Math.abs(c - (cash[k] ?? 0)));
+    // Net worth, not cash: moving money into savings or a deposit isn't a swing.
+    const worth = state.history.filter((r) => r.player === p.id).map((r) => r.netWorth);
+    const swings = worth.slice(1).map((w, k) => Math.abs(w - (worth[k] ?? 0)));
     const sorted = [...swings].sort((a, b) => a - b);
     const mid = sorted[Math.floor(sorted.length / 2)] ?? 0;
     const top = sorted.at(-1) ?? 0;
     if (mid > 0 && top > mid * 5 && top > 100_000)
       found.push(
-        `${p.id}: weekly cash swing ${Math.round(top / 100)} vs median ${Math.round(mid / 100)}`,
+        `${p.id}: weekly net-worth swing ${Math.round(top / 100)} vs median ${Math.round(mid / 100)}`,
       );
   });
   return found;
