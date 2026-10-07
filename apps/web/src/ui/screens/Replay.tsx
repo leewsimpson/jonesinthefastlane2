@@ -25,6 +25,7 @@ export default function Replay() {
   const [problem, setProblem] = useState<string | null>(null);
   const [at, setAt] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [pasted, setPasted] = useState('');
 
   const last = steps ? steps.states.length - 1 : 0;
   useEffect(() => {
@@ -85,9 +86,19 @@ export default function Replay() {
           <span>{t('replay.paste')}</span>
           <textarea
             className="min-h-32 rounded-md border-2 border-cream/20 bg-surface p-2 font-mono text-xs"
-            onChange={(e) => e.target.value.trim() && load(e.target.value)}
+            value={pasted}
+            onChange={(e) => setPasted(e.target.value)}
           />
         </label>
+        {/* Replaying a long game takes a moment, so it runs on Load, not on every keystroke. */}
+        <button
+          type="button"
+          className="btn btn-primary self-start"
+          disabled={!pasted.trim()}
+          onClick={() => load(pasted)}
+        >
+          {t('replay.load')}
+        </button>
         {problem && <p role="alert">{problem}</p>}
         <button type="button" className="btn self-start" onClick={() => go({ name: 'title' })}>
           {t('summary.title2')}

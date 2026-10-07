@@ -84,8 +84,19 @@ function evict(ctx: PlayerCtx): void {
  */
 export function subscriptionsPaid(ctx: PlayerCtx): Set<string> {
   const { player, content, world, config } = ctx;
-  let cash =
-    player.stats.cash - Math.min(player.stats.cash, player.housing.rent * config.turnLengthWeeks);
+  const { housing } = player;
+  const due = housing.rent * config.turnLengthWeeks;
+  const rentPaid = Math.min(player.stats.cash, due);
+  let cash = player.stats.cash - rentPaid;
+  // A miss that evicts refunds what the deposit doesn't owe as arrears (`evict`), before subscriptions are charged.
+  if (
+    due > 0 &&
+    rentPaid < due &&
+    housing.missedRent + 1 >= content.balance.housing.evictAfterMissed
+  ) {
+    const arrears = player.debts.arrears.balance + (due - rentPaid);
+    cash += housing.deposit - Math.min(housing.deposit, arrears);
+  }
   const paid = new Set<string>();
   for (const sub of content.city.subscriptions) {
     if (!player.subscriptions.includes(sub.id)) continue;

@@ -6,7 +6,7 @@ import { loadOverride } from '../override.ts';
 import type { GameJob, GameResultMessage } from './pool.ts';
 import { playRecorded, playTraced } from './record.ts';
 
-const { override } = workerData as { override: string | null };
+const { override, traces } = workerData as { override: string | null; traces: boolean };
 const engine = createEngine(override ? loadOverride(defaultContent, override) : defaultContent);
 const port = parentPort;
 if (!port) throw new Error('worker.ts runs as a worker thread');
@@ -24,6 +24,6 @@ port.on('message', (jobs: GameJob[] | null) => {
 function playJob(job: GameJob): GameResultMessage {
   if (job.trace) return playTraced(engine, job.matchup, job.seed);
   const record = playRecorded(engine, job.matchup, job.seed);
-  if (record.anomalies.length === 0) return { record, trace: null };
+  if (!traces || record.anomalies.length === 0) return { record, trace: null };
   return playTraced(engine, job.matchup, job.seed);
 }

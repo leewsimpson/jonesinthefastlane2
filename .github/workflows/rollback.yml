@@ -69,8 +69,12 @@ jobs:
         run: |
           api="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$PAGES_PROJECT"
           auth=(-H "Authorization: Bearer $CLOUDFLARE_API_TOKEN")
-          previous=$(curl -fsS "${auth[@]}" "$api/deployments?env=production&per_page=10" |
-            jq -r '[.result[] | select(.latest_stage.name == "deploy" and .latest_stage.status == "success")][1].id')
+          # Step back from whatever is live now (an earlier rollback may have moved it), not from the newest deploy.
+          live=$(curl -fsS "${auth[@]}" "$api" | jq -r '.result.canonical_deployment.id')
+          previous=$(curl -fsS "${auth[@]}" "$api/deployments?env=production&per_page=25" | jq -r --arg live "$live" '
+            [.result[] | select(.latest_stage.name == "deploy" and .latest_stage.status == "success")] as $ok
+            | ($ok | map(.id) | index($live)) as $i
+            | if $i == null then null else $ok[$i + 1].id end')
           if [ -z "$previous" ] || [ "$previous" = null ]; then
             echo "::error::No earlier successful production deployment to roll back to."; exit 1
           fi
@@ -87,7 +91,7 @@ jobs:
         if: inputs.sha != ''
         id: build
         run: |
-          run=$(gh run list -R "$GITHUB_REPOSITORY" --workflow main.yml --commit "$INPUT_SHA" --status success \
+          run=$(gh run list -R "$GITHUB_REPOSITORY" --workflow main.yml --branch main --commit "$INPUT_SHA" --status success \
             --json databaseId --jq '.[0].databaseId')
           [ -n "$run" ] && [ "$run" != null ] || { echo "::error::No green main deploy for $INPUT_SHA"; exit 1; }
           echo "run=$run" >> "$GITHUB_OUTPUT"

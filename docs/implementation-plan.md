@@ -262,7 +262,7 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
 | `main.yml`: deploy on merge to `main` to the preview env's `main` alias, D1 migrations first, smoke E2E; upload `web-dist-<sha>` artifact | CD-02, CD-04 |
 | `production.yml`: release-triggered, approval gate, promote the `main` artifact (no rebuild), smoke test | CD-03, CD-06 |
 | `rollback.yml` + runbook | CD-05 |
-| Security headers (CSP, HSTS) via `_headers`, SPA fallback via `_redirects`; Cloudflare Web Analytics | ci-cd §5 |
+| Security headers (CSP, HSTS) via `_headers`, SPA fallback (Pages default, no `_redirects`); Cloudflare Web Analytics | ci-cd §5 |
 | Full E2E matrix (Chromium + mobile WebKit), visual snapshots light/dark | CI-03, tech-stack §6 |
 | Performance on a mid-range 2022 phone: 60 fps board, ≤3 s first load on 4G | NFR-10 |
 | Playtest rounds → balance tuning through content data only; tighten sim KPI bands; nightly `optimizer` exploit search | NFR-15, CI-04, simulator §3 |

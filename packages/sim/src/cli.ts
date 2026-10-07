@@ -239,6 +239,7 @@ async function balanceReport(options: {
   const records = await runPool(jobs, {
     workers,
     override: options.override,
+    traces: traceDir !== null,
     onTrace(record, trace) {
       if (!traceDir) return;
       traced++;
@@ -418,6 +419,11 @@ function runTrace(): number {
   const { record, trace } = playTraced(createEngine(content), matchup, seed);
   console.log(formatTrace(record, trace));
   if (values.replay) {
+    // The client replays with shipped content from a normal start; anything else wouldn't be the same game.
+    if (values.scenario || values.override)
+      throw new Error(
+        '--replay needs a game from a normal start with shipped content (no --scenario or --override)',
+      );
     // The human log is every traced choice, in order: what the client's debug route replays on the board.
     const game = { setup: setupFor(matchup, seed), log: trace.map((t) => t.chosen) };
     writeFileSync(fromCwd(values.replay), JSON.stringify(game));

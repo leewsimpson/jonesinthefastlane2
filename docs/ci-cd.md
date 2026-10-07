@@ -72,7 +72,9 @@ Release v1.2.0 ─► production.yml ─► [manual approval] ─► D1 migrate 
 Live URLs: production web `https://fastlane-e6g.pages.dev`, API `https://fastlane-api-production.leewsimpson.workers.dev`;
 main alias web `https://main.fastlane-e6g.pages.dev`, API `https://main-fastlane-api-preview.leewsimpson.workers.dev`.
 The Pages project's production branch is `production` (the deploy workflows set it), so `main` deploys never reach the
-production URL. Security headers and the SPA fallback are `apps/web/public/_headers` and `_redirects`.
+production URL. Security headers are `apps/web/public/_headers`. The SPA fallback is Pages' own: a deploy with no top-level
+`404.html` serves `index.html` for unknown paths, so there is no `_redirects` rule (a catch-all rewrite would also
+answer a missing `/assets/*.js` chunk with HTML).
 
 ### Reference: production deploy job (sketch)
 
@@ -131,7 +133,7 @@ jobs:
 2. Create the Worker with `preview` / `production` envs in `apps/api/wrangler.jsonc`. Route `api.<domain>/*`.
 3. Create D1 databases `fastlane-db-preview` and `fastlane-db` and KV namespaces per env, then bind them in `wrangler.jsonc`.
 4. Create a scoped API token and store it in the `preview` and `production` GitHub Environments.
-5. Set security headers (CSP, HSTS) via `apps/web/public/_headers`. Set the SPA fallback via `_redirects`.
+5. Set security headers (CSP, HSTS) via `apps/web/public/_headers`. The SPA fallback is Pages' default (no `404.html`).
 6. Configure WAF rate-limit rules on `POST /runs`.
 7. Turn on Cloudflare Web Analytics (cookieless) as a privacy-friendly baseline alongside opt-in PostHog.
 
@@ -157,5 +159,4 @@ Rollbacks never run migrations. Migrations must be backward compatible (expand �
 older Worker keeps working on the newer schema. A redeploy by sha checks out that commit, so it uses that commit's
 `smoke.sh`; commits from before the deploy workflows existed can only be rolled back to with the instant rollback.
 
-**Rehearse.** Exit criterion for Phase 6: run a rollback on `main` with the previous `main` commit, then a production
-rollback, and record both run links in `docs/progress.md`.
+**Rehearse** before relying on it: the rehearsal is a Phase 6 exit criterion (see implementation-plan.md, Phase 6).

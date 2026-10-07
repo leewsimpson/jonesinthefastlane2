@@ -50,7 +50,7 @@ jobs:
         run: |
           sha=${RELEASE_SHA:-$INPUT_SHA}
           if [ -n "$sha" ]; then
-            run=$(gh run list -R "$GITHUB_REPOSITORY" --workflow main.yml --commit "$sha" --status success \
+            run=$(gh run list -R "$GITHUB_REPOSITORY" --workflow main.yml --branch main --commit "$sha" --status success \
               --json databaseId --jq '.[0].databaseId')
           else
             read -r run sha < <(gh run list -R "$GITHUB_REPOSITORY" --workflow main.yml --branch main \

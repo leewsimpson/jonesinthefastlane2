@@ -1,5 +1,0 @@
-{ "balance": { "goals": { "presets": {
-  "chill": { "wealth": 800000, "wellbeing": 70, "skills": 40, "career": 35 },
-  "standard": { "wealth": 2400000, "wellbeing": 80, "skills": 65, "career": 55 },
-  "hustle-culture": { "wealth": 5000000, "wellbeing": 85, "skills": 90, "career": 75 }
-} } } }

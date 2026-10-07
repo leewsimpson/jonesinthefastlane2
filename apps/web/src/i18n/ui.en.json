@@ -341,5 +341,6 @@
   "replay.nextWeek": "Next week",
   "replay.step": "Step",
   "replay.where": "Step {{step}} of {{steps}} · week {{week}} · {{player}}",
-  "replay.endWeek": "End week"
+  "replay.endWeek": "End week",
+  "replay.load": "Load"
 }

@@ -28,13 +28,15 @@ export function runPool(
   options: {
     workers: number;
     override?: string | null;
+    /** Keep traces of sampled and anomalous games; false skips the extra traced replay of anomalous ones. */
+    traces?: boolean;
     onRecord?: (done: number) => void;
     onTrace?: (record: GameRecord, trace: DecisionTrace[]) => void;
   },
 ): Promise<GameRecord[]> {
   return runWorkers<GameJob, GameResultMessage>(new URL('./worker.ts', import.meta.url), jobs, {
     workers: options.workers,
-    workerData: { override: options.override ?? null },
+    workerData: { override: options.override ?? null, traces: options.traces ?? true },
     onResult(message, done) {
       if (message.trace) options.onTrace?.(message.record, message.trace);
       options.onRecord?.(done);
