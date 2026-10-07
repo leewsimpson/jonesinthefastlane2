@@ -100,4 +100,24 @@ describe('subscriptions (FR-52)', () => {
     expect(player(cancelled).subscriptions).toEqual([]);
     expect(reason(cancelled, perform('unsub', { target: 'meal-kit' }))).toBe('NOT_SUBSCRIBED');
   });
+
+  it('delivers no meals from a subscription the bills are about to cancel for non-payment', () => {
+    const broke = edit(play(start(), perform('sub', { target: 'meal-kit' })).state, (p) => {
+      p.stats.cash = 100;
+    });
+    const { state, events } = play(broke, endWeek);
+    expect(eventsOf(events, 'mealSkipped')).toEqual([{ type: 'mealSkipped', player: 'p1' }]);
+    expect(player(state).subscriptions).toEqual([]);
+  });
+
+  it('counts meals the eviction refund pays for: the deposit comes back before subscriptions are charged', () => {
+    const evicted = edit(play(start(), perform('sub', { target: 'meal-kit' })).state, (p) => {
+      p.stats.cash = 100;
+      p.housing = { tier: 'flat', rent: 300, leaseWeeksLeft: 5, deposit: 600, missedRent: 1 };
+    });
+    const { state, events } = play(evicted, endWeek);
+    expect(eventsOf(events, 'evicted')).toHaveLength(1);
+    expect(eventsOf(events, 'mealSkipped')).toEqual([]);
+    expect(player(state).subscriptions).toEqual(['meal-kit']);
+  });
 });

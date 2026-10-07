@@ -6,6 +6,8 @@ import {
   type AiPolicy,
   createRng,
   randomPolicy,
+  scoreChoices,
+  scoreOptions,
   utilityPolicy,
 } from '@fastlane/engine';
 import type { Bot } from '../game.ts';
@@ -42,8 +44,23 @@ export const idleBot: Bot = {
       : { type: 'endWeek' },
 };
 
-export const personaBot = (content: GameContent, persona: Persona, seed: string): Bot =>
-  policyBot(persona.id, utilityPolicy(content, persona), seed);
+export function personaBot(content: GameContent, persona: Persona, seed: string): Bot {
+  return {
+    ...policyBot(persona.id, utilityPolicy(content, persona), seed),
+    explain(engine, state) {
+      if (state.pending)
+        return scoreChoices(content, state, state.pending, persona).map((c) => ({
+          move: c.option,
+          score: c.score,
+        }));
+      const options = engine.listActions(state).filter((o) => o.available);
+      return scoreOptions(content, state, options, persona).map((s) => ({
+        move: s.action,
+        score: s.score,
+      }));
+    },
+  };
+}
 
 /**
  * Only works GigHub (simulator §3): eats at home, gigs until the week runs out or Energy runs low, and never takes

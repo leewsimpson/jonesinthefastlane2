@@ -7,7 +7,7 @@
       "skills": 2500,
       "career": 2500
     },
-    "bottleneckBp": 5000,
+    "bottleneckBp": 2000,
     "riskAppetiteBp": 5000,
     "horizonWeeks": 8,
     "bestMoveRateBp": 9500,
@@ -82,7 +82,7 @@
       "skills": 2500,
       "career": 2500
     },
-    "bottleneckBp": 3000,
+    "bottleneckBp": 2000,
     "riskAppetiteBp": 5000,
     "horizonWeeks": 2,
     "bestMoveRateBp": 6000,

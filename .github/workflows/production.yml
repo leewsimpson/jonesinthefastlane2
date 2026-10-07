@@ -1,0 +1,134 @@
+# CD-03: promote a build that passed on main to production, behind the `production` environment's required reviewers.
+# Triggered by publishing a release (tag v*) or by hand. It never rebuilds: it deploys the `web-dist-<sha>` artifact
+# main.yml uploaded. Migrations run before the Worker (CD-04); the smoke test checks the released SHA (CD-06) and,
+# on failure, opens an issue that says how to roll back (CD-05, runbook in ci-cd.md §6).
+name: production
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Commit to promote (must have a green main deploy). Empty = the latest green main deploy.
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+env:
+  PAGES_PROJECT: fastlane
+  WEB_URL: https://fastlane-e6g.pages.dev
+  API_URL: https://fastlane-api-production.leewsimpson.workers.dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: https://fastlane-e6g.pages.dev
+    permissions:
+      contents: read
+      actions: read # download the main build's artifact
+      issues: write # open an alert issue if the smoke test fails
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Find the main build to promote
+        id: build
+        env:
+          INPUT_SHA: ${{ inputs.sha }}
+          RELEASE_SHA: ${{ github.event_name == 'release' && github.sha || '' }}
+        run: |
+          sha=${RELEASE_SHA:-$INPUT_SHA}
+          if [ -n "$sha" ]; then
+            run=$(gh run list -R "$GITHUB_REPOSITORY" --workflow main.yml --branch main --commit "$sha" --status success \
+              --json databaseId --jq '.[0].databaseId')
+          else
+            read -r run sha < <(gh run list -R "$GITHUB_REPOSITORY" --workflow main.yml --branch main \
+              --status success --limit 1 --json databaseId,headSha --jq '.[0] | "\(.databaseId) \(.headSha)"')
+          fi
+          if [ -z "${run:-}" ] || [ "$run" = null ]; then
+            echo "::error::No green main deploy for ${sha:-main}. Merge to main and let main.yml pass first."
+            exit 1
+          fi
+          echo "Promoting $sha from main.yml run $run"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.build.outputs.sha }}
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      # For wrangler and the smoke test only: the web app is not rebuilt.
+      - run: pnpm install --frozen-lockfile
+
+      - name: Download the main build
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: web-dist-${{ steps.build.outputs.sha }}
+          path: promoted-dist
+          run-id: ${{ steps.build.outputs.run }}
+          github-token: ${{ github.token }}
+
+      - name: Keep the Pages production branch `production`
+        run: .github/scripts/pages-production-branch.sh "$PAGES_PROJECT"
+
+      - name: Migrate production D1
+        working-directory: apps/api
+        run: pnpm exec wrangler d1 migrations apply fastlane-db --env production --remote
+
+      - name: Deploy Worker
+        working-directory: apps/api
+        env:
+          SHA: ${{ steps.build.outputs.sha }}
+        run: pnpm exec wrangler deploy --env production --var "VERSION:$SHA" --message "production $SHA"
+
+      - name: Write runtime config
+        run: |
+          printf '{\n  "environment": "production",\n  "apiBase": "%s"\n}\n' "$API_URL" > promoted-dist/config.json
+
+      - name: Deploy Pages (production)
+        env:
+          SHA: ${{ steps.build.outputs.sha }}
+        run: |
+          pnpm --filter @fastlane/api exec wrangler pages deploy "$GITHUB_WORKSPACE/promoted-dist" \
+            --project-name "$PAGES_PROJECT" --branch production --commit-hash "$SHA" --commit-dirty=true
+
+      - name: Smoke test
+        run: .github/scripts/smoke.sh "$WEB_URL" "$API_URL" "${{ steps.build.outputs.sha }}"
+
+      - name: Alert and suggest a rollback
+        if: failure()
+        env:
+          SHA: ${{ steps.build.outputs.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          body=$(printf 'The production deploy of `%s` failed: %s\n\nIf production is broken, run the **rollback** workflow (Actions → rollback → Run workflow, target `production`). Runbook: docs/ci-cd.md §6.\n' "${SHA:-unknown}" "$RUN_URL")
+          gh issue create -R "$GITHUB_REPOSITORY" --title "Production deploy failed (${SHA:0:7})" --body "$body"
+          echo "::error::Production deploy failed. Rollback: run the rollback workflow with target production."
+
+      - name: Summary
+        if: success()
+        run: |
+          {
+            echo "### Production deployed"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Commit | \`${{ steps.build.outputs.sha }}\` (main.yml run ${{ steps.build.outputs.run }}) |"
+            echo "| Web | $WEB_URL |"
+            echo "| API | $API_URL/healthz |"
+          } >> "$GITHUB_STEP_SUMMARY"

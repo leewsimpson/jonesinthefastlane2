@@ -5,6 +5,17 @@ import type { Action, Engine, GameSetup, GameState } from '@fastlane/engine';
 export interface Bot {
   id: string;
   choose(engine: Engine, state: GameState): Action;
+  /**
+   * How the bot scored each option at this point, for decision traces (simulator §4). Scoring never uses the RNG,
+   * so explaining a move doesn't change the game. Only utility bots can explain themselves.
+   */
+  explain?(engine: Engine, state: GameState): ScoredMove[];
+}
+
+/** One option a bot weighed: an action, or a decision option id, with its score. */
+export interface ScoredMove {
+  move: Action | string;
+  score: number;
 }
 
 export interface GameRun {

@@ -246,10 +246,8 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
 - UI copy lives in `apps/web/src/i18n/ui.en.json`; game copy stays in `packages/content/locales/en.json`. Event
   category names are UI copy for now (`category.<id>`).
 - Jones's feed posts about milestones only; a moment for a good weekend event (a viral post) fits the copy pass.
-- Client polish landed first (2026-10-07, `docs/progress.md`). Left for this phase: the sim tooling and content fill
-  with the balance pass, the content copy pass, opt-in analytics and Sentry (needs PostHog and Sentry accounts:
-  **human-only**), and tester runs for the first-paycheck criterion. New juice plugs into `src/fx/map.ts`; one-tap
-  moves come from `engine.smartDefaults`; the summary's play-time line is the tester report.
+- Done 2026-10-07 (`docs/progress.md`): client polish, then the sim tooling, content, copy and balance pass. The
+  first-paycheck tester criterion moved to Phase 6's playtest rounds.
 
 ---
 
@@ -262,7 +260,7 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
 | `main.yml`: deploy on merge to `main` to the preview env's `main` alias, D1 migrations first, smoke E2E; upload `web-dist-<sha>` artifact | CD-02, CD-04 |
 | `production.yml`: release-triggered, approval gate, promote the `main` artifact (no rebuild), smoke test | CD-03, CD-06 |
 | `rollback.yml` + runbook | CD-05 |
-| Security headers (CSP, HSTS) via `_headers`, SPA fallback via `_redirects`; Cloudflare Web Analytics | ci-cd §5 |
+| Security headers (CSP, HSTS) via `_headers`, SPA fallback (Pages default, no `_redirects`); Cloudflare Web Analytics | ci-cd §5 |
 | Full E2E matrix (Chromium + mobile WebKit), visual snapshots light/dark | CI-03, tech-stack §6 |
 | Performance on a mid-range 2022 phone: 60 fps board, ≤3 s first load on 4G | NFR-10 |
 | Playtest rounds → balance tuning through content data only; tighten sim KPI bands; nightly `optimizer` exploit search | NFR-15, CI-04, simulator §3 |
@@ -281,6 +279,13 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
 - **Human-only:** production reviewers, playtest rounds, legal/IP review, privacy notice wording, ad provider choice.
 - Record the staging rehearsal run links as evidence for the deploy and rollback exit criterion.
 - The save migration test needs a real beta save: capture one from the Phase 5 build before changing the schema.
+- Built early, in the Phase 5 branch (user decision: deploy to production now): `main.yml`, `production.yml`,
+  `rollback.yml`, the runbook (ci-cd.md §6) and `_headers`. Left from those rows: the deploy and rollback rehearsal,
+  and Cloudflare Web Analytics (**human-only**: turn it on in the dashboard; the CSP already allows its beacon).
+- Phase 5 left for the playtest rounds: first paycheck in under 3 minutes with new testers (ENG-20), hardship (the
+  bots dodge every setback), the one-goal persona and gambler bands, and the overlap between `balanced`'s band and
+  Standard Jones's (`docs/progress.md`, Phase 5). Weekend choices are mostly flat in `sim assess`: decide with
+  playtesters whether they should bite harder.
 
 ---
 

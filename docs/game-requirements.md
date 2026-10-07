@@ -341,7 +341,7 @@ Use proven, modern retention techniques **with ethical guardrails**.
 | NFR-04 | Accessibility: WCAG 2.2 AA contrast, colour-blind-safe stat colours with icons, a reduced-motion setting, scalable text, screen-reader labels for UI panels. | M |
 | NFR-05 | Audio: a lo-fi adaptive soundtrack, SFX for every action, and separate volume sliders. | S |
 | NFR-06 | Localisation-ready: all strings in resource files, currency and number formatting by locale. English at launch. | S |
-| NFR-07 | Satirical tone guide for all copy: punch up, not down. Short and witty. | M |
+| NFR-07 | Satirical tone guide for all copy: punch up, not down. Short and witty (tone guide: Appendix). | M |
 
 ---
 
@@ -388,3 +388,29 @@ Use proven, modern retention techniques **with ethical guardrails**.
 4. **Dialogue:** LLM-generated during development and committed as content (FR-84).
 5. **Long Life default for Career Mode:** yes (§12).
 6. **Partners as co-op characters:** no. Partners are NPCs only and are never playable (FR-96).
+
+---
+
+## Appendix: Copy tone guide (NFR-07)
+
+Applies to every player-facing string (UI copy, content locales, Jones's feed). Sensitive themes follow ENG-35.
+
+- **Punch up.** Targets: landlords, platforms and apps, hustle culture, corporate speak, "the algorithm", fintech, and Jones's humblebrags.
+- **Never punch down.** Not at poverty, debt itself, illness, mental health, bodies, identity, or the player's choices. The joke is the system that put you there, never you for being there.
+- **Money satire comes from the system, not the person.** Mock the fee, the interest rate, the "friendly reminder", not the person who owes it.
+- **Short.** Card and event titles: about 6 words or fewer. Body text: about 25 words or fewer. Buttons and choice labels: about 6 words or fewer.
+- **Second person.** Talk to the player as "you". Jones posts in the first person, in the feed.
+- **Plain words.** Write it the way you would say it. Corporate jargon only in quotes, as the joke.
+- **Clear before clever.** A button or choice label says what it does; the joke can ride along but never replaces the meaning.
+- **Specific 2026 details beat generic jokes.** A 47-message voice note, a $2.99 redelivery fee and an AI that "assists" with your job are funnier than "life is hard".
+- **One joke per line.** Set it up, land it, stop.
+- **No emoji**, except in Jones's feed, where they are part of the parody.
+- **Errors and warnings stay calm and useful.** Say what went wrong and what to do; a light touch is fine, blame is not.
+- **Jones is smug, never cruel.** The posts are humblebrags; the digs land on Jones's own vanity, not on the player's hardship.
+
+| Don't | Do |
+|---|---|
+| "Broke again? Maybe stop buying lattes." (blames the player) | "Rent went up again. Your landlord calls it 'market rates.'" (blames the system) |
+| "You look terrible. Hit the gym, maybe?" (bodies) | "A gym offers a free week 'with no obligation,' then a 40-minute sales pitch." (the platform) |
+| "Feeling sad? Lol, same." (mental health as punchline) | "Your body files a formal complaint and books the weekend off." (burnout as the system's bill) |
+| "Leverage synergies to optimise your career trajectory going forward." (long, flat) | "Entry level: five years' experience preferred." (short, specific) |

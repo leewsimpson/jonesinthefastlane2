@@ -149,7 +149,13 @@ export const rivalFeed: PipelineStep<RoundCtx> = {
     for (const ai of state.players) {
       if (ai.controller !== 'ai') continue;
       const own = get(ai.id);
-      const [best] = milestones(content, ai, own.now, own.before);
+      // A viral weekend card this week outranks any milestone: Jones spins all attention as a win.
+      const viral = content.events.some(
+        (e) => e.category === 'viral' && ai.seenEvents[e.id] === state.week,
+      );
+      const [best] = viral
+        ? [{ moment: 'went-viral' as const, params: {} }]
+        : milestones(content, ai, own.now, own.before);
       const post = (moment: FeedMoment, about: PlayerId | null, params: Params) =>
         ctx.emit({ type: 'rivalPost', player: ai.id, moment, about, params });
       if (best) post(best.moment, null, best.params);

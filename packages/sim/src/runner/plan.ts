@@ -9,6 +9,9 @@ import type { Matchup } from './record.ts';
 
 const WEEKS = 52;
 
+/** Matchups with their share of a run's games. */
+export type MatchupPlan = { matchup: Matchup; weight: number }[];
+
 const vsJones = (bot: string, difficulty: Difficulty, weight: number) => ({
   matchup: {
     id: `${bot}-${difficulty}`,
@@ -24,7 +27,7 @@ const vsJones = (bot: string, difficulty: Difficulty, weight: number) => ({
  * The balance gate (CI-04): the reference persona against every Jones, each one-goal persona and the floors against
  * Standard Jones, and two balanced humans for seat fairness.
  */
-export const CI_PLAN = [
+export const CI_PLAN: MatchupPlan = [
   vsJones('balanced', 'standard', 6),
   vsJones('balanced', 'chill', 2),
   vsJones('balanced', 'hustle-culture', 2),
@@ -50,7 +53,17 @@ export const CI_PLAN = [
   },
 ];
 
-export type MatchupPlan = typeof CI_PLAN;
+/** `sim assess` (simulator §6): every strategy persona against Standard Jones, so choices are judged per persona. */
+export const ASSESS_PLAN: MatchupPlan = [
+  vsJones('balanced', 'standard', 3),
+  vsJones('careerist', 'standard', 1),
+  vsJones('scholar', 'standard', 1),
+  vsJones('saver', 'standard', 1),
+  vsJones('socialite', 'standard', 1),
+  vsJones('gambler', 'standard', 1),
+  vsJones('spender', 'standard', 1),
+  vsJones('casual', 'chill', 1),
+];
 
 /** `games` shared out by weight, at least one game per matchup. */
 export function jobsFor(plan: MatchupPlan, games: number, seed: string): GameJob[] {

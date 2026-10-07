@@ -64,7 +64,15 @@ export function computeKpis(content: GameContent, records: GameRecord[], seconds
     );
     const paycheck = median(paid);
     if (paycheck !== undefined) kpis['firstPaycheck.balanced-standard'] = paycheck;
+    const milestone = median(
+      balanced.flatMap((g) => (g.firstMilestone?.[0] == null ? [] : [g.firstMilestone[0]])),
+    );
+    if (milestone !== undefined) kpis['firstMilestone.balanced-standard'] = milestone;
   }
+
+  const luck = luckShare(groups);
+  if (luck !== undefined) kpis.luckShare = luck;
+  kpis.anomalies = records.filter((r) => (r.anomalies?.length ?? 0) > 0).length;
 
   standardWins.sort((a, b) => b - a);
   if (standardWins.length >= 2) kpis.dominance = (standardWins[0] ?? 0) - (standardWins[1] ?? 0);
@@ -95,6 +103,30 @@ export function computeKpis(content: GameContent, records: GameRecord[], seconds
   );
   kpis.gamesPerSecond = Math.round((records.length / Math.max(seconds, 0.001)) * 100) / 100;
   return kpis;
+}
+
+const variance = (xs: number[]) => {
+  const mean = xs.reduce((a, b) => a + b, 0) / xs.length;
+  return xs.reduce((a, x) => a + (x - mean) ** 2, 0) / Math.max(1, xs.length - 1);
+};
+
+/**
+ * Luck share (simulator §5): of the spread in final score among non-floor personas against Standard Jones, the part
+ * that comes from the seed (variance within a persona) rather than the strategy (variance between persona means),
+ * in basis points. Skill should explain more than luck, so this should stay under half.
+ */
+export function luckShare(groups: Map<string, GameRecord[]>): number | undefined {
+  const scores: number[][] = [];
+  for (const [id, games] of groups) {
+    const bot = games[0]?.seats[0] ?? '';
+    if (!id.endsWith('-standard') || FLOORS.has(bot) || !games[0]?.seats.includes('jones'))
+      continue;
+    if (games.length >= 2) scores.push(games.map((g) => g.scoresBp[0] ?? 0));
+  }
+  if (scores.length < 2) return undefined;
+  const within = scores.reduce((a, xs) => a + variance(xs), 0) / scores.length;
+  const between = variance(scores.map((xs) => xs.reduce((a, b) => a + b, 0) / xs.length));
+  return within + between === 0 ? 0 : bp(within, within + between);
 }
 
 /** Content no game used: candidates for dead content (simulator §6). */

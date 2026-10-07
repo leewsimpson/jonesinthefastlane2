@@ -24,12 +24,12 @@
         "skills": 2500,
         "career": 2500
       },
-      "bottleneckBp": 5000,
+      "bottleneckBp": 2000,
       "riskAppetiteBp": 5000,
       "horizonWeeks": 8,
-      "bestMoveRateBp": 3000,
-      "runnersUp": 8,
-      "notes": "Wellness Jones on a relaxed week: balanced goals, usually settles for any decent move"
+      "bestMoveRateBp": 5000,
+      "runnersUp": 6,
+      "notes": "Wellness Jones on a relaxed week: balanced goals, takes the best move half the time"
     },
     {
       "id": "jones-standard",
@@ -39,12 +39,12 @@
         "skills": 2500,
         "career": 2500
       },
-      "bottleneckBp": 5000,
+      "bottleneckBp": 2000,
       "riskAppetiteBp": 5000,
       "horizonWeeks": 8,
-      "bestMoveRateBp": 7000,
-      "runnersUp": 4,
-      "notes": "Wellness Jones: balanced goals, usually finds the best move"
+      "bestMoveRateBp": 9000,
+      "runnersUp": 3,
+      "notes": "Wellness Jones: balanced goals, nearly always finds the best move"
     },
     {
       "id": "jones-hustle-culture",
@@ -54,12 +54,12 @@
         "skills": 2500,
         "career": 2500
       },
-      "bottleneckBp": 5000,
+      "bottleneckBp": 2000,
       "riskAppetiteBp": 5000,
-      "horizonWeeks": 8,
+      "horizonWeeks": 16,
       "bestMoveRateBp": 10000,
       "runnersUp": 1,
-      "notes": "Wellness Jones at full tilt: always takes the best move"
+      "notes": "Wellness Jones at full tilt: always takes the best move and plans four months ahead"
     }
   ],
   "byDifficulty": {

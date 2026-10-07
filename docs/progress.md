@@ -245,7 +245,7 @@ Running ledger of finished phases, deferrals and deviations from [implementation
     window listener before the same key press reaches it.
   - Root `devDependencies` link `@fastlane/engine` and `@fastlane/content` so E2E tests can replay in Node.
 
-## Phase 5 — Polish & content — in progress
+## Phase 5 — Polish & content — done 2026-10-07 (tester exit criterion moves to Phase 6 playtests)
 
 ### Playability pass — 2026-10-07
 
@@ -278,10 +278,9 @@ Client-only changes, with no engine rule or content change, so sim KPIs and save
   travels with the Go button and confirms the hunger warning. It passes on desktop Chromium locally; WebKit isn't
   installed in that container, so mobile WebKit runs in CI. Initial JS is 90 kB gzipped.
 - Deviations:
-  - Owner lines are UI copy (`owner.<location>.<n>` in `ui.en.json`), not content. Content strings are part of the
-    content hash, so adding them there would refuse existing saves and move the sim baseline. They move to content
-    with the FR-84 copy pass. Owner busts stay art-track work (art-direction §6, `npc-<location>`); the header uses
-    building art until then.
+  - Owner lines started as UI copy; the copy pass moved them to content (`owner.<location>.<n>` in
+    `packages/content/locales/en.json`, see "Sim tooling, content and balance" below). Owner busts stay art-track
+    work (art-direction §6, `npc-<location>`); the header uses building art until then.
   - `weeklyCap` is now exported from `@fastlane/engine` so the guide reads shift hours left from the rule itself.
 - Not done (still Phase 5): first-paycheck timing with testers (ENG-20 exit criterion), and the walk cost
   (`transportModes` in `city.json`) that makes Walk a poor default. That is a balance change, so it goes through
@@ -342,3 +341,63 @@ The client half of Phase 5 (user decision: client polish first, sim tooling and 
   content hash, so they go with the content fill); sim `assess`/`sweep`/`trace`, the content fill and the balance pass;
   analytics and Sentry (deferred by the user: no accounts yet); the walk cost from the playability pass. Unlocks on
   the run summary (ENG-21) wait for meta-progression in Phase 8.
+
+### Sim tooling, content and balance — 2026-10-07
+
+The rest of Phase 5 (user decision: finish Phase 5, then deploy). PR branch `phase-5-sim-content`.
+
+- **Sim tooling (simulator §4–§8):** decision traces for 1% of games and every anomalous one, as gzipped JSONL under
+  `sim-out/<run>/traces/`; `pnpm sim trace <seed>` prints a week-by-week log with the bot's top options and scores;
+  `--replay` writes `{ setup, log }` for the client's debug route `#/replay`, which steps through a game on the real
+  board and HUD (it also loads save files). `pnpm sim assess` plays counterfactual rollouts with common random
+  numbers on sampled weekend decisions and classifies each event; `pnpm sim sweep` runs one value across a range;
+  `--scenario` starts games from a set position (`packages/sim/scenarios/`); `--matchups` plays part of the plan;
+  every run writes `report.html` (win rates, weeks-to-win histogram, net-worth fan chart, anomalies, unused content).
+  New KPIs: luck share (with a band), week of the first goal milestone, anomaly count.
+- **Content:** theft events `porch-pirate` and `wallet-lifted` (FR-57: cash on hand and cheap housing raise the
+  risk; NeoBank or a smart lock avoid it); the air fryer unlocks a $5 healthy dinner (FR-60); Jones posts a
+  `went-viral` line after a viral weekend card (FR-82). Fix: delivered meals count at the food check only when this
+  week's bills will pay for them, including an eviction's deposit refund (FR-52); `ENGINE_VERSION` 0.5.0.
+- **Copy (NFR-07):** a tone guide (game-requirements.md, Appendix) and an edit pass over both locale files; location
+  owner lines moved to content. Locale strings aren't part of the content hash, so saves are unaffected.
+- **Balance:** see the baseline below; values in `balance.json`, `ai.json` and `sim/personas.json`.
+- **Exit criteria:**
+  - New testers reach the first paycheck in under 3 minutes without help: **not evidenced** (human-only). The run
+    summary's "Play time" line records it; moved to Phase 6's playtest rounds.
+  - Lighthouse budgets on the preview URL: `preview.yml` runs Lighthouse CI on this PR's preview (the PR carries the
+    `preview` label); the client-polish run on a local production build scored performance 96–97, accessibility 100.
+- **Baseline** (2001 games, seed `fastlane`, engine 0.5.0, content `0cfaeef41225`, 425 s on 4 workers; compared with
+  the start of this pass): `balanced` vs Standard Jones wins 52.8% (was 72.8%) in a median week 32 (was 22); Jones
+  wins 11.0% on Chill, 47.2% on Standard and 63.2% on Hustle Culture (all in band; were 7.1/27.2/50.0); dominance
+  4.4 points (was 17.3); careerist 59.3% (was 90.1%); casual on Chill 56.0% (was 26.4%); seat gap 5.5 points; luck
+  share 5.0%; first paycheck week 1. No hard band fails. Soft misses: `balanced` 52.8% (its 55–80% band and
+  Standard Jones's 35–55% only meet at 55/45: one of the two always wins), careerist 59.3%, socialite 25.3%,
+  gambler 55.0%, hardship 0.2%.
+- **Choice assessment** (300 games, 1 412 decisions, 6 rollouts × 8 weeks): 0 no-brainers, 0 traps. 6 dead: the two
+  burnout cards (strategy bots never end a week at 0 Energy) and four housing cards for tiers the bots skip
+  (`mould`, `roommate-drama`, `housewarming`, `smart-condo-glitch`). 29 flat: weekend choices move the score by
+  under 1% over 8 weeks, so they are flavour more than strategy at today's magnitudes. Left as is until playtests
+  say whether choices should bite harder. Bot regret 0.0–0.5% for every persona, so the bots are sound.
+- **Deviations:**
+  - The bottleneck bonus at 5 000 made a bot chase its weakest goal and lose time on the rest: `balanced` lost to
+    every one-goal persona. `balanced`, `casual` and every Jones now use 2 000 (Phase 3 note: fix the bot before
+    trusting its numbers). Jones's levers are now best-move rate, runners-up, bottleneck and, on Hustle Culture, a
+    16-week horizon (FR-83: strategy only).
+  - Wellbeing decays faster (happiness −4, social −5 a week) so it needs upkeep; it is still the easiest goal.
+  - The anomaly check uses weekly net-worth swings, not cash: moving money into savings isn't a swing
+    (simulator.md §4 updated).
+  - `assess` rollouts play 8 weeks, not to the end of the game, so a sample of 1 400 decisions fits in 15 minutes.
+  - `sim explain` (simulator §9, priority C) isn't built.
+  - No `_redirects`: Pages' default SPA fallback is used (ci-cd.md §5).
+- **Deferred:**
+  - Hardship (0.2% vs 30–60%), the one-goal personas and gambler, and the `balanced`/Jones band overlap → Phase 6
+    playtest tuning and band re-anchoring (simulator §10). The bots dodge every setback; people won't.
+  - Analytics and Sentry (NFR-14, NFR-16) → when the user has PostHog and Sentry accounts (**human-only**).
+  - Walk cost (playability pass) → Phase 6 playtests: walking stays slow and Transit stays the default mode. No
+    balance change made.
+- **Notes for later phases:**
+  - `pnpm sim run` now takes about 7 minutes for 2 000 games on 4 cores: games last ~32 weeks instead of 22.
+  - Use `--matchups` and `--override` for quick experiments, then a full run with `--base` for the record.
+  - Career is stepped (level × 20 × stability): targets between levels behave like the next level down. Standard's
+    55 means level 3 with low AI exposure; 65 was out of reach for every bot.
+

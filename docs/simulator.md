@@ -119,7 +119,7 @@ event: Landlord sells building → chose *Negotiate* (+$0, −5 Happiness)"). Th
 `{seed, settings, actionLog}` and replays it on the board, so a strange game can be *watched*.
 
 **Anomalies** flagged per game and always traced: crash or invariant failure, a stat out of range, money not
-conserved, a game that hits the week limit with a score < 10%, an eviction loop (≥ 3 evictions), a weekly cash
+conserved, a game that hits the week limit with a score < 10%, an eviction loop (≥ 3 evictions), a weekly net-worth
 swing > 5× median, and the same action chosen > 80% of the time.
 
 ## 5. Outcome KPIs
@@ -144,8 +144,10 @@ the hard bands are wider guard rails:
 | Content reach | Share of jobs, items, events and event choices used at least once across the run | Unused content is listed in the report |
 | Throughput | Games per second | Regression > 20% fails |
 
-Bands have a **hard** range (CI fails) and an optional **soft** range (a warning in the summary). Luck share isn't
-measured yet; throughput shows in every report but has no band, because it depends on the machine.
+Bands have a **hard** range (CI fails) and an optional **soft** range (a warning in the summary). Luck share
+(`luckShare`) is the within-persona share of final-score variance across the non-floor personas against Standard
+Jones. The first goal milestone is the first week any goal reaches a quarter of its target. Throughput shows in every
+report but has no band, because it depends on the machine.
 
 ## 6. Choice assessment
 
@@ -192,19 +194,23 @@ correlation only, unless the PR touches events or balance values.
 
 ## 8. CLI, CI and reports
 
-Built in Phase 3: `run` and `compare`, plus `random` (the replay check) and `bots` (solo games per bot). `run`
-plays a fixed plan of matchups (`packages/sim/src/runner/plan.ts`): `balanced` against each Jones, every other
-persona and the floors against Standard Jones, and two `balanced` players for seat fairness. The rest are still to
-come (§6, Phase 5).
+`run` plays a fixed plan of matchups (`packages/sim/src/runner/plan.ts`): `balanced` against each Jones, every other
+persona and the floors against Standard Jones, and two `balanced` players for seat fairness. `random` is the replay
+check and `bots` plays solo games per bot. `explain` (§9) isn't built.
 
 ```
 pnpm sim run      --games 2000 [--seed fastlane] [--workers N] [--override …] [--out sim-out] [--base report.json]
+                  [--trace-rate 0.01] [--matchups a,b] [--scenario scenarios/<id>.json]
 pnpm sim compare  --base <report.json | git ref> --head <report.json>
-pnpm sim sweep    --param <path> --from <a> --to <b> --steps <n>
-pnpm sim assess   --games 500 --rollouts 32           # choice assessment (§6)
-pnpm sim trace    <seed> [--config run.json]          # readable replay of one game
-pnpm sim explain  <report.json>                       # optional LLM analyst (§9)
+pnpm sim sweep    --param <path> --from <a> --to <b> [--steps 5] [--games 500]   # path[id] picks by id
+pnpm sim assess   [--games 500] [--rollouts 8] [--horizon 8] [--assess-rate 0.25]  # choice assessment (§6)
+pnpm sim trace    <seed> [--matchup balanced-standard] [--file <trace.jsonl.gz>] [--replay game.json]
 ```
+
+`assess` rollouts play `--horizon` weeks, not to the end of the game, and value the player's score there (a win
+before the horizon counts 100% plus a bonus per week saved). `trace --replay` writes `{ setup, log }` for the client's
+debug route, `#/replay`. Scenario files live in `packages/sim/scenarios/`; a scenario or `--matchups` run isn't gated
+on bands.
 
 Outputs go to `sim-out/<run-id>/`: `report.json` (machine-readable, the source for everything else),
 `summary.md` (the PR comment), `report.html` (one self-contained file with charts: net worth fan charts, win-rate
