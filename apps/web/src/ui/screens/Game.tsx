@@ -172,6 +172,7 @@ export function Game() {
       <Suspense fallback={null}>
         <Summary
           state={state}
+          pace={session.pace}
           onTitle={quit}
           onNewGame={() => {
             gameStore().getState().close();
