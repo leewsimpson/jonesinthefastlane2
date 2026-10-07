@@ -162,14 +162,14 @@ body {
   }
 }
 
-/* The reduced-motion setting (NFR-04) cuts CSS motion even when the OS doesn't ask for it. */
-/* biome-ignore lint/complexity/noImportantStyles: the setting must beat every component's own transition */
+/* The reduced-motion setting (NFR-04) cuts CSS motion even when the OS doesn't ask for it. Unlayered, so it beats
+   Tailwind's layered utilities without !important. */
 :root[data-motion="reduce"] *,
 :root[data-motion="reduce"] *::before,
 :root[data-motion="reduce"] *::after {
-  animation-duration: 0.01ms !important;
-  animation-iteration-count: 1 !important;
-  transition-duration: 0.01ms !important;
+  animation-duration: 0.01ms;
+  animation-iteration-count: 1;
+  transition-duration: 0.01ms;
 }
 
 :focus-visible {
