@@ -103,8 +103,22 @@ body {
 }
 .board-area {
   flex: none;
-  /* Tall enough that the buildings and their names don't overlap; short enough that the sheet peeks in below. */
-  height: clamp(340px, 135vw, calc(100svh - 13rem));
+  /* The first screen is the top bar, the whole board and the dock. 100svh is the height with the browser's toolbars
+     showing, and 10.5rem covers the bar and the dock. The floor keeps buildings and names from overlapping. */
+  height: clamp(340px, 135vw, calc(100svh - 10.5rem));
+}
+/* Below the board: the rest of the HUD, then the action sheet, then the dock (which must stay last to stick). */
+.board-area {
+  order: 1;
+}
+.hud-more {
+  order: 2;
+}
+.sheet {
+  order: 3;
+}
+.dock {
+  order: 4;
 }
 /* Pixi sets touch-action: none on its canvas, which would trap the page's scroll over the board. Vertical swipes
    scroll; a tap still picks a building. */
@@ -119,9 +133,10 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 .fx-layer {
-  /* Pops and banners stay in view wherever the page is scrolled. */
+  /* Pops and banners stay in view wherever the page is scrolled: above the pinned bars and a dialog's backdrop
+     (z-40), so they're never dimmed, but under the dialog itself (z-50). */
   position: fixed;
-  z-index: 35;
+  z-index: 45;
 }
 
 @media (orientation: landscape) and (min-width: 768px) {

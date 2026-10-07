@@ -84,7 +84,7 @@ function useScrollToSheet(location: string | undefined, player: string | undefin
     if (wide || !location || prev.player !== player || prev.location === location) return;
     const sheet = document.getElementById('sheet');
     if (!sheet) return;
-    const bar = document.querySelector<HTMLElement>('.hud > div');
+    const bar = document.querySelector<HTMLElement>('.hud-bar');
     const top = sheet.getBoundingClientRect().top + window.scrollY - (bar?.offsetHeight ?? 0);
     window.scrollTo({ top, behavior: reduced ? 'auto' : 'smooth' });
   }, [location, player, wide, reduced]);

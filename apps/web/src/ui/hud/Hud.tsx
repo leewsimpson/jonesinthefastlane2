@@ -94,7 +94,7 @@ export function Hud({
   return (
     // Portrait: the header dissolves (`contents`) so its top bar sticks to the page, not to the header.
     <header className="hud contents wide:flex wide:flex-col wide:gap-2 wide:p-3">
-      <div className="sticky top-0 z-30 flex flex-col gap-2 border-ink border-b-2 bg-surface-raised px-3 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2 wide:static wide:border-0 wide:bg-transparent wide:p-0 dark:border-cream/30">
+      <div className="hud-bar sticky top-0 z-30 flex flex-col gap-2 border-ink border-b-2 bg-surface-raised px-3 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2 wide:static wide:border-0 wide:bg-transparent wide:p-0 dark:border-cream/30">
         <div className="flex items-center gap-2">
           <span
             className="flex size-9 shrink-0 items-center justify-center rounded-full border-2 border-ink font-bold text-ink"
@@ -139,7 +139,7 @@ export function Hud({
         </div>
       </div>
 
-      <div className="flex flex-col gap-2 border-ink/20 border-b-2 bg-surface-raised px-3 py-2 wide:border-0 wide:bg-transparent wide:p-0 dark:border-cream/20">
+      <div className="hud-more flex flex-col gap-2 border-ink/20 border-t-2 border-b-2 bg-surface-raised px-3 py-2 wide:border-0 wide:bg-transparent wide:p-0 dark:border-cream/20">
         <div className="flex flex-wrap gap-1.5">
           <Stat stat="health" value={me.stats.health} />
           <Stat stat="happiness" value={me.stats.happiness} />
