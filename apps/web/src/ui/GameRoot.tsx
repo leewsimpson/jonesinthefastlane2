@@ -4,6 +4,7 @@
  */
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { MotionRoot } from '../fx/MotionRoot.tsx';
 import { saves } from '../persistence/client.ts';
 import { type Screen, useApp } from '../store/app.ts';
 import { gameStore, setSaver, useGame } from '../store/game.ts';
@@ -38,16 +39,20 @@ export default function GameRoot({ screen }: { screen: Exclude<Screen, { name: '
     };
   }, [slot, sessionId]);
 
-  if (screen.name === 'setup') return <Setup />;
-  if (error)
-    return (
-      <main className="mx-auto flex min-h-dvh max-w-xl flex-col items-center justify-center gap-4 p-6">
-        <p role="alert">{t('title.saveBroken', { message: error })}</p>
-        <button type="button" className="btn" onClick={() => go({ name: 'title' })}>
-          {t('summary.title2')}
-        </button>
-      </main>
-    );
-  if (sessionId !== slot) return <Loading />;
-  return <Game />;
+  return <MotionRoot>{body()}</MotionRoot>;
+
+  function body() {
+    if (screen.name === 'setup') return <Setup />;
+    if (error)
+      return (
+        <main className="mx-auto flex min-h-dvh max-w-xl flex-col items-center justify-center gap-4 p-6">
+          <p role="alert">{t('title.saveBroken', { message: error })}</p>
+          <button type="button" className="btn" onClick={() => go({ name: 'title' })}>
+            {t('summary.title2')}
+          </button>
+        </main>
+      );
+    if (sessionId !== slot) return <Loading />;
+    return <Game />;
+  }
 }

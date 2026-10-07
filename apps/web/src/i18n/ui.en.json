@@ -46,6 +46,16 @@
   "settings.textSize": "Text size",
   "settings.tutorial": "Coach me through week 1",
 
+  "fx.hired": "Hired: {{job}}!",
+  "fx.promoted": "Promoted to {{job}}!",
+  "fx.paid": "First paycheck: {{amount}}!",
+  "fx.credential": "Earned {{course}}!",
+  "fx.quest": "Quest done: {{quest}}",
+  "fx.moved": "Welcome home: {{home}}",
+  "fx.laidOff": "Laid off from {{job}}",
+  "fx.letGo": "Let go from {{job}}",
+  "fx.evicted": "Evicted from {{home}}",
+
   "player.jones": "Jones",
 
   "hud.week": "Week {{week}}",

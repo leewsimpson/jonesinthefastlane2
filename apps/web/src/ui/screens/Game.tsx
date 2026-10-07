@@ -7,6 +7,7 @@ import type { Action, Preview } from '@fastlane/engine';
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { boardLayout, innerRect } from '../../board/layout.ts';
+import { FxLayer } from '../../fx/FxLayer.tsx';
 import { content, engine } from '../../game/engine.ts';
 import { nextHint, pickTrip, weekNeeds } from '../../game/guide.ts';
 import { activeHuman } from '../../game/report.ts';
@@ -69,6 +70,9 @@ export function Game() {
   const handoff = useGame((s) => s.handoff);
   const lastEvents = useGame((s) => s.lastEvents);
   const error = useGame((s) => s.error);
+  const fx = useGame((s) => s.fx);
+  const tick = useGame((s) => s.tick);
+  const [shakeEl, setShakeEl] = useState<HTMLDivElement | null>(null);
   const [travel, setTravel] = useState<{ dest: string | null } | null>(null);
   const [details, setDetails] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
@@ -195,9 +199,18 @@ export function Game() {
         </div>
       </div>
       <div ref={boardRef} className="board-area relative min-h-0">
-        <Suspense fallback={null}>
-          <Board state={state} active={me.id} onSelect={goTo} onHover={setHover} />
-        </Suspense>
+        <div ref={setShakeEl} className="absolute inset-0">
+          <Suspense fallback={null}>
+            <Board
+              state={state}
+              active={me.id}
+              fx={{ id: tick, coins: fx.coins, moment: fx.moment }}
+              onSelect={goTo}
+              onHover={setHover}
+            />
+          </Suspense>
+        </div>
+        <FxLayer fx={fx} id={tick} shakeTarget={shakeEl} />
         {roomy && (
           <div
             className="pointer-events-none absolute z-10 flex items-center justify-center"
