@@ -6,6 +6,9 @@
  * move (tech-stack §2).
  */
 import type { GameState } from '@fastlane/engine';
+// A strict CSP has no 'unsafe-eval' (ci-cd.md §5): this swaps Pixi's generated shader and uniform code for
+// precompiled versions. It must load before Pixi creates a renderer.
+import 'pixi.js/unsafe-eval';
 import { Application, extend, useTick } from '@pixi/react';
 import {
   Assets,

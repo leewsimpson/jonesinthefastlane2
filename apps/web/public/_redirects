@@ -1,0 +1,2 @@
+# SPA fallback (ci-cd.md §5): any path without a file serves the app shell.
+/*  /index.html  200

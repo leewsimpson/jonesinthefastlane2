@@ -53,7 +53,7 @@
 ├─ ci.yml           # main (+ manual): lint, typecheck, test, build, size, audit (CI-01, CI-05, CI-06)
 ├─ codeql.yml       # main + weekly: CodeQL (CI-06)
 ├─ preview.yml      # PR labelled `preview`: deploy Pages preview + Worker preview, comment URL, run E2E + Lighthouse
-├─ main.yml         # push to main: migrate preview D1, deploy `main` alias (Worker + Pages), smoke, upload artifact
+├─ main.yml         # after ci is green on main: migrate preview D1, deploy `main` alias (Worker + Pages), smoke, upload artifact
 ├─ production.yml   # release published / dispatch: approval gate → migrate → deploy → smoke
 ├─ rollback.yml     # manual: roll back Pages + Worker to a chosen version
 └─ nightly.yml      # cron: full sim, full E2E matrix, audit
@@ -68,6 +68,11 @@ merge to main ─► ci.yml ─► main.yml ─► D1 migrate ─► Worker ─�
                                    │
 Release v1.2.0 ─► production.yml ─► [manual approval] ─► D1 migrate ─► Worker ─► Pages ─► smoke ─► Sentry release
 ```
+
+Live URLs: production web `https://fastlane-e6g.pages.dev`, API `https://fastlane-api-production.leewsimpson.workers.dev`;
+main alias web `https://main.fastlane-e6g.pages.dev`, API `https://main-fastlane-api-preview.leewsimpson.workers.dev`.
+The Pages project's production branch is `production` (the deploy workflows set it), so `main` deploys never reach the
+production URL. Security headers and the SPA fallback are `apps/web/public/_headers` and `_redirects`.
 
 ### Reference: production deploy job (sketch)
 
@@ -129,3 +134,28 @@ jobs:
 5. Set security headers (CSP, HSTS) via `apps/web/public/_headers`. Set the SPA fallback via `_redirects`.
 6. Configure WAF rate-limit rules on `POST /runs`.
 7. Turn on Cloudflare Web Analytics (cookieless) as a privacy-friendly baseline alongside opt-in PostHog.
+
+## 6. Runbook
+
+**Ship to production (CD-03).** Merge to `main` and wait for `ci` then `main` to go green (the `main` run uploads
+`web-dist-<sha>`). Then either publish a GitHub Release (tag `v*`) on that commit, or run **Actions → production →
+Run workflow** (empty `sha` = the latest green `main` deploy). A reviewer approves the `production` environment; the
+job migrates D1, deploys the Worker, deploys the promoted build and runs `smoke.sh`. The job summary links both URLs.
+
+**Production smoke test failed.** The workflow opens an issue titled "Production deploy failed". Check the live site
+first; if it is broken, roll back (below), then fix forward on `main`.
+
+**Roll back (CD-05).** Actions → **rollback** → Run workflow:
+
+| Situation | Inputs | What happens |
+|---|---|---|
+| Last production deploy is bad | target `production`, sha empty | Pages rolls back to the previous production deployment; `wrangler rollback` restores the previous Worker version. Instant, no rebuild |
+| Go back further, or to a known commit | target `production`, sha `<commit>` | Redeploys that commit's `web-dist-<sha>` and its Worker. The commit needs a green `main` deploy (artifacts last 90 days) |
+| The `main` alias is bad | target `main`, sha `<commit>` | Same redeploy, on the preview environment's `main` alias. Rehearse rollbacks here first |
+
+Rollbacks never run migrations. Migrations must be backward compatible (expand → migrate → contract, CD-04), so the
+older Worker keeps working on the newer schema. A redeploy by sha checks out that commit, so it uses that commit's
+`smoke.sh`; commits from before the deploy workflows existed can only be rolled back to with the instant rollback.
+
+**Rehearse.** Exit criterion for Phase 6: run a rollback on `main` with the previous `main` commit, then a production
+rollback, and record both run links in `docs/progress.md`.
