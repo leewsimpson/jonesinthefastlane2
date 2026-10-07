@@ -106,7 +106,8 @@ jobs:
           WEB_URL: ${{ steps.pages.outputs.url }}
         run: |
           export CHROME_PATH=$(pnpm exec node -e "import('@playwright/test').then((m) => console.log(m.chromium.executablePath()))")
-          pnpm exec lhci autorun --collect.url="$WEB_URL/"
+          # Pinned and run through dlx, not installed: its dependency tree carries audit advisories (CI-06).
+          pnpm dlx @lhci/cli@0.15.1 autorun --collect.url="$WEB_URL/"
 
       - name: Lighthouse summary
         if: always() && steps.lighthouse.outcome != 'skipped'
