@@ -100,7 +100,7 @@ jobs:
           E2E_BASE_URL: https://main.fastlane-e6g.pages.dev
         run: |
           pnpm exec playwright install --with-deps chromium
-          pnpm e2e --project desktop-chromium e2e/play-a-week.spec.ts
+          pnpm e2e --project=desktop-chromium e2e/play-a-week.spec.ts
 
       - name: Summary
         if: always()
