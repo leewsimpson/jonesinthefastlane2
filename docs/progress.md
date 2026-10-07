@@ -278,10 +278,9 @@ Client-only changes, with no engine rule or content change, so sim KPIs and save
   travels with the Go button and confirms the hunger warning. It passes on desktop Chromium locally; WebKit isn't
   installed in that container, so mobile WebKit runs in CI. Initial JS is 90 kB gzipped.
 - Deviations:
-  - Owner lines are UI copy (`owner.<location>.<n>` in `ui.en.json`), not content. Content strings are part of the
-    content hash, so adding them there would refuse existing saves and move the sim baseline. They move to content
-    with the FR-84 copy pass. Owner busts stay art-track work (art-direction §6, `npc-<location>`); the header uses
-    building art until then.
+  - Owner lines started as UI copy; the copy pass moved them to content (`owner.<location>.<n>` in
+    `packages/content/locales/en.json`, see "Sim tooling, content and balance" below). Owner busts stay art-track
+    work (art-direction §6, `npc-<location>`); the header uses building art until then.
   - `weeklyCap` is now exported from `@fastlane/engine` so the guide reads shift hours left from the rule itself.
 - Not done (still Phase 5): first-paycheck timing with testers (ENG-20 exit criterion), and the walk cost
   (`transportModes` in `city.json`) that makes Walk a poor default. That is a balance change, so it goes through
