@@ -49,8 +49,7 @@ previews and no DOM. The simulator adds no rules of its own. It only chooses act
 
 - **Engine API the simulator needs:** see [engine-design §3](engine-design.md#3-public-api) (`newGame`,
   `listActions`, `preview`, `reduceInPlace`, `replay`, `hash`). Bots play the human seats; AI seats are played by the
-  engine (engine-design §7). `smartDefaults` (the one-tap actions from ENG-02) joins the API with the turn-pacing
-  pass.
+  engine (engine-design §7). `smartDefaults` (the one-tap actions from ENG-02) is part of that API.
 - **Policies see what a player sees.** `policy.choose` gets a player view (own stats, public world state, previews),
   not hidden state such as the RNG or upcoming event draws. Bots can't play better than a human could.
 - **Collectors** are small observers (cash curve, action counts, goal progress, events seen). They run inside the

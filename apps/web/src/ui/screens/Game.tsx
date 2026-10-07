@@ -13,7 +13,14 @@ import { nextHint, pickTrip, weekNeeds } from '../../game/guide.ts';
 import { activeHuman } from '../../game/report.ts';
 import { useApp } from '../../store/app.ts';
 import { gameStore, useGame } from '../../store/game.ts';
-import { KEY_DETAILS, KEY_END_WEEK, KEY_TRAVEL, rowKey, useHotkeys } from '../common/hotkeys.ts';
+import {
+  KEY_DETAILS,
+  KEY_END_WEEK,
+  KEY_TRAVEL,
+  QUICK_KEYS,
+  rowKey,
+  useHotkeys,
+} from '../common/hotkeys.ts';
 import { Hud } from '../hud/Hud.tsx';
 import { ActionSheet, groupActions } from '../panels/ActionSheet.tsx';
 import { DetailsDialog } from '../panels/DetailsDialog.tsx';
@@ -87,6 +94,10 @@ export function Game() {
     [state],
   );
   const groups = useMemo(() => groupActions(previews, rowKey), [previews]);
+  const smart = useMemo(
+    () => (state && canAct ? engine.smartDefaults(state) : []),
+    [state, canAct],
+  );
 
   const dispatch = (a: Action) => {
     const ok = gameStore().getState().dispatch(a);
@@ -129,6 +140,10 @@ export function Game() {
   for (const g of groups)
     for (const r of g.rows)
       if (r.key && r.preview.available) rowHandlers[r.key] = () => dispatch(r.preview.action);
+  smart.forEach((d, i) => {
+    const key = QUICK_KEYS[i];
+    if (key) rowHandlers[key] = () => dispatch(d.preview.action);
+  });
   useHotkeys(
     {
       ...rowHandlers,
@@ -233,6 +248,7 @@ export function Game() {
         housingTier={me.housing.tier}
         world={state.world}
         groups={groups}
+        smart={smart}
         canAct={canAct}
         onPick={dispatch}
         onTravel={() => setTravel({ dest: null })}

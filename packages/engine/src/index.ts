@@ -3,6 +3,7 @@
  * enforces it. Content comes in as data through `createEngine`; only its types are imported here. Saves are a
  * separate entry point, `@fastlane/engine/save`.
  */
+export { type SmartDefault, type SmartKind, smartDefaults } from './actions/smart.ts';
 export { type AiPolicy, randomPolicy } from './ai/random.ts';
 export {
   type Persona,

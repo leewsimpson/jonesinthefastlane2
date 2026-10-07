@@ -8,7 +8,10 @@ export const KEY_END_WEEK = 'e';
 export const KEY_TRAVEL = 't';
 export const KEY_DETAILS = 'd';
 
-const ROW_KEYS = '1234567890abcfghijklmnopqrsuvwxyz'.split('');
+/** One-tap smart defaults (ENG-02) take Q, W and R; rows skip them. */
+export const QUICK_KEYS = ['q', 'w', 'r'] as const;
+
+const ROW_KEYS = '1234567890abcfghijklmnopsuvxyz'.split('');
 
 /** The shortcut for the n-th row on screen, or undefined past the end of the list. */
 export const rowKey = (n: number): string | undefined => ROW_KEYS[n];
