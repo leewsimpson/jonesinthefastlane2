@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SlotSummary } from '../../persistence/saves.ts';
+import { usePwa } from '../../pwa.ts';
 import { SettingsButton } from '../../settings/SettingsButton.tsx';
 import { useApp } from '../../store/app.ts';
 
@@ -12,6 +13,8 @@ export function Title() {
   const go = useApp((s) => s.go);
   const [slots, setSlots] = useState<Slots>({ state: 'loading' });
   const [confirm, setConfirm] = useState<string | null>(null);
+  const installable = usePwa((s) => s.installable);
+  const install = usePwa((s) => s.install);
 
   const refresh = () =>
     import('../../persistence/client.ts')
@@ -61,6 +64,11 @@ export function Title() {
           {t('title.newGame')}
         </button>
         <SettingsButton />
+        {installable && (
+          <button type="button" className="btn" onClick={() => void install()}>
+            {t('title.install')}
+          </button>
+        )}
       </div>
       <section className="w-full text-left" aria-labelledby="saves-heading">
         <h2 id="saves-heading" className="mb-2 font-display font-bold text-xl">

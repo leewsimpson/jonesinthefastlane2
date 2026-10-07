@@ -15,6 +15,7 @@
   "title.saveLine": "Week {{week}} · {{difficulty}}",
   "title.saveFinished": "Finished",
   "title.saveBroken": "This save can't be loaded: {{message}}",
+  "title.install": "Install app",
 
   "setup.title": "New game",
   "setup.players": "Players",
