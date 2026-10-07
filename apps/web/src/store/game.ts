@@ -12,7 +12,17 @@ import type {
   RuleError,
 } from '@fastlane/engine';
 import { createStore, useStore } from 'zustand';
+import { type Fx, fxFor, isFirstWage, NO_FX } from '../fx/map.ts';
+import { hasWorked } from '../game/coach.ts';
 import { engine } from '../game/engine.ts';
+import {
+  markTurnStart,
+  newPace,
+  type Pace,
+  recordFirstPay,
+  recordTurnEnd,
+  tick as tickPace,
+} from '../game/pace.ts';
 import {
   activeHuman,
   humanCount,
@@ -28,6 +38,8 @@ export interface Session {
   /** Human actions only, in order (engine-design §14). */
   log: Action[];
   state: GameState;
+  /** Play-time instrumentation (ENG-20, ENG-02); saved alongside, never part of the engine state. */
+  pace: Pace;
 }
 
 export interface GameStoreState {
@@ -36,6 +48,8 @@ export interface GameStoreState {
   lastEvents: DomainEvent[];
   /** Bumped on every accepted action, so the ticker can tell two identical batches apart. */
   tick: number;
+  /** How the last in-turn batch should feel (ENG-01); played by the FX layer and the board. */
+  fx: Fx;
   report: WeekReport | null;
   reportStep: number;
   /** Hotseat (FR-06): the human who must take the device before their turn shows. */
@@ -43,7 +57,7 @@ export interface GameStoreState {
   error: RuleError | null;
 
   start(id: string, setup: GameSetup): void;
-  resume(session: Session): void;
+  resume(session: Omit<Session, 'pace'> & { pace?: Pace }): void;
   dispatch(action: Action): boolean;
   /** Next page of the week report; closing the last page moves on to the next turn. */
   nextStep(): void;
@@ -55,7 +69,7 @@ export interface GameStoreState {
 export type Saver = (session: Session) => void;
 
 /** Builds a store. `save` is called after every accepted action and at week end (NFR-13). */
-export function createGameStore(save: Saver = () => {}) {
+export function createGameStore(save: Saver = () => {}, now: () => number = () => Date.now()) {
   return createStore<GameStoreState>()((set, get) => {
     const handoffFor = (state: GameState): PlayerId | null => {
       const next = activeHuman(state);
@@ -66,6 +80,7 @@ export function createGameStore(save: Saver = () => {}) {
       session: null,
       lastEvents: [],
       tick: 0,
+      fx: NO_FX,
       report: null,
       reportStep: 0,
       handoff: null,
@@ -73,10 +88,11 @@ export function createGameStore(save: Saver = () => {}) {
 
       start(id, setup) {
         const { state, events } = engine.newGame(setup);
-        const session: Session = { id, setup, log: [], state };
+        const session: Session = { id, setup, log: [], state, pace: tickPace(newPace(), now()) };
         set({
           session,
           lastEvents: events,
+          fx: NO_FX,
           report: null,
           reportStep: 0,
           handoff: handoffFor(state),
@@ -85,11 +101,13 @@ export function createGameStore(save: Saver = () => {}) {
         save(session);
       },
 
-      resume(session) {
+      resume(loaded) {
+        const session: Session = { ...loaded, pace: loaded.pace ?? newPace() };
         const { pending, week } = session.state;
         set({
           session,
           lastEvents: [],
+          fx: NO_FX,
           // Saved mid-sequence with a weekend choice open: reopen the sequence at the card.
           report: pending ? { player: pending.player, week, events: [] } : null,
           reportStep: 0,
@@ -108,8 +126,25 @@ export function createGameStore(save: Saver = () => {}) {
           set({ error: result.error });
           return false;
         }
-        const next: Session = { ...session, log: [...session.log, action], state: result.state };
         const { events } = result;
+        let pace = tickPace(session.pace, now());
+        const end = report || player === null ? -1 : turnEndIndex(events, player);
+        const inTurn = end < 0 ? events : events.slice(0, end);
+        let fx = NO_FX;
+        if (!report && player !== null) {
+          // From the game state, not the pace record: saves from before Phase 5 have no pace.
+          const was = before.players.find((p) => p.id === player);
+          const firstPay = isFirstWage(inTurn, player, !!was && hasWorked(was));
+          if (firstPay) pace = recordFirstPay(pace, player);
+          fx = fxFor(inTurn, player, { firstPay });
+          if (end >= 0) pace = recordTurnEnd(pace, player, before.week);
+        }
+        const next: Session = {
+          ...session,
+          log: [...session.log, action],
+          state: result.state,
+          pace,
+        };
         if (report) {
           set({
             session: next,
@@ -117,10 +152,10 @@ export function createGameStore(save: Saver = () => {}) {
             error: null,
           });
         } else {
-          const end = player === null ? -1 : turnEndIndex(events, player);
           set({
             session: next,
-            lastEvents: end < 0 ? events : events.slice(0, end),
+            lastEvents: inTurn,
+            fx,
             tick: get().tick + 1,
             report:
               end < 0 || player === null
@@ -145,16 +180,28 @@ export function createGameStore(save: Saver = () => {}) {
           set({ reportStep: reportStep + 1 });
           return;
         }
+        const next = { ...session, pace: markTurnStart(tickPace(session.pace, now())) };
         set({
+          session: next,
           report: null,
           reportStep: 0,
           lastEvents: [],
+          fx: NO_FX,
           handoff: handoffFor(session.state),
         });
+        save(next);
       },
 
       takeHandoff() {
-        set({ handoff: null });
+        const { session } = get();
+        // The next human's week starts when they take the device.
+        set({
+          handoff: null,
+          session: session && {
+            ...session,
+            pace: markTurnStart({ ...session.pace, lastAt: now() }),
+          },
+        });
       },
 
       clearError() {
@@ -162,7 +209,14 @@ export function createGameStore(save: Saver = () => {}) {
       },
 
       close() {
-        set({ session: null, report: null, reportStep: 0, handoff: null, lastEvents: [] });
+        set({
+          session: null,
+          report: null,
+          reportStep: 0,
+          handoff: null,
+          lastEvents: [],
+          fx: NO_FX,
+        });
       },
     };
   });

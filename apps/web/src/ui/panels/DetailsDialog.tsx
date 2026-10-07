@@ -8,6 +8,7 @@ import { placeLabel } from '../../game/copy.ts';
 import { content } from '../../game/engine.ts';
 import { standingOf } from '../../game/standing.ts';
 import { duration, money, percent } from '../../i18n/format.ts';
+import { ItemArt } from '../common/AtlasArt.tsx';
 import { STAT_ICON, STAT_TONE } from '../common/stats.ts';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -104,7 +105,7 @@ export function DetailsDialog({
                   hours: duration(me.job.minutesThisWeek),
                 })}
                 {me.job.layoffWarning && (
-                  <span className="ml-2 font-bold text-coral">{t('details.layoffWarning')}</span>
+                  <span className="ml-2 font-bold text-bad">{t('details.layoffWarning')}</span>
                 )}
               </p>
             ) : (
@@ -162,7 +163,14 @@ export function DetailsDialog({
 
           <Section title={t('details.items')}>
             {me.items.length ? (
-              <p className="text-sm">{me.items.map((i) => t(`item.${i}`)).join(', ')}</p>
+              <ul className="flex flex-wrap gap-2 text-sm">
+                {me.items.map((i) => (
+                  <li key={i} className="chip gap-1 py-1">
+                    <ItemArt id={i} size={28} />
+                    {t(`item.${i}`)}
+                  </li>
+                ))}
+              </ul>
             ) : (
               none
             )}

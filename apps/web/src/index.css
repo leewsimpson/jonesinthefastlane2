@@ -28,6 +28,9 @@
   --color-surface-raised: var(--surface-raised);
   --color-fg: var(--fg);
   --color-fg-muted: var(--fg-muted);
+  /* Text in the palette's good/bad colours, darkened on light surfaces for WCAG AA (NFR-04). */
+  --color-good: var(--good);
+  --color-bad: var(--bad);
 
   --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Atkinson Hyperlegible Next Variable", ui-sans-serif, system-ui, sans-serif;
@@ -50,6 +53,8 @@
   --surface-raised: #ffffff;
   --fg: #1f1b2e;
   --fg-muted: #5b5872;
+  --good: #0f7d74;
+  --bad: #c7362c;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -58,6 +63,8 @@
     --surface-raised: #1f1b2e;
     --fg: #fff6e9;
     --fg-muted: #c9c4dc;
+    --good: #1fb5a8;
+    --bad: #ff5a4e;
   }
 }
 
@@ -66,6 +73,8 @@
   --surface-raised: #1f1b2e;
   --fg: #fff6e9;
   --fg-muted: #c9c4dc;
+  --good: #1fb5a8;
+  --bad: #ff5a4e;
 }
 
 body {
@@ -90,6 +99,10 @@ body {
 }
 .hud-area {
   grid-area: hud;
+}
+.board-backdrop {
+  background-image: url("/assets/backgrounds/backdrop-day.webp");
+  mask-image: linear-gradient(to bottom, black 40%, transparent);
 }
 .board-area {
   grid-area: board;
@@ -159,6 +172,40 @@ body {
   }
   kbd {
     @apply inline-flex min-w-5 items-center justify-center rounded border border-current/40 px-1 font-mono text-[11px] leading-4 opacity-80;
+  }
+}
+
+/* The reduced-motion setting (NFR-04) cuts CSS motion even when the OS doesn't ask for it. Unlayered, so it beats
+   Tailwind's layered utilities without !important. */
+:root[data-motion="reduce"] *,
+:root[data-motion="reduce"] *::before,
+:root[data-motion="reduce"] *::after {
+  animation-duration: 0.01ms;
+  animation-iteration-count: 1;
+  transition-duration: 0.01ms;
+}
+
+/* The coach's pointer (ENG-20): the control the current step talks about, named on the root by the coach. */
+:root[data-coach-step="go"] [data-coach="go"],
+:root[data-coach-step="actions"] [data-coach="actions"],
+:root[data-coach-step="quick"] [data-coach="quick"],
+:root[data-coach-step="end"] [data-coach="end"] {
+  outline: 3px solid var(--color-coral);
+  outline-offset: 3px;
+  border-radius: 0.75rem;
+}
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-coach-step="go"]:not([data-motion="reduce"]) [data-coach="go"],
+  :root[data-coach-step="actions"]:not([data-motion="reduce"]) [data-coach="actions"],
+  :root[data-coach-step="quick"]:not([data-motion="reduce"]) [data-coach="quick"],
+  :root[data-coach-step="end"]:not([data-motion="reduce"]) [data-coach="end"] {
+    animation: coach-pulse 1.4s ease-in-out infinite;
+  }
+}
+@keyframes coach-pulse {
+  50% {
+    outline-color: var(--color-mustard);
+    outline-offset: 6px;
   }
 }
 

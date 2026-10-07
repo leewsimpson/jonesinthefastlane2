@@ -7,8 +7,11 @@
 import { GOAL_KEYS } from '@fastlane/content/keys';
 import type { Action, DomainEvent, GameState } from '@fastlane/engine';
 import * as Dialog from '@radix-ui/react-dialog';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { FlipCard, REVEAL_MAX_S, Rise, SkipReveal, Stamp } from '../../fx/Reveal.tsx';
 import { feedLine, playerName, slotValues } from '../../game/copy.ts';
+import { content } from '../../game/engine.ts';
 import {
   eventsFor,
   type ReportStep,
@@ -57,58 +60,57 @@ function SummaryPage({ report, state }: { report: WeekReport; state: GameState }
   const { t } = useTranslation();
   const { events, player } = report;
   const name = playerName(state, player);
-  const lines: string[] = [];
+  const lines: { text: string; headline?: boolean }[] = [];
+  const push = (text: string, headline = false) => lines.push({ text, headline });
   for (const e of events) {
     if ('player' in e && e.player !== player) continue;
     switch (e.type) {
       case 'turnEnded':
-        lines.push(t(`week.ended.${e.reason}`, { name }));
+        push(t(`week.ended.${e.reason}`, { name }));
         break;
       case 'restBonus':
         if (e.energy > 0)
-          lines.push(
-            t('feed.restBonus', { energy: e.energy, time: `${Math.round(e.minutes / 60)}h` }),
-          );
+          push(t('feed.restBonus', { energy: e.energy, time: `${Math.round(e.minutes / 60)}h` }));
         break;
       case 'mealSkipped':
-        lines.push(t('week.mealSkipped'));
+        push(t('week.mealSkipped'));
         break;
       case 'jobChanged':
-        lines.push(t(`week.job.${e.change}`, { job: t(`job.${e.job}`) }));
+        push(t(`week.job.${e.change}`, { job: t(`job.${e.job}`) }), e.change === 'promoted');
         break;
       case 'rentMissed':
-        lines.push(t('week.rentMissed', { owed: money(e.owed), missed: e.missed }));
+        push(t('week.rentMissed', { owed: money(e.owed), missed: e.missed }));
         break;
       case 'paymentMissed':
-        lines.push(t('week.paymentMissed', { debt: t(`debt.${e.debt}`), due: money(e.due) }));
+        push(t('week.paymentMissed', { debt: t(`debt.${e.debt}`), due: money(e.due) }));
         break;
       case 'collections':
-        lines.push(t('week.collections', { debt: t(`debt.${e.debt}`) }));
+        push(t('week.collections', { debt: t(`debt.${e.debt}`) }));
         break;
       case 'evicted':
-        lines.push(t('week.evicted', { home: t(`housing.${e.from}`) }));
+        push(t('week.evicted', { home: t(`housing.${e.from}`) }));
         break;
       case 'leaseRenewed':
-        lines.push(t('week.leaseRenewed', { from: money(e.from), to: money(e.to) }));
+        push(t('week.leaseRenewed', { from: money(e.from), to: money(e.to) }));
         break;
       case 'gigDeactivated':
-        lines.push(t('week.gigBan', { weeks: e.weeks }));
+        push(t('week.gigBan', { weeks: e.weeks }));
         break;
       case 'credentialEarned':
-        lines.push(t('week.credential', { course: t(`course.${e.course}`) }));
+        push(t('week.credential', { course: t(`course.${e.course}`) }), true);
         break;
       case 'unsubscribed':
         if (e.reason === 'unpaid')
-          lines.push(t('week.unsubscribed', { subscription: t(`subscription.${e.subscription}`) }));
+          push(t('week.unsubscribed', { subscription: t(`subscription.${e.subscription}`) }));
         break;
       case 'questCompleted':
-        lines.push(t('week.questCompleted', { quest: t(`quest.${e.quest}`) }));
+        push(t('week.questCompleted', { quest: t(`quest.${e.quest}`) }));
         break;
       case 'questFailed':
-        lines.push(t('week.questFailed', { quest: t(`quest.${e.quest}`) }));
+        push(t('week.questFailed', { quest: t(`quest.${e.quest}`) }));
         break;
       case 'questIssued':
-        lines.push(t('week.questIssued', { quest: t(`quest.${e.quest}`), deadline: e.deadline }));
+        push(t('week.questIssued', { quest: t(`quest.${e.quest}`), deadline: e.deadline }));
         break;
     }
   }
@@ -123,7 +125,15 @@ function SummaryPage({ report, state }: { report: WeekReport; state: GameState }
       <ul className="flex flex-col gap-1">
         {lines.map((l, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: a static list
-          <li key={i}>{l}</li>
+          <li key={i}>
+            {l.headline ? (
+              <Stamp delay={Math.min(0.2 + i * 0.1, REVEAL_MAX_S - 0.6)}>
+                <span className="font-bold font-display text-bad text-lg">{l.text}</span>
+              </Stamp>
+            ) : (
+              <Rise index={i}>{l.text}</Rise>
+            )}
+          </li>
         ))}
       </ul>
       {money_.length > 0 && (
@@ -134,7 +144,7 @@ function SummaryPage({ report, state }: { report: WeekReport; state: GameState }
               <li key={reason} className="flex justify-between">
                 <span>{t(`reason.${reason}`)}</span>
                 <span
-                  className={`tabular ${v.internal ? '' : v.amount > 0 ? 'text-teal' : 'text-coral'}`}
+                  className={`tabular ${v.internal ? '' : v.amount > 0 ? 'text-good' : 'text-bad'}`}
                 >
                   {v.internal ? money(v.amount) : signedMoney(v.amount)}
                 </span>
@@ -169,11 +179,10 @@ function EventPage({
   const id = pending?.subject ?? drawn?.event;
   if (!id) return null;
   const resolved = eventsFor(events, 'eventResolved', player).find((e) => e.event === id);
+  const category = drawn?.category ?? eventCategory(id);
   return (
     <div className="flex flex-col gap-3">
-      {drawn && <span className="chip self-start">{t(`category.${drawn.category}`)}</span>}
-      <h3 className="font-bold font-display text-xl">{t(`event.${id}`)}</h3>
-      <p>{t(`event.${id}.text`)}</p>
+      <EventCard id={id} category={category} />
       {pending ? (
         <ul className="flex flex-col gap-2" aria-label={t('week.choose')}>
           {pending.options.map((option, i) => {
@@ -216,6 +225,38 @@ function EventPage({
   );
 }
 
+/** The category of an event card, from content (a reopened save has no `weekendEvent` to read it from). */
+function eventCategory(id: string): string | undefined {
+  return content.events.find((e) => e.id === id)?.category;
+}
+
+/** The weekend card: it flips from its back to its face, art first (ENG-03, art-direction §9.4). */
+function EventCard({ id, category }: { id: string; category: string | undefined }) {
+  const { t } = useTranslation();
+  const face = (
+    <div className="card overflow-hidden">
+      {category && (
+        <img
+          src={`/assets/events/event-${category}.webp`}
+          alt=""
+          className="aspect-[3/2] max-h-48 w-full object-cover dark:brightness-90"
+        />
+      )}
+      <div className="flex flex-col gap-1 p-3">
+        {category && <span className="chip self-start">{t(`category.${category}`)}</span>}
+        <h3 className="font-bold font-display text-xl">{t(`event.${id}`)}</h3>
+        <p>{t(`event.${id}.text`)}</p>
+      </div>
+    </div>
+  );
+  const back = (
+    <div className="flex h-full items-center justify-center rounded-xl border-2 border-ink bg-lilac font-display font-extrabold text-5xl text-cream [background-image:repeating-linear-gradient(45deg,transparent_0_12px,rgb(255_255_255/0.12)_12px_24px)]">
+      ?
+    </div>
+  );
+  return <FlipCard front={face} back={back} />;
+}
+
 function moneyFromEvent(events: readonly DomainEvent[], player: string): number {
   let total = 0;
   for (const e of eventsFor(events, 'moneyMoved', player))
@@ -232,11 +273,15 @@ function NewsPage({ report }: { report: WeekReport }) {
         if (e.type === 'newsStarted')
           return (
             // biome-ignore lint/suspicious/noArrayIndexKey: events are an ordered log
-            <article key={i}>
-              <span className="chip chip-bad">{t('week.newsStarted')}</span>
-              <h3 className="mt-1 font-bold font-display text-lg">{t(`news.${e.news}`)}</h3>
-              <p>{t(`news.${e.news}.text`)}</p>
-            </article>
+            <Rise key={i} index={i}>
+              <article>
+                <Stamp>
+                  <span className="chip chip-bad">{t('week.newsStarted')}</span>
+                </Stamp>
+                <h3 className="mt-1 font-bold font-display text-lg">{t(`news.${e.news}`)}</h3>
+                <p>{t(`news.${e.news}.text`)}</p>
+              </article>
+            </Rise>
           );
         if (e.type === 'newsEnded')
           return (
@@ -248,13 +293,17 @@ function NewsPage({ report }: { report: WeekReport }) {
         if (e.type === 'marketMoved')
           return (
             // biome-ignore lint/suspicious/noArrayIndexKey: events are an ordered log
-            <p key={i} className="text-sm">
-              {t('week.market', {
-                regime: t(`regime.${e.regime}`),
-                prices: percent(e.priceIndexBp),
-                wages: percent(e.wageIndexBp),
-              })}
-            </p>
+            <Rise key={i} index={i}>
+              <p className="text-sm">
+                <Stamp delay={0.3}>
+                  <span className="chip font-bold">{t(`regime.${e.regime}`)}</span>
+                </Stamp>{' '}
+                {t('week.marketIndex', {
+                  prices: percent(e.priceIndexBp),
+                  wages: percent(e.wageIndexBp),
+                })}
+              </p>
+            </Rise>
           );
         return null;
       })}
@@ -288,7 +337,7 @@ function GoalsPage({ report, state }: { report: WeekReport; state: GameState }) 
         })}
       </ul>
       {eventsFor(report.events, 'nearMiss').map((e) => (
-        <p key={`${e.player}-${e.goal}`} className="font-bold text-coral">
+        <p key={`${e.player}-${e.goal}`} className="font-bold text-bad">
           {t('week.nearMiss', {
             name: playerName(state, e.player),
             short: e.goal === 'wealth' ? money(e.short) : e.short,
@@ -308,7 +357,7 @@ function RivalPage({ report, state }: { report: WeekReport; state: GameState }) 
   return (
     <div className="flex flex-col gap-3">
       {overtakes.map((e) => (
-        <p key={`${e.player}-${e.by}`} className="font-bold font-display text-coral text-lg">
+        <p key={`${e.player}-${e.by}`} className="font-bold font-display text-bad text-lg">
           {t('week.overtaken', { by: playerName(state, e.by), name: playerName(state, e.player) })}
         </p>
       ))}
@@ -367,6 +416,10 @@ export function WeekSequence({
   const last = step >= steps.length - 1;
   const blocked = current === 'event' && state.pending !== null;
   const over = state.phase.kind === 'gameOver';
+  // A click on the page finishes its reveals (ENG-03); each new page plays again.
+  const [skip, setSkip] = useState(false);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset per page
+  useEffect(() => setSkip(false), [current]);
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.ctrlKey || e.altKey || e.metaKey) return;
@@ -401,13 +454,17 @@ export function WeekSequence({
               {t('week.step', { n: step + 1, total: steps.length })}
             </span>
           </div>
-          <div className="mt-3" aria-live="polite">
-            {current === 'summary' && <SummaryPage report={report} state={state} />}
-            {current === 'event' && <EventPage report={report} state={state} onPick={onPick} />}
-            {current === 'news' && <NewsPage report={report} />}
-            {current === 'goals' && <GoalsPage report={report} state={state} />}
-            {current === 'rival' && <RivalPage report={report} state={state} />}
-            {current === 'teaser' && <TeaserPage report={report} state={state} />}
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: a click skips decoration only; nothing is lost without it */}
+          {/* biome-ignore lint/a11y/useKeyWithClickEvents: Enter moves on, which skips too */}
+          <div className="mt-3" aria-live="polite" onClick={() => setSkip(true)}>
+            <SkipReveal.Provider value={skip}>
+              {current === 'summary' && <SummaryPage report={report} state={state} />}
+              {current === 'event' && <EventPage report={report} state={state} onPick={onPick} />}
+              {current === 'news' && <NewsPage report={report} />}
+              {current === 'goals' && <GoalsPage report={report} state={state} />}
+              {current === 'rival' && <RivalPage report={report} state={state} />}
+              {current === 'teaser' && <TeaserPage report={report} state={state} />}
+            </SkipReveal.Provider>
           </div>
           {!blocked && (
             <button

@@ -9,8 +9,10 @@ import type { GameState } from '@fastlane/engine';
 import { Application, extend, useTick } from '@pixi/react';
 import {
   Assets,
+  ColorMatrixFilter,
   Container,
   Graphics,
+  ParticleContainer,
   Sprite,
   type Spritesheet,
   Text,
@@ -19,12 +21,15 @@ import {
 } from 'pixi.js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { Moment } from '../fx/map.ts';
 import { content } from '../game/engine.ts';
+import { useDarkTheme, useReducedMotion } from '../settings/hooks.ts';
 import { seatOf } from '../ui/common/stats.ts';
+import { type Coin, spawn, step } from './coins.ts';
 import { buildingFrame } from './frames.ts';
 import { type BoardLayout, boardLayout, pointAt, stepToward } from './layout.ts';
 
-extend({ Container, Graphics, Sprite, Text });
+extend({ Container, Graphics, ParticleContainer, Sprite, Text });
 
 const INK = 0x1f1b2e;
 const CREAM = 0xfff6e9;
@@ -49,18 +54,22 @@ function loadSheets(): Promise<Sheets> {
   return sheetsPromise;
 }
 
-function useReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(
-    () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
-  );
-  useEffect(() => {
-    const mq = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-    if (!mq) return;
-    const on = () => setReduced(mq.matches);
-    mq.addEventListener('change', on);
-    return () => mq.removeEventListener('change', on);
-  }, []);
-  return reduced;
+/** A burst of the active player's coins and their mood for a moment (ENG-01), keyed so each plays once. */
+export interface BoardFx {
+  id: number;
+  coins: number;
+  moment: Moment | null;
+}
+
+/** How long a moment's face (proud, shocked) stays on the token, in ms. */
+const MOMENT_FACE_MS = 2_200;
+
+/** The face a moment puts on: good news is proud, bad news is shocked. */
+export function momentFace(moment: Moment | null): string | null {
+  if (!moment) return null;
+  return moment.kind === 'laidOff' || moment.kind === 'letGo' || moment.kind === 'evicted'
+    ? 'shocked'
+    : 'proud';
 }
 
 /** Which emotion a player's bust shows, from how their week is going. */
@@ -109,7 +118,6 @@ function Pad({
   index,
   here,
   texture,
-  label,
   onSelect,
   onHover,
 }: {
@@ -117,7 +125,6 @@ function Pad({
   index: number;
   here: boolean;
   texture: Texture | undefined;
-  label: string;
   onSelect(): void;
   onHover(on: boolean): void;
 }) {
@@ -150,14 +157,37 @@ function Pad({
       {texture && (
         <pixiSprite texture={texture} anchor={{ x: 0.5, y: 1 }} y={cell * 0.08} scale={scale} />
       )}
-      <pixiText
-        text={label}
-        style={{ ...LABEL_STYLE, fontSize: Math.max(11, Math.min(14, cell * 0.13)) }}
-        anchor={{ x: 0.5, y: 0 }}
-        y={cell * 0.16}
-        resolution={2}
-      />
     </pixiContainer>
+  );
+}
+
+/** Building names, drawn above the night grade so they stay readable (NFR-04). */
+function Label({
+  layout,
+  index,
+  text,
+  dark,
+}: {
+  layout: BoardLayout;
+  index: number;
+  text: string;
+  dark: boolean;
+}) {
+  const { x, y } = pointAt(layout, index);
+  const { cell } = layout;
+  return (
+    <pixiText
+      text={text}
+      x={x}
+      y={y + cell * 0.16}
+      style={{
+        ...LABEL_STYLE,
+        fontSize: Math.max(11, Math.min(14, cell * 0.13)),
+        ...(dark ? { fill: CREAM, stroke: { color: INK, width: 4, join: 'round' } } : {}),
+      }}
+      anchor={{ x: 0.5, y: 0 }}
+      resolution={2}
+    />
   );
 }
 
@@ -182,28 +212,48 @@ function Token({
   const mask = useRef<Graphics>(null);
   const sprite = useRef<Sprite>(null);
   const pos = useRef(target);
+  /** Paper-puppet motion (art-direction §4): seconds alive for the idle bob, and the squash and pop timers. */
+  const clock = useRef(offset);
+  const squash = useRef(0);
+  const pop = useRef(0);
   const size = layout.token * (active ? 1.15 : 1);
+
+  // A new face pops in.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs when the face changes
+  useEffect(() => {
+    pop.current = 1;
+  }, [texture]);
 
   const place = useCallback(() => {
     const c = ref.current;
     if (!c) return;
     const p = pointAt(layout, pos.current);
+    const bob = reduced || !active ? 0 : Math.sin(clock.current * 3) * layout.token * 0.04;
     // Tokens stand on the road in front of the building's left corner, clear of its label.
     c.x = p.x - layout.cell * 0.42 + offset;
-    c.y = p.y - layout.cell * 0.12;
-  }, [layout, offset]);
+    c.y = p.y - layout.cell * 0.12 + bob;
+    const sq = Math.sin(squash.current * Math.PI) * 0.18;
+    const pp = 1 + Math.sin(pop.current * Math.PI) * 0.15;
+    c.scale.set((1 + sq) * pp, (1 - sq) * pp);
+  }, [layout, offset, reduced, active]);
 
   useTick(
     useCallback(
       (ticker: { deltaMS: number }) => {
-        if (reduced) pos.current = target;
-        else
-          pos.current = stepToward(
-            pos.current,
-            target,
-            (TOKEN_SPEED * ticker.deltaMS) / 1000,
-            layout.count,
-          );
+        const dt = ticker.deltaMS / 1000;
+        clock.current += dt;
+        if (reduced) {
+          pos.current = target;
+          squash.current = 0;
+          pop.current = 0;
+        } else {
+          const moving = pos.current !== target;
+          pos.current = stepToward(pos.current, target, TOKEN_SPEED * dt, layout.count);
+          // Squash on arrival: a quick down-and-up as the token lands.
+          if (moving && pos.current === target) squash.current = 1;
+          squash.current = Math.max(0, squash.current - dt * 3.5);
+          pop.current = Math.max(0, pop.current - dt * 3);
+        }
         place();
       },
       [reduced, target, layout.count, place],
@@ -242,6 +292,79 @@ function Token({
   );
 }
 
+/** Coins that burst from a point and fall away (ENG-01), on a `ParticleContainer`. */
+function Coins({ burst, x, y, scale }: { burst: BoardFx; x: number; y: number; scale: number }) {
+  const ref = useRef<ParticleContainer>(null);
+  const coins = useRef<Coin[]>([]);
+  const played = useRef(burst.id);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a burst plays once per id, from where the token is now
+  useEffect(() => {
+    const c = ref.current;
+    if (!c || burst.id === played.current || burst.coins === 0) return;
+    played.current = burst.id;
+    const fresh = spawn(burst.coins, x, y, scale);
+    for (const coin of fresh) c.addParticle(coin.p);
+    coins.current.push(...fresh);
+  }, [burst.id]);
+  useTick(
+    useCallback((ticker: { deltaMS: number }) => {
+      const c = ref.current;
+      if (!c || coins.current.length === 0) return;
+      const { alive, dead } = step(coins.current, ticker.deltaMS / 1000);
+      for (const d of dead) c.removeParticle(d.p);
+      coins.current = alive;
+    }, []),
+  );
+  return (
+    <pixiParticleContainer
+      ref={ref}
+      dynamicProperties={{
+        position: true,
+        color: true,
+        rotation: false,
+        vertex: false,
+        uvs: false,
+      }}
+    />
+  );
+}
+
+/** Lit windows for the dark board (art-direction §4): warm dots on each building, the same every night. */
+function Windows({ layout, count }: { layout: BoardLayout; count: number }) {
+  const draw = useCallback(
+    (g: Graphics) => {
+      g.clear();
+      const { cell } = layout;
+      for (let i = 0; i < count; i++) {
+        const { x, y } = pointAt(layout, i);
+        for (let k = 0; k < 4; k++) {
+          // A fixed scatter per building, so windows don't flicker between renders.
+          const wx = x + (((i * 7 + k * 13) % 9) / 9 - 0.5) * cell * 0.5;
+          const wy = y - cell * (0.25 + (((i * 5 + k * 11) % 7) / 7) * 0.45);
+          g.roundRect(wx - cell * 0.03, wy - cell * 0.03, cell * 0.06, cell * 0.06, 2).fill({
+            color: MUSTARD,
+            alpha: 0.9,
+          });
+          g.circle(wx, wy, cell * 0.09).fill({ color: MUSTARD, alpha: 0.18 });
+        }
+      }
+    },
+    [layout, count],
+  );
+  return <pixiGraphics draw={draw} blendMode="add" />;
+}
+
+/** The night grade for the dark theme: darker, cooler, a little less saturated. One shared filter for the app. */
+let night: ColorMatrixFilter | null = null;
+function nightFilter(): ColorMatrixFilter {
+  if (night) return night;
+  night = new ColorMatrixFilter();
+  night.brightness(0.62, false);
+  night.saturate(-0.15, true);
+  night.tint(0x9fa8ff, true);
+  return night;
+}
+
 /**
  * The scene measures its own container: `<Application>` renders the children it was given before its async init
  * finished, so a size passed down as a prop would stay at its first value.
@@ -250,17 +373,30 @@ function Scene({
   container,
   state,
   active,
+  fx,
   onSelect,
   onHover,
 }: {
   container: React.RefObject<HTMLDivElement | null>;
   state: GameState;
   active: string | null;
+  fx: BoardFx;
   onSelect(location: string): void;
   onHover(location: string | null): void;
 }) {
   const { t } = useTranslation();
   const reduced = useReducedMotion();
+  const dark = useDarkTheme();
+  const filters = useMemo(() => (dark ? [nightFilter()] : []), [dark]);
+  // A moment's face shows for a while, then the token goes back to its mood.
+  const [face, setFace] = useState<string | null>(null);
+  useEffect(() => {
+    const f = momentFace(fx.moment);
+    setFace(f);
+    if (!f) return;
+    const id = setTimeout(() => setFace(null), MOMENT_FACE_MS);
+    return () => clearTimeout(id);
+  }, [fx.moment]);
   const [size, setSize] = useState({ w: 0, h: 0 });
   useEffect(() => {
     const el = container.current;
@@ -306,55 +442,79 @@ function Scene({
   for (const p of state.players)
     byLocation.set(p.location, [...(byLocation.get(p.location) ?? []), p.id]);
 
+  const meIndex = me ? Math.max(0, locations.indexOf(me.location)) : 0;
+  const mePoint = pointAt(layout, meIndex);
+
   return (
     <pixiContainer>
-      <Road layout={layout} />
+      <pixiContainer filters={filters}>
+        <Road layout={layout} />
+        {order.map(({ id, index }) => (
+          <Pad
+            key={id}
+            layout={layout}
+            index={index}
+            here={me?.location === id}
+            texture={sheets?.locations.textures[frameFor(id)]}
+            onSelect={() => onSelect(id)}
+            onHover={(on) => onHover(on ? id : null)}
+          />
+        ))}
+        {state.players
+          .filter((p) => p.id !== active)
+          .concat(state.players.filter((p) => p.id === active))
+          .map((p) => {
+            const index = locations.indexOf(p.location);
+            const here = byLocation.get(p.location) ?? [];
+            const k = here.indexOf(p.id);
+            const offset = k * layout.token * 0.7;
+            const seat = seatOf(state.players, p.id);
+            return (
+              <Token
+                key={p.id}
+                layout={layout}
+                target={Math.max(0, index)}
+                offset={offset}
+                colour={seat.colour}
+                texture={
+                  sheets?.busts.textures[
+                    `${seat.avatar}/${(p.id === active && face) || emotion(p.stats)}`
+                  ]
+                }
+                active={p.id === active}
+                reduced={reduced}
+              />
+            );
+          })}
+      </pixiContainer>
+      {dark && <Windows layout={layout} count={locations.length} />}
       {order.map(({ id, index }) => (
-        <Pad
-          key={id}
-          layout={layout}
-          index={index}
-          here={me?.location === id}
-          texture={sheets?.locations.textures[frameFor(id)]}
-          label={t(`location.${id}`)}
-          onSelect={() => onSelect(id)}
-          onHover={(on) => onHover(on ? id : null)}
-        />
+        <Label key={id} layout={layout} index={index} text={t(`location.${id}`)} dark={dark} />
       ))}
-      {state.players
-        .filter((p) => p.id !== active)
-        .concat(state.players.filter((p) => p.id === active))
-        .map((p) => {
-          const index = locations.indexOf(p.location);
-          const here = byLocation.get(p.location) ?? [];
-          const k = here.indexOf(p.id);
-          const offset = k * layout.token * 0.7;
-          const seat = seatOf(state.players, p.id);
-          return (
-            <Token
-              key={p.id}
-              layout={layout}
-              target={Math.max(0, index)}
-              offset={offset}
-              colour={seat.colour}
-              texture={sheets?.busts.textures[`${seat.avatar}/${emotion(p.stats)}`]}
-              active={p.id === active}
-              reduced={reduced}
-            />
-          );
-        })}
+      {!reduced && (
+        <Coins
+          burst={fx}
+          x={mePoint.x - layout.cell * 0.42}
+          y={mePoint.y - layout.cell * 0.2}
+          scale={Math.max(0.6, layout.token / 64)}
+        />
+      )}
     </pixiContainer>
   );
 }
 
+const NO_BOARD_FX: BoardFx = { id: 0, coins: 0, moment: null };
+
 export default function Board({
   state,
   active,
+  fx = NO_BOARD_FX,
   onSelect,
   onHover = () => {},
 }: {
   state: GameState;
   active: string | null;
+  fx?: BoardFx;
   onSelect(location: string): void;
   onHover?(location: string | null): void;
 }) {
@@ -372,6 +532,7 @@ export default function Board({
           container={ref}
           state={state}
           active={active}
+          fx={fx}
           onSelect={onSelect}
           onHover={onHover}
         />

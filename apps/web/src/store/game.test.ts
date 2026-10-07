@@ -1,6 +1,6 @@
-import type { GameSetup } from '@fastlane/engine';
+import type { GameSetup, Preview } from '@fastlane/engine';
 import { describe, expect, it, vi } from 'vitest';
-import { engine } from '../game/engine.ts';
+import { content, engine } from '../game/engine.ts';
 import { reportSteps } from '../game/report.ts';
 import { createGameStore, type GameStore, type Session } from './game.ts';
 
@@ -129,5 +129,42 @@ describe('game store', () => {
     expect(fresh.getState().report?.player).toBe(must(session.state.pending, 'decision').player);
     finishReport(fresh);
     expect(must(fresh.getState().session, 'session').state.pending).toBeNull();
+  });
+
+  it('times the first paycheck and the week in active play time, and turns it into fx (ENG-20, ENG-01)', () => {
+    let clock = 0;
+    const store = createGameStore(undefined, () => clock);
+    store.getState().start('slot-1', solo);
+    const act = (pick: (p: Preview) => boolean) => {
+      clock += 10_000;
+      const state = must(store.getState().session, 'session').state;
+      const p = must(
+        engine.listActions(state).find((x) => x.available && pick(x)),
+        'action',
+      );
+      expect(store.getState().dispatch(p.action)).toBe(true);
+    };
+    act((p) => p.action.type === 'travel' && p.action.to === 'joblink');
+    act((p) => p.action.type === 'perform' && p.action.actionId === 'apply-job');
+    expect(store.getState().fx.moment).toMatchObject({ kind: 'hired' });
+    const job = must(must(store.getState().session, 'session').state.players[0]?.job, 'job');
+    const workAt = must(
+      content.city.jobs.find((j) => j.id === job.id),
+      'job content',
+    ).location;
+    if (workAt !== 'joblink') act((p) => p.action.type === 'travel' && p.action.to === workAt);
+    act((p) => p.action.type === 'perform' && p.action.actionId.startsWith('work-'));
+    const { fx, session } = store.getState();
+    expect(fx.moment).toMatchObject({ kind: 'paid' });
+    expect(fx.coins).toBeGreaterThan(0);
+    const pace = must(session, 'session').pace;
+    expect(pace.firstPayMs.p1).toBe(pace.playMs);
+    expect(pace.playMs).toBe(workAt === 'joblink' ? 30_000 : 40_000);
+
+    clock += 5_000;
+    store.getState().dispatch({ type: 'endWeek' });
+    expect(must(store.getState().session, 'session').pace.weeks).toEqual([
+      { player: 'p1', week: 1, ms: pace.playMs + 5_000 },
+    ]);
   });
 });

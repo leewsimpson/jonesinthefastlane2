@@ -67,6 +67,7 @@ export interface Engine {
   reduceInPlace(state: GameState, action: Action): ReduceResult   // simulator only
   listActions(state: GameState): Preview[]               // for the active player
   preview(state: GameState, action: Action): Preview     // never changes state or RNG
+  smartDefaults(state: GameState): SmartDefault[]        // one-tap moves (ENG-02): eat if hungry, longest shift, longest study
   replay(setup: GameSetup, log: readonly Action[]): GameState      // throws ReplayError on an illegal action
   hash(state: GameState): string
 }

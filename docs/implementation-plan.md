@@ -246,6 +246,10 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
 - UI copy lives in `apps/web/src/i18n/ui.en.json`; game copy stays in `packages/content/locales/en.json`. Event
   category names are UI copy for now (`category.<id>`).
 - Jones's feed posts about milestones only; a moment for a good weekend event (a viral post) fits the copy pass.
+- Client polish landed first (2026-10-07, `docs/progress.md`). Left for this phase: the sim tooling and content fill
+  with the balance pass, the content copy pass, opt-in analytics and Sentry (needs PostHog and Sentry accounts:
+  **human-only**), and tester runs for the first-paycheck criterion. New juice plugs into `src/fx/map.ts`; one-tap
+  moves come from `engine.smartDefaults`; the summary's play-time line is the tester report.
 
 ---
 

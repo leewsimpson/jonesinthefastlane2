@@ -99,6 +99,27 @@ jobs:
           pnpm exec playwright install --with-deps chromium webkit
           pnpm e2e
 
+      # CI-05: Lighthouse CI on the preview URL; budgets in lighthouserc.json. Reuses Playwright's Chromium.
+      - name: Lighthouse
+        id: lighthouse
+        env:
+          WEB_URL: ${{ steps.pages.outputs.url }}
+        run: |
+          export CHROME_PATH=$(pnpm exec node -e "import('@playwright/test').then((m) => console.log(m.chromium.executablePath()))")
+          # Pinned and run through dlx, not installed: its dependency tree carries audit advisories (CI-06).
+          pnpm dlx @lhci/cli@0.15.1 autorun --collect.url="$WEB_URL/"
+
+      - name: Lighthouse summary
+        if: always() && steps.lighthouse.outcome != 'skipped'
+        run: |
+          node -e '
+            const fs = require("node:fs");
+            const runs = JSON.parse(fs.readFileSync(".lighthouseci/manifest.json", "utf8"));
+            const rep = runs.find((r) => r.isRepresentativeRun) ?? runs[0];
+            const rows = Object.entries(rep.summary).map(([k, v]) => `| ${k} | ${Math.round(v * 100)} |`);
+            console.log(["### Lighthouse (median run)", "", "| Category | Score |", "|---|---|", ...rows].join("\n"));
+          ' >> "$GITHUB_STEP_SUMMARY" || echo "No Lighthouse results" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Sticky PR comment
         env:
           GH_TOKEN: ${{ github.token }}

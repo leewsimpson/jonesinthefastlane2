@@ -57,7 +57,7 @@ function Clock({ left, total, size }: { left: number; total: number; size: numbe
 function Need({ ok, icon, text }: { ok: boolean; icon: string; text: string }) {
   return (
     <li className={`flex items-start gap-1.5 text-xs leading-snug ${ok ? '' : 'font-bold'}`}>
-      <span aria-hidden="true" className={ok ? 'text-teal' : 'text-coral'}>
+      <span aria-hidden="true" className={ok ? 'text-good' : 'text-bad'}>
         {ok ? '✓' : '!'}
       </span>
       <span aria-hidden="true">{icon}</span>

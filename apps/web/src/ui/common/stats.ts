@@ -18,9 +18,9 @@ export const STAT_ICON: Record<StatKey | 'time' | 'meals', string> = {
 
 /** Tailwind text colour per stat, readable on cream and on night (WCAG AA for the bold icon glyphs). */
 export const STAT_TONE: Record<StatKey | 'time' | 'meals', string> = {
-  cash: 'text-teal',
+  cash: 'text-good',
   energy: 'text-mustard',
-  health: 'text-coral',
+  health: 'text-bad',
   happiness: 'text-lilac',
   social: 'text-sky',
   creditScore: 'text-slate dark:text-fg-muted',

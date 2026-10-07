@@ -6,6 +6,7 @@
 import { createSave, loadSave, type SaveFile, serializeSave } from '@fastlane/engine/save';
 import { Dexie, type EntityTable } from 'dexie';
 import { engine } from '../game/engine.ts';
+import { type Pace, parsePace } from '../game/pace.ts';
 import type { Session } from '../store/game.ts';
 import { SaveFileSchema } from './schema.ts';
 
@@ -19,9 +20,11 @@ export interface SlotRow {
   finished: boolean;
   /** A serialised `SaveFile`. */
   save: string;
+  /** Play-time instrumentation (ENG-20); absent in saves from before Phase 5. */
+  pace?: Pace;
 }
 
-export type SlotSummary = Omit<SlotRow, 'save'>;
+export type SlotSummary = Omit<SlotRow, 'save' | 'pace'>;
 
 class SaveDb extends Dexie {
   slots!: EntityTable<SlotRow, 'id'>;
@@ -52,12 +55,12 @@ export function openSaves(name = 'fastlane'): SaveStore {
     },
     async list() {
       const rows = await db.slots.orderBy('updatedAt').reverse().toArray();
-      return rows.map(({ save: _save, ...summary }) => summary);
+      return rows.map(({ save: _save, pace: _pace, ...summary }) => summary);
     },
     async read(id) {
       const row = await db.slots.get(id);
       if (!row) throw new Error(`no save ${id}`);
-      return fromJson(id, row.save);
+      return { ...fromJson(id, row.save), pace: parsePace(row.pace) };
     },
     async remove(id) {
       await db.slots.delete(id);
@@ -76,11 +79,12 @@ function toRow(session: Session): SlotRow {
     difficulty: state.config.difficulty,
     finished: state.phase.kind === 'gameOver',
     save: serializeSave(save),
+    pace: session.pace,
   };
 }
 
 /** Parse, migrate and validate a save. Throws `SaveError` or a Zod error if it can't be used. */
-export function fromJson(id: string, json: string): Session {
+export function fromJson(id: string, json: string): Omit<Session, 'pace'> {
   const migrated = loadSave(json);
   const save = SaveFileSchema.parse(migrated) as unknown as SaveFile;
   return { id, setup: save.setup, log: save.log, state: save.snapshot };

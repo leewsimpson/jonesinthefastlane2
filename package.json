@@ -21,6 +21,7 @@
     "e2e": "playwright test"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@biomejs/biome": "2.5.15",
     "@fastlane/content": "workspace:*",
     "@fastlane/engine": "workspace:*",

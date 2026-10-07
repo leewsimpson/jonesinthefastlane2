@@ -4,9 +4,11 @@
  */
 import type { GameState, PlayerState } from '@fastlane/engine';
 import { useTranslation } from 'react-i18next';
+import { Counter } from '../../fx/FxLayer.tsx';
 import { content } from '../../game/engine.ts';
 import { standingOf } from '../../game/standing.ts';
 import { duration, money, percent } from '../../i18n/format.ts';
+import { SettingsButton } from '../../settings/SettingsButton.tsx';
 import { KEY_DETAILS } from '../common/hotkeys.ts';
 import { STAT_ICON, STAT_TONE, seatOf } from '../common/stats.ts';
 import { GoalRings, Ring } from './GoalRings.tsx';
@@ -110,9 +112,9 @@ export function Hud({
           </div>
         </div>
         <div className="text-right">
-          <div className="tabular font-bold font-display text-teal text-xl leading-none">
+          <div className="tabular font-bold font-display text-good text-xl leading-none">
             <span className="sr-only">{t('stat.cash')} </span>
-            {money(me.stats.cash)}
+            <Counter value={me.stats.cash} format={money} />
           </div>
           <button
             type="button"
@@ -122,6 +124,7 @@ export function Hud({
           >
             {t('hud.details')} <kbd>{KEY_DETAILS.toUpperCase()}</kbd>
           </button>
+          <SettingsButton className="ml-2 text-fg-muted text-xs underline" />
           <button type="button" className="ml-2 text-fg-muted text-xs underline" onClick={onQuit}>
             {t('menu.quit')}
           </button>

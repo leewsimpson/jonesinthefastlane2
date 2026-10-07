@@ -14,3 +14,4 @@ test-results/
 Thumbs.db
 .claude/settings.local.json
 sim-out/
+.lighthouseci/

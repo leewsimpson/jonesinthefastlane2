@@ -5,3 +5,7 @@ packages:
 allowBuilds:
   esbuild: true
   workerd: true
+
+# CI-06: wrangler → miniflare pins an older sharp with a high advisory (librsvg); the fixed release is API-compatible.
+overrides:
+  sharp@<0.35.5: 0.35.5

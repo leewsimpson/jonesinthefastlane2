@@ -3,6 +3,7 @@ import type { GameContent } from '@fastlane/content';
 import { DEBT_KINDS, DIFFICULTIES, GOAL_KEYS, SAVINGS_ID } from '@fastlane/content/keys';
 import { HANDLERS } from '../actions/handlers.ts';
 import { listActions, paramsOf, playerById, previewAction } from '../actions/plan.ts';
+import { type SmartDefault, smartDefaults } from '../actions/smart.ts';
 import type { AiPolicy } from '../ai/random.ts';
 import { rivalPolicy } from '../ai/utility.ts';
 import { transfer } from '../money/ledger.ts';
@@ -103,6 +104,8 @@ export interface Engine {
   listActions(state: GameState): Preview[];
   /** What an action would do. Never changes state or RNG (FR-03). */
   preview(state: GameState, action: Action): Preview;
+  /** One-tap suggestions for the active player (ENG-02): eat if hungry, the longest shift, the longest study. */
+  smartDefaults(state: GameState): SmartDefault[];
   /** Rebuild a game from its setup and human action log. Throws `ReplayError` if an action is illegal. */
   replay(setup: GameSetup, log: readonly Action[]): GameState;
   hash(state: GameState): string;
@@ -340,6 +343,7 @@ export function createEngine(content: GameContent, options: EngineOptions = {}):
     reduce: (state, action) => reduceWith(state, action, clone),
     reduceInPlace,
     listActions: (state) => listActions(content, state),
+    smartDefaults: (state) => smartDefaults(content, state),
     preview: (state, action) => previewAction(content, state, action),
     replay,
     hash: hashValue,

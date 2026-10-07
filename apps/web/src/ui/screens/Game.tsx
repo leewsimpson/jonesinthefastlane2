@@ -7,14 +7,25 @@ import type { Action, Preview } from '@fastlane/engine';
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { boardLayout, innerRect } from '../../board/layout.ts';
+import { FxLayer } from '../../fx/FxLayer.tsx';
+import { coachStep, hasWorked } from '../../game/coach.ts';
 import { content, engine } from '../../game/engine.ts';
 import { nextHint, pickTrip, weekNeeds } from '../../game/guide.ts';
 import { activeHuman } from '../../game/report.ts';
+import { useSettings } from '../../settings/settings.ts';
 import { useApp } from '../../store/app.ts';
 import { gameStore, useGame } from '../../store/game.ts';
-import { KEY_DETAILS, KEY_END_WEEK, KEY_TRAVEL, rowKey, useHotkeys } from '../common/hotkeys.ts';
+import {
+  KEY_DETAILS,
+  KEY_END_WEEK,
+  KEY_TRAVEL,
+  QUICK_KEYS,
+  rowKey,
+  useHotkeys,
+} from '../common/hotkeys.ts';
 import { Hud } from '../hud/Hud.tsx';
 import { ActionSheet, groupActions } from '../panels/ActionSheet.tsx';
+import { Coach } from '../panels/Coach.tsx';
 import { DetailsDialog } from '../panels/DetailsDialog.tsx';
 import { EndWeekDialog, endWeekWarnings } from '../panels/EndWeekDialog.tsx';
 import { Ticker } from '../panels/Ticker.tsx';
@@ -69,6 +80,12 @@ export function Game() {
   const handoff = useGame((s) => s.handoff);
   const lastEvents = useGame((s) => s.lastEvents);
   const error = useGame((s) => s.error);
+  const fx = useGame((s) => s.fx);
+  const tick = useGame((s) => s.tick);
+  const [shakeEl, setShakeEl] = useState<HTMLDivElement | null>(null);
+  const tutorial = useSettings((s) => s.tutorial);
+  /** Players who skipped or finished the coach this session. */
+  const [coached, setCoached] = useState<ReadonlySet<string>>(new Set());
   const [travel, setTravel] = useState<{ dest: string | null } | null>(null);
   const [details, setDetails] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
@@ -83,6 +100,10 @@ export function Game() {
     [state],
   );
   const groups = useMemo(() => groupActions(previews, rowKey), [previews]);
+  const smart = useMemo(
+    () => (state && canAct ? engine.smartDefaults(state) : []),
+    [state, canAct],
+  );
 
   const dispatch = (a: Action) => {
     const ok = gameStore().getState().dispatch(a);
@@ -125,6 +146,10 @@ export function Game() {
   for (const g of groups)
     for (const r of g.rows)
       if (r.key && r.preview.available) rowHandlers[r.key] = () => dispatch(r.preview.action);
+  smart.forEach((d, i) => {
+    const key = QUICK_KEYS[i];
+    if (key) rowHandlers[key] = () => dispatch(d.preview.action);
+  });
   useHotkeys(
     {
       ...rowHandlers,
@@ -147,6 +172,7 @@ export function Game() {
       <Suspense fallback={null}>
         <Summary
           state={state}
+          pace={session.pace}
           onTitle={quit}
           onNewGame={() => {
             gameStore().getState().close();
@@ -167,6 +193,9 @@ export function Game() {
       if (kind === 'study') here.canStudy = true;
     }
   const hint = nextHint(content, state, me, here);
+  const paid = hasWorked(me);
+  const coach =
+    tutorial && canAct && !coached.has(me.id) ? coachStep(content, state, me, paid) : null;
   const inner = innerRect(
     boardLayout(boardSize.w, boardSize.h, content.city.board.locations.length),
     PANEL_MAX,
@@ -194,10 +223,34 @@ export function Game() {
           <p>{t('menu.help')}</p>
         </div>
       </div>
-      <div ref={boardRef} className="board-area relative min-h-0">
-        <Suspense fallback={null}>
-          <Board state={state} active={me.id} onSelect={goTo} onHover={setHover} />
-        </Suspense>
+      <div ref={boardRef} className="board-area relative min-h-0 overflow-hidden">
+        {/* The skyline backdrop (art-direction §9.5), faded so the board reads first; darker at night. */}
+        <div
+          aria-hidden="true"
+          className="board-backdrop pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-center bg-cover opacity-30 dark:opacity-20 dark:brightness-50"
+        />
+        <div ref={setShakeEl} className="absolute inset-0">
+          <Suspense fallback={null}>
+            <Board
+              state={state}
+              active={me.id}
+              fx={{ id: tick, coins: fx.coins, moment: fx.moment }}
+              onSelect={goTo}
+              onHover={setHover}
+            />
+          </Suspense>
+        </div>
+        <FxLayer fx={fx} id={tick} shakeTarget={shakeEl} />
+        {coach && roomy && (
+          <div className="pointer-events-none absolute inset-x-2 bottom-2 z-30 flex justify-center">
+            <Coach
+              step={coach}
+              canGo={!!coach.location && !!pickTrip(previews, coach.location, mode)}
+              onGo={goTo}
+              onSkip={() => setCoached(new Set([...coached, me.id]))}
+            />
+          </div>
+        )}
         {roomy && (
           <div
             className="pointer-events-none absolute z-10 flex items-center justify-center"
@@ -215,11 +268,21 @@ export function Game() {
         housingTier={me.housing.tier}
         world={state.world}
         groups={groups}
+        smart={smart}
         canAct={canAct}
         onPick={dispatch}
         onTravel={() => setTravel({ dest: null })}
         onEndWeek={endWeek}
       >
+        {coach && !roomy && (
+          <Coach
+            step={coach}
+            compact
+            canGo={!!coach.location && !!pickTrip(previews, coach.location, mode)}
+            onGo={goTo}
+            onSkip={() => setCoached(new Set([...coached, me.id]))}
+          />
+        )}
         {!roomy && <WeekPanel {...panelProps} compact />}
         <Ticker events={lastEvents} state={state} player={me.id} error={error} />
       </ActionSheet>

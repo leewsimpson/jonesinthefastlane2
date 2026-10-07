@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SlotSummary } from '../../persistence/saves.ts';
+import { usePwa } from '../../pwa.ts';
+import { SettingsButton } from '../../settings/SettingsButton.tsx';
 import { useApp } from '../../store/app.ts';
 
 type Slots = { state: 'loading' } | { state: 'ok'; slots: SlotSummary[] } | { state: 'error' };
@@ -11,6 +13,8 @@ export function Title() {
   const go = useApp((s) => s.go);
   const [slots, setSlots] = useState<Slots>({ state: 'loading' });
   const [confirm, setConfirm] = useState<string | null>(null);
+  const installable = usePwa((s) => s.installable);
+  const install = usePwa((s) => s.install);
 
   const refresh = () =>
     import('../../persistence/client.ts')
@@ -36,7 +40,7 @@ export function Title() {
     <main className="mx-auto flex min-h-dvh max-w-xl flex-col items-center justify-center gap-8 p-6 text-center">
       <div>
         <h1 className="font-display text-5xl font-extrabold tracking-tight sm:text-6xl">
-          {t('app.title')} <span className="text-coral">{t('app.year')}</span>
+          {t('app.title')} <span className="text-bad">{t('app.year')}</span>
         </h1>
         <p className="mt-3 text-fg-muted text-lg">{t('app.tagline')}</p>
       </div>
@@ -59,6 +63,12 @@ export function Title() {
         >
           {t('title.newGame')}
         </button>
+        <SettingsButton />
+        {installable && (
+          <button type="button" className="btn" onClick={() => void install()}>
+            {t('title.install')}
+          </button>
+        )}
       </div>
       <section className="w-full text-left" aria-labelledby="saves-heading">
         <h2 id="saves-heading" className="mb-2 font-display font-bold text-xl">

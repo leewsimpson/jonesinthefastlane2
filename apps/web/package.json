@@ -28,6 +28,7 @@
     "@radix-ui/react-dialog": "1.1.23",
     "dexie": "4.4.6",
     "i18next": "26.4.2",
+    "motion": "14.0.0",
     "pixi.js": "8.22.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
@@ -45,6 +46,8 @@
     "sharp": "0.35.5",
     "size-limit": "14.1.0",
     "tailwindcss": "4.3.3",
-    "vite": "8.3.2"
+    "vite": "8.3.2",
+    "vite-plugin-pwa": "2.0.0",
+    "workbox-window": "7.4.1"
   }
 }

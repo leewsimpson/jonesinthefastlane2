@@ -145,8 +145,9 @@
 | Balance | `packages/sim` | Headless bot games with KPI bands (CI-04). See [simulator.md](simulator.md) |
 | Component | Vitest + Testing Library | Key UI panels |
 | E2E | Playwright | Start game → week 1 tutorial → end week → save/reload. Mobile + desktop viewports |
+| Accessibility | Playwright + axe (`@axe-core/playwright`) | WCAG 2.2 A/AA on the main screens, light/dark (NFR-04) |
 | Visual | Playwright screenshots | Main screens, light/dark |
-| Performance | Lighthouse CI | Bundle size and load budgets (NFR-10) |
+| Performance | Lighthouse CI | Performance and accessibility scores on the PR preview (CI-05); budgets in `lighthouserc.json` |
 
 ---
 

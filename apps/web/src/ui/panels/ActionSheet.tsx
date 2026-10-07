@@ -4,14 +4,15 @@
  * numbered for the keyboard (NFR-03).
  */
 import { ANYWHERE } from '@fastlane/content/keys';
-import type { Action, Preview, WorldState } from '@fastlane/engine';
+import type { Action, Preview, SmartDefault, WorldState } from '@fastlane/engine';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { buildingFrame } from '../../board/frames.ts';
 import { targetInfo, targetLabel } from '../../game/copy.ts';
 import { content } from '../../game/engine.ts';
 import { duration, money } from '../../i18n/format.ts';
-import { BuildingArt } from '../common/BuildingArt.tsx';
-import { KEY_END_WEEK, KEY_TRAVEL } from '../common/hotkeys.ts';
+import { BuildingArt, ItemArt, interiorFor, itemFrame } from '../common/AtlasArt.tsx';
+import { KEY_END_WEEK, KEY_TRAVEL, QUICK_KEYS } from '../common/hotkeys.ts';
 import { PlanChips } from '../common/PlanChips.tsx';
 
 type PerformAction = Extract<Action, { type: 'perform' }>;
@@ -68,6 +69,63 @@ export function ownerLine(location: string, week: number): string {
 }
 const OWNER_LINES = 3;
 
+/** The label for a one-tap default: "Work full shift" when it is the longest shift on offer. */
+export function quickLabel(t: TFunction, d: SmartDefault, groups: readonly ActionGroup[]): string {
+  const { action } = d.preview;
+  if (action.type !== 'perform') return '';
+  const time = action.minutes === undefined ? '' : duration(action.minutes);
+  if (d.kind === 'eat') return t('quick.eat', { action: t(`action.${action.actionId}`) });
+  if (d.kind === 'study') return t('quick.study', { time });
+  const longest = Math.max(
+    0,
+    ...(groups.find((g) => g.actionId === action.actionId)?.rows ?? []).map(
+      (r) => r.preview.action.minutes ?? 0,
+    ),
+  );
+  return t(action.minutes === longest ? 'quick.workFull' : 'quick.workRest', { time });
+}
+
+/** The one-tap row (ENG-02): the likeliest next moves, each with its preview. */
+function QuickBar({
+  smart,
+  groups,
+  onPick,
+}: {
+  smart: readonly SmartDefault[];
+  groups: readonly ActionGroup[];
+  onPick(a: Action): void;
+}) {
+  const { t: tr } = useTranslation();
+  if (smart.length === 0) return null;
+  return (
+    <section
+      aria-label={tr('quick.title')}
+      className="flex flex-col gap-1 px-3 pt-2"
+      data-coach="quick"
+    >
+      {smart.map((d, i) => {
+        const key = QUICK_KEYS[i];
+        return (
+          <button
+            key={d.kind}
+            type="button"
+            className="action-row border-coral bg-coral/10 dark:border-coral"
+            onClick={() => onPick(d.preview.action)}
+            aria-keyshortcuts={key}
+            data-testid={`quick-${d.kind}`}
+          >
+            <span className="flex w-full items-center gap-2">
+              {key && <kbd>{key.toUpperCase()}</kbd>}
+              <span className="flex-1 text-left font-bold">{quickLabel(tr, d, groups)}</span>
+            </span>
+            <PlanChips plan={d.preview.plan} />
+          </button>
+        );
+      })}
+    </section>
+  );
+}
+
 /** "Laptop", "4h", "$500", or a combination. Empty for an action with a single plain option. */
 export function optionLabel(action: PerformAction): string {
   const parts: string[] = [];
@@ -101,11 +159,12 @@ function Row({
     >
       <span className="flex w-full items-center gap-2">
         {key && <kbd>{key.toUpperCase()}</kbd>}
+        {target !== undefined && itemFrame(target) && <ItemArt id={target} size={32} />}
         <span className="flex-1 text-left font-bold">
           {label || t(`action.${preview.action.actionId}`)}
         </span>
         {!preview.available && (
-          <span className="text-coral text-xs">{t(`error.${preview.reason.code}`)}</span>
+          <span className="text-bad text-xs">{t(`error.${preview.reason.code}`)}</span>
         )}
       </span>
       {info && <span className="text-fg-muted text-xs">{info}</span>}
@@ -120,6 +179,7 @@ export function ActionSheet({
   housingTier,
   world,
   groups,
+  smart = [],
   canAct,
   onPick,
   onTravel,
@@ -131,6 +191,7 @@ export function ActionSheet({
   housingTier: string;
   world: Readonly<WorldState>;
   groups: ActionGroup[];
+  smart?: readonly SmartDefault[];
   canAct: boolean;
   onPick(a: Action): void;
   onTravel(): void;
@@ -146,9 +207,9 @@ export function ActionSheet({
     if (reason)
       return (
         <li key={g.actionId}>
-          <div className="flex items-center gap-2 rounded-xl border-2 border-ink/15 border-dashed px-2 py-1.5 text-sm opacity-70 dark:border-cream/20">
+          <div className="flex items-center gap-2 rounded-xl border-2 border-ink/15 border-dashed px-2 py-1.5 text-fg-muted text-sm dark:border-cream/20">
             <span className="flex-1 font-bold">{t(`action.${g.actionId}`)}</span>
-            <span className="text-coral text-xs">{t(`error.${reason}`)}</span>
+            <span className="text-bad text-xs">{t(`error.${reason}`)}</span>
           </div>
         </li>
       );
@@ -168,6 +229,13 @@ export function ActionSheet({
       className="sheet flex min-h-0 flex-col border-ink border-t-2 bg-surface-raised dark:border-cream/30"
       aria-labelledby="sheet-heading"
     >
+      {location === content.city.board.home && (
+        <div
+          aria-hidden="true"
+          className="h-16 shrink-0 bg-center bg-cover dark:brightness-75"
+          style={{ backgroundImage: `url(${interiorFor(housingTier)})` }}
+        />
+      )}
       <div className="flex items-end gap-2 px-3 pt-2">
         <BuildingArt frame={buildingFrame(location, housingTier)} width={56} />
         <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -180,7 +248,8 @@ export function ActionSheet({
         </div>
       </div>
       {children}
-      <div className="relative min-h-0 flex-1 overflow-y-auto px-3 pb-2">
+      {canAct && <QuickBar smart={smart} groups={groups} onPick={onPick} />}
+      <div className="relative min-h-0 flex-1 overflow-y-auto px-3 pb-2" data-coach="actions">
         {local.length === 0 && anywhere.length === 0 && (
           <p className="text-fg-muted">{t('sheet.nothing')}</p>
         )}
@@ -210,6 +279,7 @@ export function ActionSheet({
           onClick={onEndWeek}
           disabled={!canAct}
           aria-keyshortcuts={KEY_END_WEEK}
+          data-coach="end"
         >
           {t('sheet.endWeek')} <kbd>{KEY_END_WEEK.toUpperCase()}</kbd>
         </button>
