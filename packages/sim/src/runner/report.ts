@@ -79,7 +79,8 @@ const pct = (bp: number) => `${(bp / 100).toFixed(1)}%`;
 /** KPI values in their own units: rates as percentages, everything else as is. */
 function show(kpi: string, value: number | null): string {
   if (value === null) return '—';
-  if (/^(win|jonesWin|score|hardship|seatGap|reach)\.|^dominance$/.test(kpi)) return pct(value);
+  if (/^(win|jonesWin|score|hardship|seatGap|reach)\.|^(dominance|luckShare)$/.test(kpi))
+    return pct(value);
   return String(value);
 }
 

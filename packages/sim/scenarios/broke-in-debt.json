@@ -1,0 +1,15 @@
+{
+  "id": "broke-in-debt",
+  "note": "Recovery arc (FR-14): no cash, $2,000 on the card with two payments missed, a 520 credit score, back in Parents' Basement",
+  "player": {
+    "stats": { "cash": 0, "creditScore": 520, "happiness": 40 },
+    "debts": { "card": { "balance": 200000, "missed": 2, "collections": false } },
+    "housing": {
+      "tier": "parents-basement",
+      "rent": 0,
+      "leaseWeeksLeft": 0,
+      "deposit": 0,
+      "missedRent": 0
+    }
+  }
+}

@@ -3,8 +3,8 @@ import { parentPort, workerData } from 'node:worker_threads';
 import { defaultContent } from '@fastlane/content';
 import { createEngine } from '@fastlane/engine';
 import { loadOverride } from '../override.ts';
-import type { GameJob } from './pool.ts';
-import { playRecorded } from './record.ts';
+import type { GameJob, GameResultMessage } from './pool.ts';
+import { playRecorded, playTraced } from './record.ts';
 
 const { override } = workerData as { override: string | null };
 const engine = createEngine(override ? loadOverride(defaultContent, override) : defaultContent);
@@ -16,6 +16,14 @@ port.on('message', (jobs: GameJob[] | null) => {
     port.close();
     return;
   }
-  for (const job of jobs) port.postMessage(playRecorded(engine, job.matchup, job.seed));
+  for (const job of jobs) port.postMessage(playJob(job));
   port.postMessage(null);
 });
+
+/** Play a job; trace it if asked, or replay it traced if it turned out anomalous (simulator §4). */
+function playJob(job: GameJob): GameResultMessage {
+  if (job.trace) return playTraced(engine, job.matchup, job.seed);
+  const record = playRecorded(engine, job.matchup, job.seed);
+  if (record.anomalies.length === 0) return { record, trace: null };
+  return playTraced(engine, job.matchup, job.seed);
+}

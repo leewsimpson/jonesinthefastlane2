@@ -1,0 +1,8 @@
+{
+  "id": "student-loan",
+  "note": "Starts with $8,000 of student debt and a credential already earned (Food Safety), like a fresh graduate",
+  "player": {
+    "debts": { "student": { "balance": 800000, "missed": 0, "collections": false } },
+    "credentials": ["food-safety-cert"]
+  }
+}
