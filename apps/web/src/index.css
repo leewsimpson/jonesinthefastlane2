@@ -176,6 +176,24 @@ body {
   transition-duration: 0.01ms;
 }
 
+/* The coach's pointer (ENG-20): the control the current step talks about. */
+.coach-target {
+  outline: 3px solid var(--color-coral);
+  outline-offset: 3px;
+  border-radius: 0.75rem;
+}
+@media (prefers-reduced-motion: no-preference) {
+  :root:not([data-motion="reduce"]) .coach-target {
+    animation: coach-pulse 1.4s ease-in-out infinite;
+  }
+}
+@keyframes coach-pulse {
+  50% {
+    outline-color: var(--color-mustard);
+    outline-offset: 6px;
+  }
+}
+
 :focus-visible {
   outline: 3px solid var(--color-coral);
   outline-offset: 2px;

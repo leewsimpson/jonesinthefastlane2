@@ -98,7 +98,11 @@ function QuickBar({
   const { t: tr } = useTranslation();
   if (smart.length === 0) return null;
   return (
-    <section aria-label={tr('quick.title')} className="flex flex-col gap-1 px-3 pt-2">
+    <section
+      aria-label={tr('quick.title')}
+      className="flex flex-col gap-1 px-3 pt-2"
+      data-coach="quick"
+    >
       {smart.map((d, i) => {
         const key = QUICK_KEYS[i];
         return (
@@ -245,7 +249,7 @@ export function ActionSheet({
       </div>
       {children}
       {canAct && <QuickBar smart={smart} groups={groups} onPick={onPick} />}
-      <div className="relative min-h-0 flex-1 overflow-y-auto px-3 pb-2">
+      <div className="relative min-h-0 flex-1 overflow-y-auto px-3 pb-2" data-coach="actions">
         {local.length === 0 && anywhere.length === 0 && (
           <p className="text-fg-muted">{t('sheet.nothing')}</p>
         )}
@@ -275,6 +279,7 @@ export function ActionSheet({
           onClick={onEndWeek}
           disabled={!canAct}
           aria-keyshortcuts={KEY_END_WEEK}
+          data-coach="end"
         >
           {t('sheet.endWeek')} <kbd>{KEY_END_WEEK.toUpperCase()}</kbd>
         </button>

@@ -164,6 +164,7 @@ export function WeekPanel({
       className="btn btn-sm btn-primary shrink-0"
       disabled={!canAct || !hintTrip}
       onClick={() => hint.dest && onGo(hint.dest)}
+      data-coach="go"
     >
       {t('week.go', { location: t(`location.${hint.dest}`) })}
     </button>

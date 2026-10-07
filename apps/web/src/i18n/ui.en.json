@@ -62,6 +62,15 @@
   "quick.eat": "Eat now: {{action}}",
   "quick.study": "Study · {{time}}",
 
+  "coach.step": "Week 1 coach · {{n}} of {{total}}",
+  "coach.skip": "Skip tutorial",
+  "coach.done": "Got it",
+  "coach.findJob": "Welcome to 2026. You win by hitting four goals: wealth, happiness, career and skills. All of them start with rent money, so first get to {{location}}: click it on the board, or press Go.",
+  "coach.apply": "Pick a job with a number on it. Each row shows the pay and how likely an AI is to take your job. Greyed-out ones say what they need.",
+  "coach.goWork": "Hired! Now get to {{location}} for your first shift.",
+  "coach.work": "Tap Work full shift. Wages land at the end of every shift, not at the end of the week.",
+  "coach.paid": "That's your first paycheck. The week panel tracks food and rent: eat something, then end the week when you're done.",
+
   "player.jones": "Jones",
 
   "hud.week": "Week {{week}}",

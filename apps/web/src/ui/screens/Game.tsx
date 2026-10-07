@@ -8,9 +8,11 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { boardLayout, innerRect } from '../../board/layout.ts';
 import { FxLayer } from '../../fx/FxLayer.tsx';
+import { coachStep } from '../../game/coach.ts';
 import { content, engine } from '../../game/engine.ts';
 import { nextHint, pickTrip, weekNeeds } from '../../game/guide.ts';
 import { activeHuman } from '../../game/report.ts';
+import { useSettings } from '../../settings/settings.ts';
 import { useApp } from '../../store/app.ts';
 import { gameStore, useGame } from '../../store/game.ts';
 import {
@@ -23,6 +25,7 @@ import {
 } from '../common/hotkeys.ts';
 import { Hud } from '../hud/Hud.tsx';
 import { ActionSheet, groupActions } from '../panels/ActionSheet.tsx';
+import { Coach } from '../panels/Coach.tsx';
 import { DetailsDialog } from '../panels/DetailsDialog.tsx';
 import { EndWeekDialog, endWeekWarnings } from '../panels/EndWeekDialog.tsx';
 import { Ticker } from '../panels/Ticker.tsx';
@@ -80,6 +83,9 @@ export function Game() {
   const fx = useGame((s) => s.fx);
   const tick = useGame((s) => s.tick);
   const [shakeEl, setShakeEl] = useState<HTMLDivElement | null>(null);
+  const tutorial = useSettings((s) => s.tutorial);
+  /** Players who skipped or finished the coach this session. */
+  const [coached, setCoached] = useState<ReadonlySet<string>>(new Set());
   const [travel, setTravel] = useState<{ dest: string | null } | null>(null);
   const [details, setDetails] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
@@ -186,6 +192,9 @@ export function Game() {
       if (kind === 'study') here.canStudy = true;
     }
   const hint = nextHint(content, state, me, here);
+  const paid = session.pace.firstPayMs[me.id] !== undefined;
+  const coach =
+    tutorial && canAct && !coached.has(me.id) ? coachStep(content, state, me, paid) : null;
   const inner = innerRect(
     boardLayout(boardSize.w, boardSize.h, content.city.board.locations.length),
     PANEL_MAX,
@@ -231,6 +240,11 @@ export function Game() {
           </Suspense>
         </div>
         <FxLayer fx={fx} id={tick} shakeTarget={shakeEl} />
+        {coach && roomy && (
+          <div className="pointer-events-none absolute inset-x-2 bottom-2 z-30 flex justify-center">
+            <Coach step={coach} onSkip={() => setCoached(new Set([...coached, me.id]))} />
+          </div>
+        )}
         {roomy && (
           <div
             className="pointer-events-none absolute z-10 flex items-center justify-center"
@@ -254,6 +268,9 @@ export function Game() {
         onTravel={() => setTravel({ dest: null })}
         onEndWeek={endWeek}
       >
+        {coach && !roomy && (
+          <Coach step={coach} compact onSkip={() => setCoached(new Set([...coached, me.id]))} />
+        )}
         {!roomy && <WeekPanel {...panelProps} compact />}
         <Ticker events={lastEvents} state={state} player={me.id} error={error} />
       </ActionSheet>
