@@ -31,7 +31,7 @@
     }
   ],
   "hungerPenalty": { "energy": -15, "health": -8, "happiness": -3 },
-  "weeklyDrift": { "energy": 35, "happiness": -2, "social": -3 },
+  "weeklyDrift": { "energy": 35, "happiness": -4, "social": -5 },
   "jobs": {
     "maxWeeklyMinutes": 2400,
     "ratingStart": 50,
@@ -138,9 +138,9 @@
   },
   "goals": {
     "presets": {
-      "chill": { "wealth": 500000, "wellbeing": 55, "skills": 30, "career": 25 },
-      "standard": { "wealth": 1500000, "wellbeing": 65, "skills": 50, "career": 45 },
-      "hustle-culture": { "wealth": 4000000, "wellbeing": 75, "skills": 80, "career": 70 }
+      "chill": { "wealth": 1200000, "wellbeing": 70, "skills": 45, "career": 35 },
+      "standard": { "wealth": 3600000, "wellbeing": 80, "skills": 80, "career": 55 },
+      "hustle-culture": { "wealth": 7000000, "wellbeing": 85, "skills": 100, "career": 75 }
     },
     "wellbeingLowPartPenaltyBp": 5000,
     "careerPointsPerLevel": 20,

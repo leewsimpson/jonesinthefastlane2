@@ -1,0 +1,52 @@
+{
+ "balance": {
+  "goals": {
+   "presets": {
+    "chill": {
+     "wealth": 1200000,
+     "wellbeing": 70,
+     "skills": 45,
+     "career": 40
+    },
+    "standard": {
+     "wealth": 3200000,
+     "wellbeing": 80,
+     "skills": 80,
+     "career": 65
+    },
+    "hustle-culture": {
+     "wealth": 7000000,
+     "wellbeing": 85,
+     "skills": 100,
+     "career": 80
+    }
+   }
+  },
+  "weeklyDrift": {
+   "energy": 35,
+   "happiness": -4,
+   "social": -5
+  }
+ },
+ "ai": {
+  "rivals": [
+   {
+    "id": "jones-chill",
+    "bestMoveRateBp": 0,
+    "runnersUp": 12,
+    "bottleneckBp": 2000
+   },
+   {
+    "id": "jones-standard",
+    "bestMoveRateBp": 9000,
+    "runnersUp": 3,
+    "bottleneckBp": 2000
+   },
+   {
+    "id": "jones-hustle-culture",
+    "horizonWeeks": 16,
+    "bottleneckBp": 2000
+   }
+  ]
+ }
+}

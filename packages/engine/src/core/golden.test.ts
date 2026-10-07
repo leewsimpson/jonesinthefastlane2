@@ -51,7 +51,7 @@ it('shipped content: the same seed and log give the pinned hash', () => {
   expect(goldenRun(defaultContent)).toMatchInlineSnapshot(`
     {
       "actions": 319,
-      "hash": "12c5f9981cddb8035363949dc8f0",
+      "hash": "06d36440f1e36114df787dda54c4",
       "week": 12,
     }
   `);
