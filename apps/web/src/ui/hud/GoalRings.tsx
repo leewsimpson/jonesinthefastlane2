@@ -82,7 +82,7 @@ export function GoalRings({ progress, size = 44 }: { progress: GoalValues; size?
           >
             {GOAL_ICON[g]}
           </Ring>
-          <span className="tabular text-[11px] text-fg-muted" aria-hidden="true">
+          <span className="tabular text-fg-muted text-xs" aria-hidden="true">
             {percent(progress[g])}
           </span>
         </span>

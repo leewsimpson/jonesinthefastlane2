@@ -78,7 +78,7 @@ export function FxLayer({
   }, [banner]);
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden" aria-hidden="true">
+    <div className="fx-layer pointer-events-none inset-0 overflow-hidden" aria-hidden="true">
       <div className="absolute inset-x-0 top-3 flex flex-wrap justify-center gap-2">
         <AnimatePresence>
           {shown?.fx.pops.map((p, i) => (

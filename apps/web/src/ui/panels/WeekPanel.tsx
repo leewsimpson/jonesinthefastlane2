@@ -15,7 +15,7 @@ import { type Hint, pickTrip, type WeekNeeds } from '../../game/guide.ts';
 import { duration, money } from '../../i18n/format.ts';
 import { STAT_ICON } from '../common/stats.ts';
 
-function Clock({ left, total, size }: { left: number; total: number; size: number }) {
+export function Clock({ left, total, size }: { left: number; total: number; size: number }) {
   const { t } = useTranslation();
   const r = size / 2 - 5;
   const c = 2 * Math.PI * r;
@@ -45,10 +45,15 @@ function Clock({ left, total, size }: { left: number; total: number; size: numbe
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
-        <span className="tabular whitespace-nowrap font-bold font-display text-[13px]">
+        <span
+          className="tabular whitespace-nowrap font-bold font-display"
+          style={{ fontSize: Math.round(size * 0.2) }}
+        >
           {duration(left)}
         </span>
-        <span className="text-[10px] text-fg-muted">{t('week.left')}</span>
+        <span className="text-fg-muted" style={{ fontSize: Math.round(size * 0.15) }}>
+          {t('week.left')}
+        </span>
       </div>
     </div>
   );
@@ -56,7 +61,7 @@ function Clock({ left, total, size }: { left: number; total: number; size: numbe
 
 function Need({ ok, icon, text }: { ok: boolean; icon: string; text: string }) {
   return (
-    <li className={`flex items-start gap-1.5 text-xs leading-snug ${ok ? '' : 'font-bold'}`}>
+    <li className={`flex items-start gap-1.5 text-sm leading-snug ${ok ? '' : 'font-bold'}`}>
       <span aria-hidden="true" className={ok ? 'text-good' : 'text-bad'}>
         {ok ? '✓' : '!'}
       </span>
@@ -161,7 +166,7 @@ export function WeekPanel({
   const goButton = hint.dest && (
     <button
       type="button"
-      className="btn btn-sm btn-primary shrink-0"
+      className={`btn btn-sm btn-primary ${compact ? 'flex-1' : 'shrink-0'}`}
       disabled={!canAct || !hintTrip}
       onClick={() => hint.dest && onGo(hint.dest)}
     >
@@ -171,7 +176,7 @@ export function WeekPanel({
   const endButton = (hint.id === 'timeUp' || hint.id === 'endWeek') && (
     <button
       type="button"
-      className="btn btn-sm btn-primary shrink-0"
+      className={`btn btn-sm btn-primary ${compact ? 'flex-1' : 'shrink-0'}`}
       disabled={!canAct}
       onClick={onEndWeek}
     >
@@ -185,9 +190,9 @@ export function WeekPanel({
   );
 
   const modePicker = (
-    <label className="flex shrink-0 items-center gap-1 text-xs">
+    <label className="flex shrink-0 items-center gap-1 text-sm">
       <span className="text-fg-muted">{t('week.mode')}</span>
-      <select className="input py-0! text-xs" value={mode} onChange={(e) => onMode(e.target.value)}>
+      <select className="input py-0! text-sm" value={mode} onChange={(e) => onMode(e.target.value)}>
         {modes.map((m) => (
           <option key={m} value={m} disabled={!usable.has(m)}>
             {t(`transport.${m}`)}
@@ -197,17 +202,25 @@ export function WeekPanel({
     </label>
   );
 
-  // Small boards: one slim row above the action list, so the actions keep the room.
+  // Phones and small boards: a card at the top of the action sheet with the week's needs, the next step, its Go
+  // button and the mode a tap on the board travels by.
   if (compact)
     return (
       <section
-        className="mx-3 mt-1 flex items-center gap-2 rounded-xl border-2 border-mustard bg-mustard/15 px-2 py-1 text-xs"
+        className="mx-3 mt-2 flex flex-col gap-2 rounded-xl border-2 border-mustard bg-mustard/15 p-2"
         aria-label={t('week.next')}
       >
-        <span className="flex-1">{hintText}</span>
-        {goButton}
-        {endButton}
-        <span className="[&_span]:sr-only">{modePicker}</span>
+        <ul className="flex flex-wrap gap-x-4 gap-y-1">
+          {needLines(t, needs).map((n) => (
+            <Need key={n.id} ok={n.ok} icon={n.icon} text={n.text} />
+          ))}
+        </ul>
+        {hintText}
+        <div className="flex flex-wrap items-center gap-2">
+          {goButton}
+          {endButton}
+          {modePicker}
+        </div>
       </section>
     );
 
@@ -239,7 +252,7 @@ export function WeekPanel({
         </div>
       ) : (
         <div className="flex flex-col gap-1 rounded-xl border-2 border-mustard bg-mustard/15 p-2 text-sm">
-          <span className="font-bold text-[10px] text-fg-muted uppercase tracking-wide">
+          <span className="font-bold text-fg-muted text-xs uppercase tracking-wide">
             {t('week.next')}
           </span>
           {hintText}

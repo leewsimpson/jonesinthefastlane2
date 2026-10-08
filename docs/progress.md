@@ -401,3 +401,35 @@ The rest of Phase 5 (user decision: finish Phase 5, then deploy). PR branch `pha
   - Career is stepped (level × 20 × stability): targets between levels behave like the next level down. Standard's
     55 means level 3 with low AI exposure; 65 was out of reach for every bot.
 
+
+## Phone layout pass — 2026-10-07
+
+User report from an iPhone Pro Max: text too small, board graphics overlapping, and the game screen couldn't be
+scrolled properly. Most players will be on phones of that size, so portrait (NFR-02) was redesigned. These are
+client-only changes, so sim KPIs and save hashes are untouched.
+
+- **Causes:** the game screen was locked to the viewport height, with only a 40%-height strip under the board
+  scrolling (and the HUD scrolling separately). Pixi's `touch-action: none` on the canvas swallowed swipes over the
+  board. Eleven buildings shared a 430×378 board, so names landed on neighbouring roofs. Chips, reasons and HUD links
+  were 10–13px, and the links were about 16px tall.
+- **One scrolling page:** portrait is now a normal document. The HUD's top bar (name, week, cash, Time, Energy)
+  sticks to the top. Travel / End week and the last-action ticker sit in a dock pinned to the bottom (`ActionDock`,
+  safe-area aware). The first screen is that bar, the whole board and the dock. Stats, goals and Details / Settings /
+  Quit come next, then the action sheet. The board canvas allows vertical panning, so a swipe over it scrolls and a
+  tap still travels. Arriving somewhere scrolls that place's actions into view under the top bar. Each new screen
+  opens at its top: Setup's Start button is below the fold, and the game used to open part-way down. Floating
+  numbers and banners are fixed to the screen, above a dialog's backdrop so they're never dimmed (axe flagged their
+  contrast behind the week wrap-up's backdrop).
+- **Board:** on phones it fills the space between the top bar and the dock with the browser's toolbars showing
+  (`clamp(340px, 135vw, 100svh − 10.5rem)`); the user's iPhone in Brave leaves about 430×735 CSS px. `boardLayout`
+  shrinks buildings when the loop is too short for each to have 1.2× its width of road. Names are 14–17px, wrap to
+  the building's width, and follow the text-size setting. The week panel always sits in the sheet on portrait, as a
+  card with the needs, next step, Go and travel mode; the loop's centre shows the hours-left clock.
+- **Text and touch (NFR-04):** under 768px wide, Tailwind's `xs`/`sm`/`base` steps move up one notch (smallest text
+  14px). On touch screens, keyboard hints are hidden, buttons and inputs are at least 44px tall, and inputs are at
+  least 16px, so iOS doesn't zoom on focus.
+- **Evidence:** `e2e/phone-layout.spec.ts` (mobile project) checks no sideways overflow, a scrolling page,
+  smallest text ≥14px, the dock staying on screen without covering the last action, and scroll-to-actions on
+  arrival. `play-a-week` reads the ticker from the dock. All E2E specs pass locally on desktop Chromium and a
+  430×735 Chromium phone viewport; mobile WebKit runs in CI. Checked by screenshot at 430×932, 430×735 and 384×832, and
+  at 1366×800 for the desktop layout.

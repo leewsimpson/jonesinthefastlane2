@@ -66,7 +66,7 @@ export function Ticker({
   }
   const stats = statTotals(events, player);
   return (
-    <div className="min-h-7 px-3 text-sm" aria-live="polite" role="status">
+    <div className="px-3 text-sm wide:min-h-7" aria-live="polite" role="status">
       {error && <p className="font-bold text-bad">{t(`error.${error.code}`)}</p>}
       {lines.length > 0 && (
         <p className="flex flex-wrap items-center gap-1">

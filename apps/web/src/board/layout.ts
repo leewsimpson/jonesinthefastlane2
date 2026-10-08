@@ -17,11 +17,27 @@ export interface BoardLayout {
   count: number;
 }
 
+/** Road length per location, as a multiple of the building width: below this, neighbours overlap. */
+const SPACING = 1.2;
+
 export function boardLayout(width: number, height: number, count: number): BoardLayout {
-  const cell = Math.max(40, Math.min(130, Math.min(width / 4.6, height / 3.2)));
-  const rx = Math.max(10, width / 2 - cell * 0.6);
-  // Room above the top row for the buildings, and below the bottom row for the labels.
-  const ry = Math.max(10, height / 2 - cell * 0.62 - 8);
+  let cell = Math.max(40, Math.min(130, Math.min(width / 4.6, height / 3.2)));
+  const radii = (c: number) => ({
+    rx: Math.max(10, width / 2 - c * 0.6),
+    // Room above the top row for the buildings, and below the bottom row for the labels.
+    ry: Math.max(10, height / 2 - c * 0.62 - 8),
+  });
+  // A phone-sized loop is too short for full-size buildings: shrink them until each has its share of the road.
+  // Shrinking a building lengthens the road, so this settles in a few steps.
+  for (let i = 0; i < 8; i++) {
+    const { rx, ry } = radii(cell);
+    const r = Math.min(rx, ry);
+    const share = (4 * Math.abs(rx - ry) + 2 * Math.PI * r) / count;
+    const fit = Math.max(40, Math.min(cell, share / SPACING));
+    if (cell - fit < 0.5) break;
+    cell = fit;
+  }
+  const { rx, ry } = radii(cell);
   return {
     cx: width / 2,
     cy: height / 2 + cell * 0.28,

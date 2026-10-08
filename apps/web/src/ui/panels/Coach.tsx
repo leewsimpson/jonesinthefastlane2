@@ -37,7 +37,7 @@ export function Coach({
     <aside
       className={
         compact
-          ? 'mx-3 mt-2 flex flex-col gap-0.5 rounded-xl border-2 border-coral bg-surface px-2 py-1.5 text-sm'
+          ? 'mx-3 mt-2 flex flex-col gap-1 rounded-xl border-2 border-coral bg-surface p-2'
           : 'card pointer-events-auto flex w-full max-w-md flex-col gap-1 p-3 shadow-[0_4px_0_var(--color-ink)]'
       }
       aria-labelledby="coach-heading"
@@ -47,7 +47,11 @@ export function Coach({
         <h2 id="coach-heading" className="font-bold text-bad text-xs uppercase tracking-wide">
           {t('coach.step', { n: step.n, total: COACH_STEPS.length })}
         </h2>
-        <button type="button" className="text-fg-muted text-xs underline" onClick={onSkip}>
+        <button
+          type="button"
+          className="-my-2 px-1 py-2 text-fg-muted text-sm underline"
+          onClick={onSkip}
+        >
           {step.id === 'paid' ? t('coach.done') : t('coach.skip')}
         </button>
       </div>
