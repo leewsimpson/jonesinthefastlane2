@@ -11,11 +11,19 @@ describe('parseSettings', () => {
   it('keeps known values and drops unknown ones', () => {
     expect(
       parseSettings(
-        JSON.stringify({ theme: 'dark', motion: 'reduce', textSize: 130, tutorial: false }),
+        JSON.stringify({
+          theme: 'dark',
+          motion: 'reduce',
+          textSize: 130,
+          tutorial: false,
+          shareData: true,
+        }),
       ),
-    ).toEqual({ theme: 'dark', motion: 'reduce', textSize: 130, tutorial: false });
+    ).toEqual({ theme: 'dark', motion: 'reduce', textSize: 130, tutorial: false, shareData: true });
     expect(
-      parseSettings(JSON.stringify({ theme: 'neon', textSize: 200, tutorial: 'yes' })),
+      parseSettings(
+        JSON.stringify({ theme: 'neon', textSize: 200, tutorial: 'yes', shareData: 'yes' }),
+      ),
     ).toEqual(DEFAULT_SETTINGS);
   });
 });

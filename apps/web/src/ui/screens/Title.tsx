@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AboutButton } from '../../about/AboutButton.tsx';
 import type { SlotSummary } from '../../persistence/saves.ts';
 import { usePwa } from '../../pwa.ts';
 import { SettingsButton } from '../../settings/SettingsButton.tsx';
@@ -64,6 +65,7 @@ export function Title() {
           {t('title.newGame')}
         </button>
         <SettingsButton />
+        <AboutButton />
         {installable && (
           <button type="button" className="btn" onClick={() => void install()}>
             {t('title.install')}
@@ -118,6 +120,7 @@ export function Title() {
             ))}
         </ul>
       </section>
+      <p className="text-fg-muted text-sm">{t('title.privacy')}</p>
     </main>
   );
 }

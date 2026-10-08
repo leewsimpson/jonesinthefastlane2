@@ -1,5 +1,5 @@
 /**
- * The settings dialog (NFR-04): theme, motion, text size and the week-1 coach. Lazy-loaded from the title screen and
+ * The settings dialog (NFR-04): theme, motion, text size, the week-1 coach and data-sharing consent (NFR-14). Lazy-loaded from the title screen and
  * the HUD, so Radix stays out of the initial bundle.
  */
 import * as Dialog from '@radix-ui/react-dialog';
@@ -87,6 +87,21 @@ export default function SettingsDialog({ open, onClose }: { open: boolean; onClo
             />
             {t('settings.tutorial')}
           </label>
+          <div>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                className="size-5 accent-coral"
+                checked={s.shareData}
+                onChange={(e) => set({ shareData: e.target.checked })}
+                aria-describedby="share-data-hint"
+              />
+              {t('settings.shareData')}
+            </label>
+            <p id="share-data-hint" className="mt-1 text-fg-muted text-sm">
+              {t('settings.shareDataHint')}
+            </p>
+          </div>
           <Dialog.Close asChild>
             <button type="button" className="btn btn-primary">
               {t('details.close')}
