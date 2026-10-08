@@ -56,6 +56,8 @@ export function runWorkers<J, R>(
   if (!Number.isInteger(options.workers) || options.workers < 1)
     throw new Error(`workers must be a positive integer, got ${options.workers}`);
   const count = Math.min(options.workers, Math.max(1, jobs.length));
+  // Small runs of slow jobs (assess, optimize) would otherwise all land in the first worker's batch.
+  const batchSize = Math.max(1, Math.min(BATCH, Math.ceil(jobs.length / count)));
   const results: R[] = new Array(jobs.length);
   const workers: Worker[] = [];
   let next = 0;
@@ -80,7 +82,7 @@ export function runWorkers<J, R>(
       let got = 0;
       const send = () => {
         batch = [];
-        while (batch.length < BATCH && next < jobs.length) batch.push(next++);
+        while (batch.length < batchSize && next < jobs.length) batch.push(next++);
         got = 0;
         worker.postMessage(batch.length ? batch.map((j) => jobs[j]) : null);
       };

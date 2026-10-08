@@ -24,6 +24,11 @@ for (const scheme of ['light', 'dark'] as const) {
     await page.goto('/');
     await audit(page, 'title');
 
+    await page.getByRole('button', { name: 'About & privacy' }).click();
+    await expect(page.getByRole('dialog', { name: 'About & privacy' })).toBeVisible();
+    await audit(page, 'about');
+    await page.keyboard.press('Escape');
+
     await page.getByRole('button', { name: 'New game' }).click();
     await expect(page.getByRole('button', { name: 'Start' })).toBeVisible();
     await audit(page, 'setup');

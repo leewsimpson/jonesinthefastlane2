@@ -12,7 +12,7 @@ import { targetInfo, targetLabel } from '../../game/copy.ts';
 import { content } from '../../game/engine.ts';
 import { duration, money } from '../../i18n/format.ts';
 import { BuildingArt, ItemArt, interiorFor, itemFrame } from '../common/AtlasArt.tsx';
-import { KEY_END_WEEK, KEY_TRAVEL, QUICK_KEYS } from '../common/hotkeys.ts';
+import { KEY_END_WEEK, KEY_TRAVEL, keyLabel, QUICK_KEYS } from '../common/hotkeys.ts';
 import { PlanChips } from '../common/PlanChips.tsx';
 
 type PerformAction = Extract<Action, { type: 'perform' }>;
@@ -115,7 +115,7 @@ function QuickBar({
             data-testid={`quick-${d.kind}`}
           >
             <span className="flex w-full items-center gap-2">
-              {key && <kbd>{key.toUpperCase()}</kbd>}
+              {key && <kbd>{keyLabel(key)}</kbd>}
               <span className="flex-1 text-left font-bold">{quickLabel(tr, d, groups)}</span>
             </span>
             <PlanChips plan={d.preview.plan} />
@@ -158,7 +158,7 @@ function Row({
       aria-keyshortcuts={key}
     >
       <span className="flex w-full flex-wrap items-center gap-x-2 gap-y-0.5">
-        {key && <kbd>{key.toUpperCase()}</kbd>}
+        {key && <kbd>{keyLabel(key)}</kbd>}
         {target !== undefined && itemFrame(target) && <ItemArt id={target} size={32} />}
         <span className="flex-1 text-left font-bold">
           {label || t(`action.${preview.action.actionId}`)}

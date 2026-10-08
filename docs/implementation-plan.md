@@ -286,6 +286,11 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
   bots dodge every setback), the one-goal persona and gambler bands, and the overlap between `balanced`'s band and
   Standard Jones's (`docs/progress.md`, Phase 5). Weekend choices are mostly flat in `sim assess`: decide with
   playtesters whether they should bite harder.
+- Built 2026-10-08 (`docs/progress.md`, Phase 6): save fixture test, `upskill-u` rename, About & privacy with
+  consent and help links, monetization spec (§13.4), visual snapshots (`visual.yml`), NFR-10 budgets, `optimizer`
+  and `nightly.yml`, the M audit. Open: the deploy and rollback rehearsal and every human-only step above.
+- `sim optimize` found the utility scorer short-sighted in weeks 1–6 (optimizer 19/20 vs `balanced` 8/20 on the same
+  seeds): consider a longer early horizon in `ai.json` during playtest tuning, then re-check Jones's bands.
 
 ---
 
@@ -300,6 +305,7 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
 | Anonymous device ID; rate limiting / WAF on `POST /runs` | tech-stack §5 |
 | Gentle streaks with freezes | ENG-18 |
 | Sentry releases + private source maps | CD-08 |
+| Add `/daily` to the smoke test once the endpoint exists | CD-06 |
 | Release automation (release-please or Changesets) | CD-07 |
 
 **Notes**
@@ -318,7 +324,13 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
 | Side hustles, event chains, scam job offers, theft/scams, remote jobs, item breakage/resale | FR-45, FR-73, FR-47, FR-57, FR-46, FR-61 |
 | Audio: Howler, lo-fi adaptive soundtrack, SFX, volume sliders | NFR-05 |
 | Session reminder; opt-in "Daily Run is ready" notification (max one per day) | ENG-34, ENG-33 |
-| Nightly workflow: 10k-game sim, full E2E, audit | OPS-04 |
+| Nightly workflow: `nightly.yml` exists (Phase 6, manual dispatch); schedule it, raise to 10k games | OPS-04 |
+| Rewarded video for credits, per the monetization spec; ad consent | ENG-31, MON-01…07 |
+| Grow the event deck towards 100+ (event packs are an unlock) | FR-70 |
+| Location actions the MVP left out: LeaseLord renew / dispute a hike and bidding wars, JobLink networking events, ThriftUp's random thrift finds | §5, ENG-12 |
+| Car transport mode (needs a car item, running costs) | FR-02 |
+| Reputation/Clout as a simulated stat (with CreatorLab) | FR-20 |
+| Meme stocks, BNPL and personal loans | FR-53, FR-54 |
 
 **Notes**
 - Many small features: one PR per row is reasonable.

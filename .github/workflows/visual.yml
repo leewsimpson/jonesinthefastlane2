@@ -1,0 +1,45 @@
+# Visual baselines (tech-stack §6, CI-03): renders e2e/visual.spec.ts on this runner, for desktop Chromium and mobile
+# WebKit, and commits the screenshots to the branch it ran on. Run it after a deliberate visual change; the preview E2E
+# then compares every PR against these baselines.
+name: visual
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: visual-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  baselines:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write # commit the baselines
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Render baselines
+        run: |
+          pnpm exec playwright install --with-deps chromium webkit
+          pnpm e2e e2e/visual.spec.ts --update-snapshots=all
+      - name: Commit baselines
+        run: |
+          git add e2e/__screenshots__
+          if git diff --cached --quiet; then
+            echo "Baselines unchanged." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "test(e2e): update visual baselines"
+          git push
+          git diff --stat HEAD~1 >> "$GITHUB_STEP_SUMMARY"

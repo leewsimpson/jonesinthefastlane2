@@ -56,7 +56,8 @@
 ├─ main.yml         # after ci is green on main: migrate preview D1, deploy `main` alias (Worker + Pages), smoke, upload artifact
 ├─ production.yml   # release published / dispatch: approval gate → migrate → deploy → smoke
 ├─ rollback.yml     # manual: roll back Pages + Worker to a chosen version
-└─ nightly.yml      # cron: full sim, full E2E matrix, audit
+├─ visual.yml       # manual: render visual baselines (e2e/visual.spec.ts) on CI's runner and commit them
+└─ nightly.yml      # manual (cron when switched on): full sim, assess, optimize, full E2E matrix, audit
 ```
 
 ### Pipeline flow

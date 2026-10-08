@@ -27,6 +27,11 @@
  *   `run`, `assess` and `trace` take `--scenario scenarios/<id>.json` to start every game from a set position;
  *   `run` and `sweep` take `--matchups a,b` to play only some of the CI plan.
  *
+ *   pnpm sim optimize [--games 20] [--difficulty standard] [--base-bot balanced] [--candidates 4] [--rollouts 3]
+ *                     [--horizon 4] [--weeks 52]
+ *     Exploit search (simulator §3, SIM-09): the lookahead optimizer and its base persona play the same seeds against
+ *     Jones; lists the leads (moves that beat the base persona's by a wide margin). Writes optimize.json and .md.
+ *
  *   pnpm sim trace <seed> [--matchup balanced-standard] [--file traces/<game>.jsonl.gz] [--replay game.json]
  *     A readable week-by-week log of one game (simulator §4), replayed from its seed or read from a trace file.
  *     `--replay` also writes `{ setup, log }` for the client's debug replay route (`#/replay`).
@@ -42,7 +47,15 @@ import { createEngine, ENGINE_VERSION } from '@fastlane/engine';
 import { type AssessOptions, classify, regretByPersona, type Situation } from './assess/assess.ts';
 import { type AssessReport, assessMarkdown } from './assess/report.ts';
 import type { AssessJob } from './assess/worker.ts';
+import { DEFAULT_OPTIMIZER, type OptimizerOptions } from './bots/optimizer.ts';
 import { playGame } from './game.ts';
+import {
+  groupLeads,
+  type OptimizeJob,
+  type OptimizeResult,
+  optimizeMarkdown,
+  summarise,
+} from './optimize/optimize.ts';
 import { loadOverride, merge } from './override.ts';
 import { randomPlay } from './random-play.ts';
 import { htmlReport } from './runner/html.ts';
@@ -55,7 +68,16 @@ import { patchAt, sweepMarkdown } from './runner/sweep.ts';
 import { decodeTrace, encodeTrace, formatTrace, traceFileName } from './runner/trace.ts';
 import { loadScenario } from './scenario.ts';
 
-const COMMANDS = ['random', 'bots', 'run', 'compare', 'trace', 'assess', 'sweep'] as const;
+const COMMANDS = [
+  'random',
+  'bots',
+  'run',
+  'compare',
+  'trace',
+  'assess',
+  'sweep',
+  'optimize',
+] as const;
 type Command = (typeof COMMANDS)[number];
 
 const { values, positionals } = parseArgs({
@@ -78,8 +100,10 @@ const { values, positionals } = parseArgs({
     matchup: { type: 'string', default: 'balanced-standard' },
     file: { type: 'string' },
     replay: { type: 'string' },
-    rollouts: { type: 'string', default: '8' },
-    horizon: { type: 'string', default: '8' },
+    rollouts: { type: 'string' },
+    horizon: { type: 'string' },
+    candidates: { type: 'string' },
+    'base-bot': { type: 'string', default: 'balanced' },
     'assess-rate': { type: 'string', default: '0.25' },
     scenario: { type: 'string' },
     matchups: { type: 'string' },
@@ -112,6 +136,7 @@ const handlers: Record<Command, () => Promise<number> | number> = {
   trace: runTrace,
   assess: runAssess,
   sweep: runSweep,
+  optimize: runOptimize,
 };
 process.exit(await handlers[command]());
 
@@ -350,8 +375,8 @@ async function runAssess(): Promise<number> {
   const games = Number(values.games ?? 500);
   const options: AssessOptions = {
     rateBp: Math.round(Number(values['assess-rate']) * 10_000),
-    rollouts: Number(values.rollouts),
-    horizonWeeks: Number(values.horizon),
+    rollouts: Number(values.rollouts ?? 8),
+    horizonWeeks: Number(values.horizon ?? 8),
   };
   const jobs: AssessJob[] = jobsFor(planWithScenario(ASSESS_PLAN), games, values.seed);
   const workers = workerCount(jobs.length);
@@ -400,6 +425,59 @@ async function runAssess(): Promise<number> {
   const summary = assessMarkdown(report);
   writeFileSync(join(out, 'assess.md'), summary);
   console.log(`\n${summary}\nwrote ${out}`);
+  return 0;
+}
+
+async function runOptimize(): Promise<number> {
+  const games = Number(values.games ?? 20);
+  const difficulty = values.difficulty as Difficulty;
+  if (!DIFFICULTIES.includes(difficulty)) throw new Error(`unknown difficulty ${difficulty}`);
+  const options: OptimizerOptions = {
+    base: values['base-bot'],
+    candidates: Number(values.candidates ?? DEFAULT_OPTIMIZER.candidates),
+    rollouts: Number(values.rollouts ?? DEFAULT_OPTIMIZER.rollouts),
+    horizonWeeks: Number(values.horizon ?? DEFAULT_OPTIMIZER.horizonWeeks),
+  };
+  const weekLimit = Number(values.weeks);
+  const jobs: OptimizeJob[] = Array.from({ length: games }, (_, i) => ({
+    seed: `${values.seed}-${i}`,
+    difficulty,
+    weekLimit,
+  }));
+  const workers = workerCount(jobs.length);
+  const meta =
+    `${games} games vs ${difficulty} Jones, base ${options.base}, top ${options.candidates} moves × ` +
+    `${options.rollouts} rollouts × ${options.horizonWeeks} weeks, engine ${ENGINE_VERSION}, ` +
+    `content ${createEngine(content).contentHash.slice(0, 12)}, seed ${values.seed}`;
+  console.log(meta);
+  const started = performance.now();
+  const results = await runWorkers<OptimizeJob, OptimizeResult>(
+    new URL('./optimize/worker.ts', import.meta.url),
+    jobs,
+    {
+      workers,
+      workerData: { override: values.override ? fromCwd(values.override) : null, options },
+      onResult(r, done) {
+        console.log(
+          `  ${done}/${jobs.length} ${r.seed}: optimizer ${r.optimizer.win ? `won w${r.optimizer.week}` : 'lost'}, ` +
+            `${options.base} ${r.base.win ? `won w${r.base.week}` : 'lost'}, ${r.leads.length} leads, ` +
+            `${(r.ms / 1000).toFixed(0)} s`,
+        );
+      },
+    },
+  );
+  const summary = summarise(results, options.base);
+  const groups = groupLeads(results);
+  const seconds = (performance.now() - started) / 1000;
+  const md = optimizeMarkdown(summary, groups, `${meta}, ${seconds.toFixed(0)} s.`);
+  const out = fromCwd(values.out ?? join('sim-out', `${values.seed}-optimize`));
+  mkdirSync(out, { recursive: true });
+  writeFileSync(
+    join(out, 'optimize.json'),
+    JSON.stringify({ meta, options, summary, leads: groups, results }),
+  );
+  writeFileSync(join(out, 'optimize.md'), md);
+  console.log(`\n${md}\nwrote ${out}`);
   return 0;
 }
 

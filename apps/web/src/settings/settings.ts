@@ -1,5 +1,5 @@
 /**
- * Player settings (NFR-04): theme, motion and text size, plus whether week 1 coaches. They live in the initial
+ * Player settings (NFR-04): theme, motion and text size, plus whether week 1 coaches and data-sharing consent. They live in the initial
  * bundle and in `localStorage`: a per-browser convenience, so storage that is missing or throws (private windows)
  * only means the defaults are used. `applySettings` reflects them on `<html>`, where CSS picks them up.
  */
@@ -16,6 +16,11 @@ export interface Settings {
   textSize: TextSize;
   /** Week 1 coach marks (ENG-20). */
   tutorial: boolean;
+  /**
+   * Consent to anonymous play telemetry (NFR-14, NFR-16). Off until the player opts in; any analytics loader must
+   * check it before it loads, and stop when it is turned off.
+   */
+  shareData: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -23,6 +28,7 @@ export const DEFAULT_SETTINGS: Settings = {
   motion: 'system',
   textSize: 100,
   tutorial: true,
+  shareData: false,
 };
 
 const KEY = 'fastlane.settings';
@@ -43,6 +49,7 @@ export function parseSettings(raw: string | null): Settings {
     motion: pick(v.motion, ['system', 'reduce', 'full'] as const, DEFAULT_SETTINGS.motion),
     textSize: pick(v.textSize, TEXT_SIZES, DEFAULT_SETTINGS.textSize),
     tutorial: typeof v.tutorial === 'boolean' ? v.tutorial : DEFAULT_SETTINGS.tutorial,
+    shareData: v.shareData === true,
   };
 }
 

@@ -32,6 +32,9 @@ jobs:
       github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      issues: write # open an alert issue if the deploy fails (CD-06)
     environment:
       name: preview
       url: https://main.fastlane-e6g.pages.dev
@@ -101,6 +104,16 @@ jobs:
         run: |
           pnpm exec playwright install --with-deps chromium
           pnpm e2e --project=desktop-chromium e2e/play-a-week.spec.ts
+
+      # CD-06: alert and suggest a rollback of the main alias.
+      - name: Open an issue on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          body=$(printf 'The main deploy of `%s` failed: %s\n\nIf https://%s.%s is broken, run the **rollback** workflow with target `main` and the last good commit. Runbook: docs/ci-cd.md §6.\n' "$SHA" "$RUN_URL" "$ALIAS" "$PAGES_HOST")
+          gh issue create -R "$GITHUB_REPOSITORY" --title "main deploy failed (${SHA:0:7})" --body "$body"
 
       - name: Summary
         if: always()

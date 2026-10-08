@@ -143,7 +143,7 @@
 | Property-based | fast-check | Invariants: money is conserved, stats stay in range, no softlocks, replay(seed, actions) is stable |
 | Content | Zod + Vitest | Every content file validates. Every event's referenced IDs exist |
 | Balance | `packages/sim` | Headless bot games with KPI bands (CI-04). See [simulator.md](simulator.md) |
-| Component | Vitest + Testing Library | Key UI panels |
+| Component | Vitest + Testing Library on happy-dom (per file, `// @vitest-environment happy-dom`) | Key UI panels (`apps/web/src/**/*.test.tsx`) |
 | E2E | Playwright | Start game → week 1 tutorial → end week → save/reload. Mobile + desktop viewports |
 | Accessibility | Playwright + axe (`@axe-core/playwright`) | WCAG 2.2 A/AA on the main screens, light/dark (NFR-04) |
 | Visual | Playwright screenshots | Main screens, light/dark |
