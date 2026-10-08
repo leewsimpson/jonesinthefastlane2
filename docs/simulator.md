@@ -90,7 +90,7 @@ shared tuning (both loaded through `@fastlane/content/sim`).
 | `spender` | Buys whatever raises Happiness now | Shows that consumerism and subscription creep hurt (the satire must land) |
 | `casual` | `balanced` with `bestMoveRate` 0.6 and a short horizon | A careless human. Should still finish a Chill game |
 | `jones-<difficulty>` | Jones's own config per difficulty preset | Sets the difficulty curve: humans vs Jones |
-| `optimizer` | Lookahead: for each candidate, run *k* short rollouts from a cloned state and pick the best average | Exploit search (SIM-09). Slow, so nightly only |
+| `optimizer` | Lookahead on top of a base persona (`balanced` by default): at each turn's first move and every weekend choice, play *k* short rollouts of the base persona's top candidates from a cloned state (common random numbers) and pick the best mean; the base persona plays every other move. `pnpm sim optimize` plays it and its base persona on the same seeds and lists the leads: moves that beat the base persona's pick by `EXPLOIT_GAIN_BP` or more | Exploit search (SIM-09). About 50 s a game at the defaults, so nightly only |
 | `llm-playtester` | An LLM picks actions from a text view and explains why | Optional, a handful of games. A "does this make sense to a newcomer?" probe, not a balance source |
 
 **Granularity.** A week has many micro-actions (travel, then act). Bots choose from legal actions plus the engine's
@@ -220,7 +220,7 @@ matrix, game-length histogram, choice classification table, unused content list)
 |---|---|---|
 | Unit tests | Tiny runs (20 games) as Vitest tests: no crash, determinism, money conservation | Fails the test suite |
 | Locally, before merging a rules or content change (CI-04: not in CI) | `run` (2k games) + `--base` against an earlier report | Hard bands fail; the band table, soft warnings and deltas go to `summary.md` |
-| Nightly (`nightly.yml`, OPS-04) | Full game count, all personas, `assess`, `optimizer` exploit search | Opens or updates a GitHub issue when anything is out of band or a new exploit is found |
+| Nightly (`nightly.yml`, OPS-04; manual dispatch until its schedule is turned on, to save Actions minutes) | Full game count, all personas, `assess`, `optimize` exploit search, full E2E matrix, audit | Opens or updates a GitHub issue when a hard band fails, a check fails or the optimizer finds leads |
 | Local | Any command; `report.html` opens in a browser | — |
 
 ## 9. LLM analyst (optional)

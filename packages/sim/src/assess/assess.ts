@@ -36,7 +36,12 @@ export interface Situation {
 export const WIN_BONUS_BP = 250;
 
 /** The player's value when a rollout stops. */
-function rolloutValue(engine: Engine, state: GameState, player: string, stopWeek: number): number {
+export function rolloutValue(
+  engine: Engine,
+  state: GameState,
+  player: string,
+  stopWeek: number,
+): number {
   if (state.phase.kind === 'gameOver') {
     const { result } = state.phase;
     if (result.winner === player && result.reason === 'win')
@@ -47,7 +52,12 @@ function rolloutValue(engine: Engine, state: GameState, player: string, stopWeek
 }
 
 /** Plays every human seat with its bot until `stopWeek` starts or the game ends. */
-function playUntil(engine: Engine, state: GameState, bots: Map<string, Bot>, stopWeek: number) {
+export function playUntil(
+  engine: Engine,
+  state: GameState,
+  bots: Map<string, Bot>,
+  stopWeek: number,
+) {
   let guard = 0;
   while (state.phase.kind !== 'gameOver' && state.week < stopWeek) {
     const seat = state.pending?.player ?? (state.phase.kind === 'turn' ? state.phase.player : '');

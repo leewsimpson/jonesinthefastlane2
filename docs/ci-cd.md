@@ -57,7 +57,7 @@
 ├─ production.yml   # release published / dispatch: approval gate → migrate → deploy → smoke
 ├─ rollback.yml     # manual: roll back Pages + Worker to a chosen version
 ├─ visual.yml       # manual: render visual baselines (e2e/visual.spec.ts) on CI's runner and commit them
-└─ nightly.yml      # cron: full sim, full E2E matrix, audit
+└─ nightly.yml      # manual (cron when switched on): full sim, assess, optimize, full E2E matrix, audit
 ```
 
 ### Pipeline flow
