@@ -257,7 +257,7 @@ Life doesn't stop for your career. Relationships, family and life stages add the
 
 | ID | Requirement | Pri |
 |---|---|---|
-| FR-70 | **Weekend events:** after each week, draw from a weighted, condition-filtered deck (100+ events at launch). Many give the player a choice between 2–3 options. | M |
+| FR-70 | **Weekend events:** after each week, draw from a weighted, condition-filtered deck (~40 events at MVP per §16, 100+ by v1.0). Many give the player a choice between 2–3 options. | M |
 | FR-71 | Event categories: Work (layoffs, a bonus, a toxic boss), Money (market swings, a tax refund, scams), Life (a friend's wedding, a breakup, a new pet), Health (flu, burnout, a marathon), Housing (a rent hike, a mould problem, a roommate drama), Viral (a post blows up, getting cancelled), Climate (a heatwave raises the power bill, a flood). | M |
 | FR-72 | **News ticker:** global events that change the whole economy for N weeks (e.g. "AI model release: copywriting exposure +20%", "Rate cut: loans cheaper", "Housing bubble"). | M |
 | FR-73 | **Event chains:** multi-week storylines (e.g. a side hustle grows → hire help → get acquired). | S |
@@ -323,11 +323,32 @@ Use proven, modern retention techniques **with ethical guardrails**.
 | ID | Requirement | Pri |
 |---|---|---|
 | ENG-30 | No real-money loot boxes, gacha or paid randomness. | M |
-| ENG-31 | No pay-to-win. Monetization is opt-in **rewarded video** (e.g. watch an ad for extra credits), plus optionally cosmetics or expansion packs. Rewards, caps and which modes they apply to (e.g. excluded from Daily Run leaderboards) are specified in Phase 6. | M |
+| ENG-31 | No pay-to-win. Monetization is opt-in **rewarded video** (e.g. watch an ad for extra credits), plus optionally cosmetics or expansion packs. Rewards, caps and which modes they apply to are specified in §13.4. | M |
 | ENG-32 | No energy/wait timers that block play, and no FOMO countdowns that punish absence. | M |
 | ENG-33 | No manipulative notifications. Push/email is opt-in and capped at one per day (e.g. "Daily Run is ready"). | M |
 | ENG-34 | Optional session reminder ("You've played 60 min — Jones is also taking a break"). | S |
 | ENG-35 | Sensitive themes (debt, mental health, layoffs) are handled with satire aimed at systems, not at players. The credits include an "about real financial help" link. | S |
+
+### 13.4 Monetization spec (ENG-31)
+
+Written in Phase 6. **The MVP ships with no ads**: Classic mode has nothing outside the run to reward, and a reward
+inside a run would change its outcome. Rewarded video arrives with Career Mode meta-progression (ENG-15, Phase 8).
+
+| ID | Rule |
+|---|---|
+| MON-01 | **What a video gives:** "credits", a meta currency that only buys what meta-progression unlocks (cosmetic outfits and apartments, backgrounds, event packs, ENG-15). One video = the credits of about one finished run, so watching speeds unlocks up but never gates them. |
+| MON-02 | **Never in a run:** a video never changes `GameState` (cash, time, stats, rerolls, undo). Saves, replays and the engine stay ad-free (NFR-12), and every unlock is earnable by playing. |
+| MON-03 | **Excluded modes:** none in the Daily Run (ENG-17) or anything with a leaderboard; none during hotseat turns. Offered only on the run summary and the unlocks screen. |
+| MON-04 | **Caps:** at most 3 rewarded videos a day per device; the offer is hidden once the cap is reached. No streak or timer asks the player to come back for one (ENG-32). |
+| MON-05 | **Opt-in and calm:** the player taps "Watch a video for credits"; there are no interstitials, no autoplay and no copy that says watching helps us (provider policy). Closing early gives nothing and costs nothing. |
+| MON-06 | **Consent and privacy:** the ad SDK loads only after the player's ad consent (NFR-14), from a lazy chunk outside the initial bundle (NFR-10), and the CSP is widened only for the provider's hosts. Offline or no fill: the offer is hidden; the game never waits on an ad (NFR-11). |
+| MON-07 | **Paid extras** (optional, later): cosmetics or expansion packs at a fixed, shown price. No loot boxes, gacha or paid randomness (ENG-30). |
+
+**Provider (human-only decision).** Candidate: Google's H5 Games Ad Placement API (`adBreak` with `beforeReward` /
+`adViewed` / `adDismissed`), which supports rewarded placements in web games but is by application only and requires
+that rewards have no value outside the game and are explicitly opted into. Portal SDKs (Poki, CrazyGames) only apply
+if the game is distributed through those portals. The choice, the consent wording and the per-region consent
+platform are the owner's.
 
 ---
 

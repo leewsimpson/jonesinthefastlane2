@@ -318,7 +318,9 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
 | Side hustles, event chains, scam job offers, theft/scams, remote jobs, item breakage/resale | FR-45, FR-73, FR-47, FR-57, FR-46, FR-61 |
 | Audio: Howler, lo-fi adaptive soundtrack, SFX, volume sliders | NFR-05 |
 | Session reminder; opt-in "Daily Run is ready" notification (max one per day) | ENG-34, ENG-33 |
-| Nightly workflow: 10k-game sim, full E2E, audit | OPS-04 |
+| Nightly workflow: `nightly.yml` exists (Phase 6, manual dispatch); schedule it, raise to 10k games | OPS-04 |
+| Rewarded video for credits, per the monetization spec; ad consent | ENG-31, MON-01…07 |
+| Grow the event deck towards 100+ (event packs are an unlock) | FR-70 |
 
 **Notes**
 - Many small features: one PR per row is reasonable.

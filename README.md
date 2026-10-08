@@ -21,7 +21,8 @@ original is only a source of inspiration. Get a legal check before using the ori
 
 ## Requirement conventions
 
-- IDs: `FR-` functional, `NFR-` non-functional, `ENG-` engagement, `CI-`/`CD-`/`OPS-` pipeline, `SIM-` simulator.
+- IDs: `FR-` functional, `NFR-` non-functional, `ENG-` engagement, `MON-` monetization, `CI-`/`CD-`/`OPS-` pipeline,
+  `SIM-` simulator.
 - Priority: **M** = Must (MVP), **S** = Should (v1.0), **C** = Could (post-launch).
 - All numbers (prices, wages, hours) are **starting balance values**. They live in data files and get tuned in playtesting.
 
