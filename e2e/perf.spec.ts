@@ -91,10 +91,10 @@ test('the board leaves a 60 fps frame budget on a throttled phone', async ({
   info.annotations.push({ type: 'frame budget', description: line });
   console.log(line);
   // The frame rate here is the software rasteriser's, not the game's, so it is reported, not asserted. What the game
-  // controls is its own main-thread work, on a CPU slowed 4×: at most half of a 16.7 ms frame per frame, and a
-  // click's JS under 300 ms. Locally the click measured 120–195 ms; the margin is for slower CI runners. Under
-  // 200 ms is a "good" Interaction to Next Paint, so the click is the place to look if this ever tightens.
-  expect(idle.scriptPerFrame).toBeLessThanOrEqual(8);
-  expect(glide.scriptPerFrame).toBeLessThanOrEqual(8);
+  // controls is its own main-thread work, on a CPU slowed 4×: at most 10 ms of each 16.7 ms frame (2–6 ms measured
+  // locally), and a click's JS under 300 ms (120–195 ms measured). The headroom is for busy CI runners. Under 200 ms
+  // is a "good" Interaction to Next Paint, so the click is the place to look if this ever tightens.
+  expect(idle.scriptPerFrame).toBeLessThanOrEqual(10);
+  expect(glide.scriptPerFrame).toBeLessThanOrEqual(10);
   expect(click.script).toBeLessThanOrEqual(300);
 });

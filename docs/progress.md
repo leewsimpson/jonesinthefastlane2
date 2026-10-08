@@ -433,3 +433,196 @@ client-only changes, so sim KPIs and save hashes are untouched.
   arrival. `play-a-week` reads the ticker from the dock. All E2E specs pass locally on desktop Chromium and a
   430×735 Chromium phone viewport; mobile WebKit runs in CI. Checked by screenshot at 430×932, 430×735 and 384×832, and
   at 1366×800 for the desktop layout.
+
+
+## Phase 6 — MVP hardening & launch — in progress 2026-10-08 (human-only steps open)
+
+Branch `phase-6-mvp-hardening`. Built everything in the plan that doesn't need a person, an account or a device;
+the open items are listed under "Left for the owner" below.
+
+- **Save migration test (tech-stack §4):** `packages/sim/scripts/capture-save.ts` captured a v3 save from the beta
+  build (engine 0.5.0, content `0cfaeef41225`), parked on a weekend choice:
+  `apps/web/src/persistence/__fixtures__/save-v3-beta.json`. `persistence/beta-save.test.ts` loads every fixture,
+  reopens the choice, plays three more weeks and round-trips through IndexedDB, and requires a fixture for the
+  current `SAVE_VERSION`. Capture a new fixture before each schema bump.
+- **IP check (art-direction §9.1):** the `hitech-u` art file, atlas frame, manifest and prompt are now `upskill-u`, and
+  the frame alias is gone. The About dialog says the game is inspired by, and not affiliated with, the original.
+  Legal review of the title and names is **human-only**.
+- **Privacy, consent, credits (NFR-14, ENG-35):** About & privacy dialog on the title screen (privacy notice,
+  "About real financial help" links for the US, UK, Australia, Canada and New Zealand, credits, IP note); a
+  "Share anonymous play data" setting, off by default, that any analytics loader must check; one privacy line on the
+  title screen. The link targets couldn't be fetched from the build container: check them before release.
+- **Monetization spec (ENG-31):** game-requirements §13.4, MON-01…07. The MVP ships without ads; rewarded video for
+  meta credits comes with Phase 8 meta-progression, never inside a run or the Daily Run, capped at 3 a day.
+- **Visual snapshots (tech-stack §6, CI-03):** `e2e/visual.spec.ts`: title, setup, game, details and wrap-up in light
+  and dark. Baselines come from `visual.yml` (dispatch) on CI's runner: fonts and rasterising differ between
+  machines. Until a project has baselines its comparisons are skipped with a report note. The E2E matrix itself
+  (desktop Chromium + mobile WebKit on the preview) was already in place.
+- **Performance (NFR-10):** Lighthouse's mobile profile is a Moto G Power (2022) on slow 4G. On the local production
+  build (3 runs) it gave LCP 1.97–2.42 s, time to interactive 2.17–2.47 s, performance 0.95–0.98. `lighthouserc.json` now fails above
+  3 s for either. `e2e/perf.spec.ts` throttles the CPU 4× at 412×915: the board's JS is 2.0–6.1 ms per frame idle
+  and 2.9–6.5 ms gliding (budget 10), a travel click 120–195 ms (budget 300). The headless frame rate (10–29 fps) is
+  SwiftShader's software WebGL, not the game: with the canvas hidden it was 60 fps, and the JS profile is under
+  1% of the time. Initial JS is now measured as the entry plus every modulepreloaded chunk (`apps/web/.size-limit.js`):
+  94.2 kB gz, was 85.6 kB with the old glob.
+- **Exploit search (SIM-09, OPS-04):** the `optimizer` bot and `pnpm sim optimize` (simulator §3). 20 games vs
+  Standard Jones (top 4 × 3 rollouts × 4 weeks, 451 s on 4 workers): optimizer won 19/20 in a median week 31,
+  `balanced` 8/20 in week 33 on the same seeds. 11 leads, none seen more than twice, all in weeks 1–6 (transport mode,
+  social upkeep, an early gym pass): no hole in the economy, but the utility scorer is short-sighted early, which
+  also makes Jones beatable by a careful player. Look at it with the playtest tuning. `nightly.yml` runs the balance run,
+  `assess`, `optimize`, the full E2E matrix and the audit and opens a "Nightly report" issue. It is manual dispatch
+  only (about 40 Actions minutes a run) until the owner turns on its schedule.
+- **Earlier phases, fixed on the way:**
+  - NFR-03: a NeoBank with every account open lists more than the 30 row keys, so its last rows had no shortcut.
+    Rows past them take Shift+letter (`⇧A`); `ui/common/hotkeys.test.ts` checks a fully stocked NeoBank.
+  - CD-06: `main.yml` opens an issue when the main deploy fails, like `production.yml`.
+  - tech-stack §6 Component: Testing Library on happy-dom; `ui/panels/panels.test.tsx` covers the action sheet and
+    the end-week check.
+  - `runWorkers` (sim pool) put every job of a small run in the first worker's batch; batches are now an even share,
+    so `assess` and `optimize` use every core.
+  - Docs: FR-70 said 100+ events at launch while §16 said ~40; it now says ~40 at MVP and 100+ by v1.0 (Phase 8).
+- **Guardrail review (ENG-30…33, §13.3):** no purchases, loot boxes or paid randomness (crypto and gambling-flavoured
+  events use in-game cash only); the only clock is the in-game week, so no real-time energy or wait timers; no
+  countdowns or FOMO copy in either locale file; no notification or push code. ENG-35: debt, layoffs and burnout copy
+  aims at systems (tone guide, Appendix) and the credits link to real help.
+- **Exit criteria:**
+  - Production deploy and rollback rehearsed: **not yet**. Needs a `production` reviewer (**human-only**). Rehearse
+    the rollback on the `main` alias first (ci-cd.md §6), then a production release and a production rollback;
+    record the run links here.
+  - All **M** requirements met or explicitly deferred: the table below. Six rows are Partly, each with its owner.
+- **Left for the owner (human-only):** the deploy and rollback rehearsal; playtest rounds (first paycheck under
+  3 min, 60–120 s weeks, hardship, the persona bands, flat weekend choices, the early-game scorer gap above) and the
+  KPI band tightening that follows them; a try on a real 2022 mid-range phone; legal/IP review of the title and
+  names; privacy notice wording; the ad provider; turning on Cloudflare Web Analytics; dispatching `visual.yml`
+  after deliberate visual changes; scheduling `nightly.yml`; confirming Dependabot alerts are on (CI-06).
+- **Deviations:**
+  - The board's 60 fps can't be measured headless (no GPU); `e2e/perf.spec.ts` budgets the game's own main-thread
+    work instead, and the real-device check stays human-only.
+  - `nightly.yml` is manual dispatch, not a cron (Actions minutes, as with CI-04).
+  - Deferred to Phase 8 rows: car transport (FR-02), LeaseLord renew/dispute and bidding wars, JobLink networking,
+    random thrift finds (§5, ENG-12), Reputation/Clout (FR-20), meme stocks, BNPL and personal loans (FR-53, FR-54),
+    sound (ENG-01 via NFR-05). `/daily` in the smoke test → Phase 7 (CD-06).
+- **Notes for later phases:**
+  - Local Playwright in the cloud container: its Chromium build may not match `@playwright/test`; link the
+    installed one at the path the error names. Visual baselines made there would not match CI's.
+  - `pnpm sim optimize` takes about 55 s a game at the defaults; `--candidates 2 --rollouts 1 --horizon 2` is a
+    quick look.
+
+### M requirement audit (2026-10-08)
+
+Scope rule: game-requirements §16. An M row that asks for more than the MVP is Deferred to the phase that owns it.
+
+#### game-requirements.md
+
+| ID | Status | Evidence / reason |
+|---|---|---|
+| FR-01 | Met | `balance.json` weekMinutes 3600; sleep through `weeklyDrift` + housing `weekly` in `pipeline/order.ts` statDrift |
+| FR-02 | Deferred | walk, e-scooter, transit, rideshare in `city.json`; car → Phase 8 row (FR-02) |
+| FR-03 | Met | `core/properties.test.ts` "applies what the preview promised", "never ... consumes RNG when previewing" |
+| FR-04 | Met | `actions/plan.ts` restBonusEnergyPerHour; End Week always offered (`properties.test.ts`) |
+| FR-05 | Met | `pipeline/order.ts` defaultPipeline; pinned by `pipeline/order.test.ts` |
+| FR-05a | Met | per-round marketMove/news in `order.ts`; `core/world.test.ts` "same economy ... whatever they do" |
+| FR-06 | Met | `Setup.tsx` MAX_HUMANS + Jones toggle; `ui/week/Handoff.tsx` |
+| FR-10 | Met | `Setup.tsx` presets + custom sliders; `balance.json` goals.presets |
+| FR-11 | Met | `pipeline/goalCheck.ts` round-end check, overshoot tiebreak; `goals/goals.test.ts` |
+| FR-13 | Met | `ui/hud/GoalRings.tsx`; ring animation in `WeekSequence.tsx` |
+| FR-14 | Met | `economy.properties.test.ts` "never softlocks"; `parents-basement` rent 0 in `housing.json` |
+| FR-20 | Partly | MVP stats simulated and shown; Reputation/Clout → Phase 8 row, Age and Relationship → Phase 9 |
+| FR-21 | Met | `balance.json` statModifiers low-energy -20%; modifiers chips in `PlanChips.tsx` |
+| §5 Your Place | Met | `city.json` nap/wfh/eat-groceries/host-friends/subscription-audit |
+| §5 LeaseLord | Deferred | rent/move + renewal hikes; renew/dispute and bidding wars → Phase 8 row (§5) |
+| §5 JobLink Hub | Deferred | `apply-job` with screening and requirements; networking events → Phase 8 row (§5) |
+| §5 UpSkill U | Met | enroll/enroll-loan/study/drop-course; credentials on completion (no separate exam action) |
+| §5 Fulfillment | Met | `work-fulfillment`; fulfillment ladder in `jobs.json` |
+| §5 Burger Bot | Met | burger-combo, hang-out, work, shop |
+| §5 FreshMart | Met | groceries need fridge (`items.json`), ready-meal, prices via price index |
+| §5 ThriftUp | Deferred | outfits for every dress tier; random thrift finds → Phase 8 row (§5, ENG-12) |
+| §5 Circuit Planet | Met | laptop, headphones, e-scooter, fridge, air fryer, smart lock (`items.json`) |
+| §5 NeoBank | Met | deposit/withdraw/borrow/repay over savings, index fund, crypto (MVP scope) |
+| §5 GigHub | Met | `gig-shift` at location `*` (§16: "GigHub as an action") |
+| FR-30 | Met | board, segments and transportModes in `cities/default/city.json` |
+| FR-33 | Met | `content/data/cities/default/` merged into one City (`content/src/index.ts`); name pools come with Phase 9 |
+| FR-40 | Met | `jobs.json` fields: wage, level, dressTier, minExperience, requires, aiExposureBp, benefits, remote |
+| FR-41 | Met | 20 jobs over 7 ladders (`jobs.json`); pinned in `schemas.test.ts` |
+| FR-42 | Met | `pipeline/jobChecks.ts` (base x exposure x news; hoursCut/restructure/layoff with warning); teaser `teaser.layoff` |
+| FR-43 | Met | `actions/work.ts` pay per shift + rating; `e2e/first-paycheck.spec.ts` |
+| FR-44 | Met | `actions/work.ts` gig: rolled pay, news surge (`gigPayBp`), deactivation, no ladder XP |
+| FR-50 | Met | `balance.json` inflation weeklyDriftBp + wageCatchUpBp; `grocery-shock` news |
+| FR-51 | Met | `housing.json` 5 tiers with weekly buffs; leaseWeeks + renewalHikeBp; theft cards keyed to cheap housing |
+| FR-52 | Met | 5 subs in `subscriptions.json`, weekly charge in `pipeline/bills.ts`, `subscription-audit` action |
+| FR-53 | Met (MVP) | savings, index fund, crypto with crash and rug-pull; meme stocks → Phase 8 row |
+| FR-54 | Met (MVP) | card, student loan, collections (`pipeline/debts.ts`); BNPL and personal loans → Phase 8 row |
+| FR-55 | Met | `balance.json` regimes steady/bull/bear/crash/ai-bubble; `pipeline/market.test.ts` |
+| FR-60 | Met | `items.json` + `ai-assistant` sub; fridge gate, air-fryer dinner, smart lock `notItems` on `porch-pirate` |
+| FR-70 | Met | 43 weighted, conditioned cards; FR-70 now says ~40 at MVP, 100+ by v1.0 (Phase 8 row) |
+| FR-71 | Met | all 7 categories: work 7, money 8, life 7, health 7, housing 6, viral 4, climate 4 |
+| FR-72 | Met | 11 news cards with N-week modifiers (`news.json`, `pipeline/news.ts`) |
+| FR-74 | Met | `content/src/schemas.ts` + checkContent; `schemas.test.ts` "finds broken event, news, quest ... references" |
+| FR-80 | Met | Jones uses `listActions`/`reduce` like humans (`core/reduce.ts`, `ai/utility.ts`) |
+| FR-82 | Met | `pipeline/rivalFeed.ts` (own posts + react-* moments); 52 `feed.*` lines |
+| FR-83 | Met | persona levers only (best-move rate, runners-up, bottleneck) in `data/ai.json` |
+| FR-84 | Met | feed and owner lines committed in `content/locales/en.json`; no LLM client in apps |
+| FR-112 | Deferred | relationships are Phase 9 (plan Phase 9 step 7); §16 puts §9 in v1.0 |
+| FR-113 | Deferred | Phase 9 step 7 guardrail review |
+| FR-114 | Deferred | Phase 9 step 7 (no sensitive events in today's deck; settings toggle comes with Phase 9) |
+| FR-115 | Deferred | Phase 9 step 7 |
+| §12 Classic | Met | `Setup.tsx` week limit optional; goals race vs Jones/hotseat |
+| ENG-01 | Partly | `fx/map.ts`, `FxLayer.tsx`, coin bursts, shake; sound → Phase 8 audio (NFR-05) |
+| ENG-02 | Partly | smart defaults Q/W/R, `game/pace.ts`; 60–120 s week needs playtesters (**human-only**) |
+| ENG-03 | Met | `fx/Reveal.tsx` REVEAL_MAX_S = 1.5, click skips |
+| ENG-10 | Met | `pipeline/teasers.ts` + 11 `teaser.*` lines; `teasers.test.ts` |
+| ENG-11 | Met | `quests.json` 13 quests, `balance.json` quests.active 2; `pipeline/quests.test.ts` |
+| ENG-12 | Met | weekend deck, viral cards, market regimes; (no random thrift finds, see §5 ThriftUp) |
+| ENG-13 | Met | `nearMiss` events (rival.nearMissBp) shown in `WeekSequence.tsx` |
+| ENG-14 | Met | rival score rings in `Hud.tsx`; `overtaken` events + feed overtook/fell-behind |
+| ENG-20 | Partly | week-1 coach, `e2e/first-paycheck.spec.ts`; under 3 min with new testers needs playtesters (**human-only**) |
+| ENG-21 | Met | `game/review.ts` + `Summary.tsx` (timeline, best/worst week, chart, story); unlocks wait for Phase 8 |
+| ENG-30 | Met | guardrail review below: no purchases, loot boxes or paid randomness |
+| ENG-31 | Met (spec) | game-requirements §13.4 MON-01…07; MVP ships without ads; provider is the owner's call |
+| ENG-32 | Met | guardrail review below: no real-time timers or countdowns |
+| ENG-33 | Met | guardrail review below: no notification or push code |
+| NFR-01 | Met | `art/` assets on board and busts with emotion states; light/dark (`index.css`, board night grade) |
+| NFR-02 | Met | portrait/landscape layouts; `e2e/phone-layout.spec.ts` |
+| NFR-03 | Met | keys for every row, Shift+letter past 30 rows (`ui/common/hotkeys.test.ts`, stocked NeoBank) |
+| NFR-04 | Met | `e2e/a11y.spec.ts` axe WCAG 2.2 A/AA light+dark; `settings.ts` motion/text size; `STAT_ICON` |
+| NFR-07 | Met | tone guide (game-requirements Appendix); copy pass recorded in progress.md Phase 5 |
+| NFR-10 | Partly | 94 kB gz initial JS (all preloaded chunks); LCP/TTI ≤ 3 s budgets on Lighthouse mobile; `e2e/perf.spec.ts` frame budget; a real 2022 phone not yet tried (**human-only**) |
+| NFR-11 | Met | `vite.config.ts` VitePWA precache; Dexie saves (`persistence/saves.ts`) |
+| NFR-12 | Met | `rng/streams.ts`; `core/world.test.ts`; replay property test; cross-runtime hash in `e2e/play-a-week.spec.ts` |
+| NFR-13 | Met | `store/game.ts` save() after every dispatch and at week end; slots in `saves.test.ts` |
+| NFR-14 | Met | no account; nothing sent; opt-in `shareData` setting; About & privacy notice (wording review **human-only**) |
+| NFR-15 | Met | values in `balance.json`/`ai.json`/city files; no balance literals found in `packages/engine/src` |
+
+#### ci-cd.md
+
+| ID | Status | Evidence / reason |
+|---|---|---|
+| CI-01 | Met | `ci.yml` checks: install (cached), `biome ci`, typecheck, content:validate, test, build; push main + dispatch |
+| CI-03 | Met | `preview.yml` E2E step against preview URL; `playwright.config.ts` desktop-chromium + mobile-webkit |
+| CI-05 | Met | `apps/web/.size-limit.js` counts entry + modulepreloads; Lighthouse budgets incl. LCP/TTI |
+| CI-06 | Met | `codeql.yml`; `pnpm audit --audit-level high` in `ci.yml`; secret scanning + push protection on (GitHub API); Dependabot alerts setting not readable through the proxy |
+| CI-07 | Met | no ruleset by decision; CI runs on push to main (`ci.yml`) |
+| CD-01 | Met | `preview.yml`: label gate, `versions upload --preview-alias pr-<n>`, Pages `--branch pr-<n>`, sticky comment |
+| CD-02 | Met | `main.yml`: D1 migrate, Worker `--preview-alias main`, Pages `--branch main`, smoke + smoke E2E, `web-dist-<sha>` |
+| CD-03 | Met | `production.yml`: release/dispatch, `environment: production`, downloads `web-dist-<sha>`, no rebuild, runtime `config.json` |
+| CD-04 | Met | migrate step before Worker deploy in `main.yml`/`production.yml`; no migrations exist yet (`apps/api/migrations` absent) |
+| CD-05 | Met | `rollback.yml`, runbook ci-cd.md §6; rehearsal is the open exit criterion |
+| CD-06 | Partly | `smoke.sh` `/`, `/healthz` version; failure issues from `main.yml` and `production.yml`; `/daily` → Phase 7 row |
+| OPS-01 | Met | Cloudflare token only in env-scoped jobs (`environment:` preview/production); Sentry/PostHog keys deferred with those tools |
+| OPS-02 | Met | every `uses:` pinned to a 40-char SHA; every workflow has top-level `permissions: contents: read` |
+| OPS-03 | Met | preview `cancel-in-progress: true`; `production` group shared with `rollback.yml`, never cancelled |
+
+#### tech-stack.md (§4 Saves, §6 Testing Strategy)
+
+| ID | Status | Evidence / reason |
+|---|---|---|
+| §4 Saves | Met | `engine/src/save/index.ts` SAVE_VERSION + SAVE_MIGRATIONS; Zod `persistence/schema.ts`; `persistence/beta-save.test.ts` with `save-v3-beta.json` |
+| §6 Unit | Met | Vitest across engine/content/sim/web (310 tests) |
+| §6 Property-based | Met | `economy.properties.test.ts` (money, no softlock), `properties.test.ts` (ranges, replay, preview purity) |
+| §6 Content | Met | `content/src/schemas.test.ts` cross-reference tests; `pnpm content:validate` in CI |
+| §6 Balance | Met | `packages/sim` KPI bands in `content/sim/kpi-bands.json`; run locally per CI-04 |
+| §6 Component | Met | Testing Library on happy-dom: `ui/panels/panels.test.tsx` |
+| §6 E2E | Met | `e2e/play-a-week.spec.ts` (week 1, end week, reload, continue) on desktop + mobile projects |
+| §6 Accessibility | Met | `e2e/a11y.spec.ts` axe on main screens, light and dark |
+| §6 Visual | Met | `e2e/visual.spec.ts` light/dark; baselines from `visual.yml` on CI's runner |
+| §6 Performance | Met | Lighthouse CI budgets + `e2e/perf.spec.ts` |
