@@ -339,7 +339,7 @@ A generated asset is accepted only if:
 | `your-place-1`…`5` | Your Place | One exterior per housing tier: parents' suburban house (basement window lit), shared house, studio in a block, apartment, smart condo | Tier 1: a mattress visible through the basement window. Tier 5: everything is a touchscreen, including the door | Varies by tier, cosiest at the top |
 | `leaselord` | LeaseLord | A rental office built in the shape of a giant smartphone | A huge key on a chain and a queue of tenants holding application folders | Teal, slate, coral |
 | `joblink` | JobLink Hub | A glass recruitment office | A lilac robot "screener" at the door sorting CVs into a bin | Sky, cream, lilac |
-| `hitech-u` | Hi-Tech U Online* | A small campus building with a graduation-cap roof and a giant laptop in front | A diploma pinned to a ball and chain | Mustard, teal |
+| `upskill-u` | UpSkill U Online* | A small campus building with a graduation-cap roof and a giant laptop in front | A diploma pinned to a ball and chain | Mustard, teal |
 | `fulfillment` | Fulfillment Center | A big warehouse with loading bays and conveyor belts | Lilac robots outnumber the one human picker, who wears a step-counter | Slate, coral, lilac |
 | `burger-bot` | Burger Bot | See §5.4 | Robot arm cooking, delivery robots queuing | Coral, mustard, lilac |
 | `freshmart` | FreshMart | A corner grocery store with fruit crates outside | The price tags on the crates are tiny pictograms of rising arrows | Mint, coral, cream |
@@ -348,8 +348,8 @@ A generated asset is accepted only if:
 | `neobank` | NeoBank | A sleek bank pod with a huge coin-slot door | A vault door shaped like an app icon. Small crypto coins orbit the roof | Teal, mustard |
 | `gighub` | GigHub | A street kiosk with a phone on a pole | A scooter, an e-bike and a delivery bag piled up, with a surge-pricing lightning bolt | Coral, lilac |
 
-\* **IP check:** [README](../README.md) says "Hi-Tech U" is the original game's location name. Rename this location before any
-public build, for example **"UpSkill U"** or **"Degree.ai"**.
+\* **IP check:** [README](../README.md) says "Hi-Tech U" is the original game's location name. Renamed to UpSkill U
+(art file, atlas frame and location ID `upskill-u`) in Phase 6.
 
 ### 9.2 Characters
 
