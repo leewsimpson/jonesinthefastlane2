@@ -204,7 +204,7 @@ describe('job checks (FR-42, FR-43)', () => {
       p.trackMinutes.tech = 240; // ⌊√4⌋ = 2 points
     });
     expect(engine.preview(skilled, work(60))).toMatchObject({
-      plan: { modifiers: [{ source: 'track.tech', target: 'workOutput', bp: 1000 }] },
+      plan: { modifiers: [{ source: 'modifier.skill.tech', target: 'workOutput', bp: 1000 }] },
     });
   });
 });

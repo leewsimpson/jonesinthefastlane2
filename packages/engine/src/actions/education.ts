@@ -1,7 +1,10 @@
 /** UpSkill U (§5): enrol in a course, study hours toward its credential and its skill track. */
+import type { LocationAction } from '@fastlane/content';
+import type { PlanCtx } from '../core/context.ts';
 import { price } from '../economy/prices.ts';
 import { transfer } from '../money/ledger.ts';
-import { scaleGain } from '../stats/stats.ts';
+import { collectModifiers, scaleGain } from '../stats/stats.ts';
+import type { Enrollment } from '../types/state.ts';
 import {
   type ActionHandler,
   actionCause,
@@ -57,12 +60,48 @@ export const dropCourse: ActionHandler = {
   },
 };
 
-/** Study toward the enrolled course. Study-output modifiers scale the progress (FR-21). */
+/** Minutes of study that just finish the enrolled course, given the study-output modifiers (FR-21). */
+export function finishMinutes(
+  ctx: PlanCtx,
+  def: LocationAction,
+  enrollment: Enrollment,
+): number | null {
+  const course = ctx.content.city.courses.find((c) => c.id === enrollment.course);
+  if (!course) return null;
+  const left = course.studyMinutes - enrollment.minutes;
+  const modifiers = def.outputTarget
+    ? collectModifiers(ctx.content, ctx.player, def.outputTarget)
+    : [];
+  let minutes = Math.max(1, left);
+  while (scaleGain(minutes, modifiers) < left) minutes += 1;
+  while (minutes > 1 && scaleGain(minutes - 1, modifiers) >= left) minutes -= 1;
+  return minutes;
+}
+
+/**
+ * Study toward the enrolled course. Study-output modifiers scale the progress (FR-21). A block longer than the
+ * course needs is cut to what finishes it, so no time or energy is spent past the credential; the options offer
+ * that exact length in place of the blocks that would overshoot.
+ */
 export const study: ActionHandler = {
-  options: (_ctx, def) => durationOptions(def),
+  options(ctx, def) {
+    const durations = def.durations ?? [];
+    const enrollment = ctx.player.enrollment;
+    const finish = enrollment ? finishMinutes(ctx, def, enrollment) : null;
+    if (finish === null) return durationOptions(def);
+    return [...durations.filter((m) => m < finish), finish].map((minutes) => ({ minutes }));
+  },
+  durations(ctx, def) {
+    const enrollment = ctx.player.enrollment;
+    const finish = enrollment ? finishMinutes(ctx, def, enrollment) : null;
+    return finish === null ? [] : [finish];
+  },
   plan(ctx, def, params) {
-    if (!ctx.player.enrollment) return fail('NOT_ENROLLED');
-    return planFromData(ctx, def, params);
+    const enrollment = ctx.player.enrollment;
+    if (!enrollment) return fail('NOT_ENROLLED');
+    const finish = finishMinutes(ctx, def, enrollment);
+    const minutes = Math.min(params.minutes ?? def.minutes, finish ?? Number.POSITIVE_INFINITY);
+    return planFromData(ctx, def, { ...params, minutes });
   },
   apply(ctx, def, plan) {
     const { player, content } = ctx;

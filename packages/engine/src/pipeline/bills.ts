@@ -1,6 +1,6 @@
 /** P2: rent, lease renewals, eviction and subscriptions (FR-51, FR-52, FR-14). */
 import type { PlayerCtx } from '../core/context.ts';
-import { price } from '../economy/prices.ts';
+import { price, roundPrice } from '../economy/prices.ts';
 import { newsEffect } from '../hooks/news.ts';
 import { applyBp, BP_ONE } from '../math/fixed.ts';
 import { transfer } from '../money/ledger.ts';
@@ -55,7 +55,9 @@ function renewLease(ctx: PlayerCtx): void {
   if (!tier) throw new Error(`unknown housing ${housing.tier}`);
   const { min, max } = content.balance.housing.renewalHikeBp;
   const news = newsEffect(content, world, 'rentHikeBp');
-  const hiked = applyBp(housing.rent, Math.max(0, BP_ONE + ctx.rng('bills').int(min, max) + news));
+  const hiked = roundPrice(
+    applyBp(housing.rent, Math.max(0, BP_ONE + ctx.rng('bills').int(min, max) + news)),
+  );
   const from = housing.rent;
   housing.rent = Math.max(hiked, price(world, tier.rent));
   housing.leaseWeeksLeft = content.balance.housing.leaseWeeks;

@@ -22,10 +22,10 @@
     "weeks": 5,
     "goal": {
       "kind": "save",
-      "amount": 50000
+      "amount": 150000
     },
     "reward": {
-      "cash": 5000
+      "cash": 7500
     }
   },
   {
@@ -37,10 +37,10 @@
     },
     "goal": {
       "kind": "save",
-      "amount": 200000
+      "amount": 500000
     },
     "reward": {
-      "cash": 15000
+      "cash": 20000
     }
   },
   {
@@ -143,7 +143,7 @@
   {
     "id": "touch-grass",
     "weight": 4,
-    "weeks": 3,
+    "weeks": 4,
     "when": {
       "stats": {
         "social": {
@@ -154,7 +154,7 @@
     "goal": {
       "kind": "stat",
       "stat": "social",
-      "atLeast": 60
+      "by": 15
     },
     "reward": {
       "stats": {
@@ -176,7 +176,7 @@
     "goal": {
       "kind": "stat",
       "stat": "health",
-      "atLeast": 85
+      "by": 10
     },
     "reward": {
       "stats": {
@@ -199,7 +199,7 @@
     "goal": {
       "kind": "stat",
       "stat": "happiness",
-      "atLeast": 75
+      "by": 10
     },
     "reward": {
       "stats": {

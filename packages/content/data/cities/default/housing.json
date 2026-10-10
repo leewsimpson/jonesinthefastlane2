@@ -4,7 +4,7 @@
     "rent": 0,
     "deposit": 0,
     "minCreditScore": 300,
-    "weekly": { "happiness": -2 }
+    "weekly": { "happiness": -4, "social": -3 }
   },
   {
     "id": "shared-house",

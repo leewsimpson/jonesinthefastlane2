@@ -20,7 +20,7 @@ import {
 } from '../actions/plan.ts';
 import type { PlayerCtx } from '../core/context.ts';
 import { price, wage } from '../economy/prices.ts';
-import { goalValues, wellbeing } from '../goals/goals.ts';
+import { goalValues, progressBp, scoreBp, wellbeing } from '../goals/goals.ts';
 import {
   effectiveExposure,
   jobById,
@@ -494,14 +494,73 @@ export function scoreChoices(
 }
 
 /**
+ * Jones's score lead over the best other player, in basis points of a full score. Scores are public (the standings
+ * every player sees), so reading them is within FR-80.
+ */
+export function scoreLead(content: GameContent, state: Readonly<GameState>, id: string): number {
+  const score = (p: Readonly<PlayerState>) =>
+    scoreBp(progressBp(goalValues(content, p), state.config.goals));
+  let rival = Number.NEGATIVE_INFINITY;
+  for (const p of state.players) if (p.id !== id) rival = Math.max(rival, score(p));
+  return Number.isFinite(rival) ? score(playerById(state, id)) - rival : 0;
+}
+
+/**
+ * The persona with the rubber band applied (FR-83): ahead by more than the threshold, it takes the best move less
+ * often, picks from more runners-up and leans toward risk; behind by that much, the reverse, and it finds the best
+ * move more often. It changes how Jones chooses, never the state or the rules.
+ */
+export function bandedPersona(
+  content: GameContent,
+  state: Readonly<GameState>,
+  id: string,
+  persona: Persona,
+): Persona {
+  const band = content.ai.rubberBand;
+  const lead = scoreLead(content, state, id);
+  const past = Math.abs(lead) - band.thresholdBp;
+  if (past <= 0) return persona;
+  const strengthBp = Math.min(BP_ONE, Math.floor((past * BP_ONE) / band.spanBp));
+  if (lead > 0)
+    return {
+      ...persona,
+      bestMoveRateBp: clamp(
+        persona.bestMoveRateBp - applyBp(band.bestMoveDropBp, strengthBp),
+        0,
+        BP_ONE,
+      ),
+      runnersUp: persona.runnersUp + Math.round((band.runnersUpExtra * strengthBp) / BP_ONE),
+      riskAppetiteBp: clamp(
+        persona.riskAppetiteBp + applyBp(band.riskShiftBp, strengthBp),
+        0,
+        BP_ONE,
+      ),
+    };
+  return {
+    ...persona,
+    bestMoveRateBp: clamp(persona.bestMoveRateBp + applyBp(band.catchUpBp, strengthBp), 0, BP_ONE),
+    riskAppetiteBp: clamp(
+      persona.riskAppetiteBp - applyBp(band.riskShiftBp, strengthBp),
+      0,
+      BP_ONE,
+    ),
+  };
+}
+
+/**
  * A policy from a persona. It takes its top move `bestMoveRateBp` of the time, otherwise one of its top few that
  * still beat ending the week (FR-83: difficulty is how often it picks the best move, never bent rules).
  */
-export function utilityPolicy(content: GameContent, persona: Persona): AiPolicy {
+export function utilityPolicy(content: GameContent, base: Persona, rubberBand = false): AiPolicy {
   const { longerSlackBp } = content.ai.utility;
-  const { runnersUp } = persona;
+  /** The persona as it plays this turn: the base persona, nudged by the rubber band if it is on. */
+  const personaFor = (state: Readonly<GameState>, id: string) =>
+    rubberBand ? bandedPersona(content, state, id, base) : base;
   return {
     chooseAction(options, rng, state) {
+      if (state.phase.kind !== 'turn') throw new Error('AI actions need a turn');
+      const persona = personaFor(state, state.phase.player);
+      const { runnersUp } = persona;
       const order = ranked(scoreOptions(content, state, options, persona));
       const endWeek = options.find((o) => o.action.type === 'endWeek');
       if (!endWeek) throw new Error('End Week is always available');
@@ -511,11 +570,12 @@ export function utilityPolicy(content: GameContent, persona: Persona): AiPolicy 
       return longest(order, pick, longerSlackBp);
     },
     chooseOption(decision, rng, state) {
+      const persona = personaFor(state, decision.player);
       const order = ranked(scoreChoices(content, state, decision, persona));
       // Every option is a real choice here, so "beats doing nothing" doesn't apply: shift scores to be positive.
       const low = Math.min(...order.map((o) => o.score));
       const shifted = order.map((o) => ({ ...o, score: o.score - low + 1 }));
-      const pick = choose(shifted, persona, runnersUp, rng);
+      const pick = choose(shifted, persona, persona.runnersUp, rng);
       if (!pick) throw new Error('a decision has options');
       return pick.option;
     },
@@ -524,7 +584,7 @@ export function utilityPolicy(content: GameContent, persona: Persona): AiPolicy 
 
 /** Jones (FR-80): each AI seat plays its own persona from `content.ai.rivals` (FR-83). */
 export function rivalPolicy(content: GameContent): AiPolicy {
-  const policies = new Map(content.ai.rivals.map((p) => [p.id, utilityPolicy(content, p)]));
+  const policies = new Map(content.ai.rivals.map((p) => [p.id, utilityPolicy(content, p, true)]));
   const forPlayer = (state: Readonly<GameState>, id: string) => {
     const persona = playerById(state, id).persona;
     const policy = persona === null ? undefined : policies.get(persona);

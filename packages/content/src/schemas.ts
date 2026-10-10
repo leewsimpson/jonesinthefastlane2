@@ -235,6 +235,10 @@ export const BalanceSchema = z
       netWorthJump: Cents,
       /** "Jones is close" teaser: a rival's score within this many basis points of the player's, or ahead. */
       closeBp: Chance,
+      /** Jones's week is quiet if its score and every goal moved by less than this many basis points... */
+      quietBp: Chance,
+      /** ...and its net worth moved by less than this much, in cents. Otherwise it posts a busy week, not a quiet one. */
+      quietNetWorth: Cents,
     }),
   })
   .superRefine((b, ctx) => {
@@ -708,6 +712,7 @@ export function contentStringKeys(content: GameContent): string[] {
     ...[...new Set(city.jobs.map((j) => j.ladder))].map((l) => `ladder.${l}`),
     ...city.courses.map((c) => `course.${c.id}`),
     ...balance.skills.tracks.map((t) => `track.${t}`),
+    ...balance.skills.tracks.map((t) => `modifier.skill.${t}`),
     ...city.housing.map((h) => `housing.${h.id}`),
     ...city.items.map((i) => `item.${i.id}`),
     ...city.subscriptions.map((s) => `subscription.${s.id}`),

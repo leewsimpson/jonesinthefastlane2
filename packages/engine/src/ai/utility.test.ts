@@ -4,7 +4,7 @@ import { edit, endWeek, eventsOf, harness, human, player } from '../__fixtures__
 import { emptyPlan } from '../actions/plan.ts';
 import { newJobState } from '../jobs/jobs.ts';
 import type { ChoicePlan, Decision } from '../types/state.ts';
-import { scoreChoices, valuation } from './utility.ts';
+import { bandedPersona, scoreChoices, scoreLead, valuation } from './utility.ts';
 
 const { engine, start, play } = harness();
 const jones = { name: 'Jones', controller: 'ai' as const };
@@ -108,5 +108,75 @@ describe('Jones (FR-80, FR-83)', () => {
     const setup = { seed: 'r', players: [human('Ada'), jones], config: { weekLimit: 3 } };
     const { state } = play(start(setup), endWeek, endWeek, endWeek);
     expect(engine.hash(engine.replay(setup, [endWeek, endWeek, endWeek]))).toBe(engine.hash(state));
+  });
+});
+
+describe('the rubber band on Jones (FR-83)', () => {
+  const bandContent = {
+    ...fixtureContent,
+    ai: {
+      ...fixtureContent.ai,
+      rubberBand: {
+        thresholdBp: 1000,
+        spanBp: 1000,
+        bestMoveDropBp: 4000,
+        runnersUpExtra: 2,
+        riskShiftBp: 2000,
+        catchUpBp: 3000,
+      },
+    },
+  };
+  const persona = { ...rival, bestMoveRateBp: 6000, riskAppetiteBp: 5000, runnersUp: 2 };
+  const base = start({ seed: 'band', players: [human('Ada'), jones] });
+  /** Jones with `cash` extra: the standard wealth target is 100 000, so 10 000 cash is 2.5 points of score. */
+  const richJones = (cash: number) =>
+    edit(
+      base,
+      (p) => {
+        p.stats.cash += cash;
+      },
+      1,
+    );
+  const richAda = (cash: number) =>
+    edit(
+      base,
+      (p) => {
+        p.stats.cash += cash;
+      },
+      0,
+    );
+
+  it('reads the lead from the public scores and ignores a close race', () => {
+    expect(scoreLead(bandContent, base, 'p2')).toBe(0);
+    expect(scoreLead(bandContent, richJones(20_000), 'p2')).toBe(500);
+    expect(bandedPersona(bandContent, richJones(20_000), 'p2', persona)).toEqual(persona);
+    expect(bandedPersona(bandContent, richAda(20_000), 'p2', persona)).toEqual(persona);
+  });
+
+  it('plays looser and riskier the further ahead it is, up to a ceiling', () => {
+    const at = (cash: number) => bandedPersona(bandContent, richJones(cash), 'p2', persona);
+    const some = at(60_000); // lead 1500: half way in
+    const more = at(80_000); // lead 2000
+    const most = at(400_000); // a full 25 points: past the span
+    expect(some.bestMoveRateBp).toBeLessThan(persona.bestMoveRateBp);
+    expect(more.bestMoveRateBp).toBeLessThan(some.bestMoveRateBp);
+    expect(more.riskAppetiteBp).toBeGreaterThan(some.riskAppetiteBp);
+    expect(most.bestMoveRateBp).toBe(persona.bestMoveRateBp - 4000);
+    expect(most.riskAppetiteBp).toBe(persona.riskAppetiteBp + 2000);
+    expect(most.runnersUp).toBe(persona.runnersUp + 2);
+    // Only how it chooses moves: goals, horizon and weights are untouched.
+    expect(most.goalWeightsBp).toEqual(persona.goalWeightsBp);
+    expect(most.horizonWeeks).toBe(persona.horizonWeeks);
+  });
+
+  it('plays tighter and safer when far behind', () => {
+    const behind = bandedPersona(bandContent, richAda(400_000), 'p2', persona);
+    expect(behind.bestMoveRateBp).toBe(persona.bestMoveRateBp + 3000);
+    expect(behind.riskAppetiteBp).toBe(persona.riskAppetiteBp - 2000);
+    expect(behind.runnersUp).toBe(persona.runnersUp);
+  });
+
+  it('is off in the test fixture, so rule tests see an unbanded Jones', () => {
+    expect(bandedPersona(fixtureContent, richJones(400_000), 'p2', persona)).toEqual(persona);
   });
 });

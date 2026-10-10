@@ -118,7 +118,7 @@ export const fixtureContent: GameContent = {
     news: { chanceBp: 10_000, maxActive: 1 },
     quests: { active: 1, cooldownWeeks: 2 },
     teasers: { promotionRatingGap: 10, credentialMinutes: 600 },
-    rival: { nearMissBp: 9000, netWorthJump: 500, closeBp: 500 },
+    rival: { nearMissBp: 9000, netWorthJump: 500, closeBp: 500, quietBp: 300, quietNetWorth: 250 },
   }),
   city: CitySchema.parse({
     id: 'test',
@@ -365,6 +365,15 @@ export const fixtureContent: GameContent = {
       overshootBp: 1500,
       valueCapBp: 12_500,
       longerSlackBp: 1500,
+    },
+    // Off by default: rule tests see a Jones that doesn't react to the score.
+    rubberBand: {
+      thresholdBp: 10_000,
+      spanBp: 1,
+      bestMoveDropBp: 0,
+      runnersUpExtra: 0,
+      riskShiftBp: 0,
+      catchUpBp: 0,
     },
     rivals: [
       {

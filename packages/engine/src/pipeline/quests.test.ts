@@ -70,4 +70,23 @@ describe('micro-goals (ENG-11)', () => {
     expect(questProgressBp(content, p, save, p.stats.cash)).toBe(0);
     expect(questProgressBp(content, p, { kind: 'hired' }, 0)).toBe(0);
   });
+
+  it('does not credit wealth the player already held when a save quest was issued', () => {
+    const p = player(start());
+    const save = { kind: 'save', amount: 500 } as const;
+    const rich = p.stats.cash;
+    expect(questProgressBp(content, p, save, rich)).toBe(0);
+  });
+
+  it('sizes a relative stat quest from the stat when it was issued, capped at the stat maximum', () => {
+    const p = player(start());
+    const raise = { kind: 'stat', stat: 'social', by: 15 } as const;
+    const social = p.stats.social;
+    expect(questProgressBp(content, p, raise, social)).toBe(0);
+    expect(questProgressBp(content, p, raise, social - 5)).toBe(3333);
+    expect(questProgressBp(content, p, raise, social - 15)).toBe(10_000);
+    // At 95 social the target is capped at 100, so the quest stays reachable.
+    const high = { ...p, stats: { ...p.stats, social: 100 } };
+    expect(questProgressBp(content, high, raise, 95)).toBe(10_000);
+  });
 });

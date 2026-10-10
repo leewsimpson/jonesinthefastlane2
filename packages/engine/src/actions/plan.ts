@@ -92,9 +92,10 @@ export function previewAction(
           reason: { code: 'NOT_UNLOCKED', unlockWeek: opens },
           plan: null,
         };
-      const bad = checkParams(def, params);
+      const handler = HANDLERS[def.kind];
+      const bad = checkParams(def, params, handler.durations?.({ content, state, player }, def));
       if (bad) return unavailable(bad);
-      const result = HANDLERS[def.kind].plan({ content, state, player }, def, params);
+      const result = handler.plan({ content, state, player }, def, params);
       if ('code' in result) return unavailable(result.code);
       plan = result;
       if (def.location !== ANYWHERE && def.location !== player.location)
@@ -134,8 +135,13 @@ export function paramsOf(action: Extract<Action, { type: 'perform' }>): PerformP
 }
 
 /** Durations must be one the action offers; amounts must be positive whole cents, and only for money actions. */
-function checkParams(def: LocationAction, params: PerformParams): RuleErrorCode | null {
-  if (def.durations ? !def.durations.includes(params.minutes ?? -1) : params.minutes !== undefined)
+function checkParams(
+  def: LocationAction,
+  params: PerformParams,
+  extraDurations: readonly number[] = [],
+): RuleErrorCode | null {
+  const allowed = def.durations ? [...def.durations, ...extraDurations] : undefined;
+  if (allowed ? !allowed.includes(params.minutes ?? -1) : params.minutes !== undefined)
     return 'BAD_DURATION';
   const { amount } = params;
   if (def.amounts ? !(Number.isInteger(amount) && (amount ?? 0) > 0) : amount !== undefined)

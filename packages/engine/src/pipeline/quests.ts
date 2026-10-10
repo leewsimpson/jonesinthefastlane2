@@ -52,6 +52,17 @@ export function questMeasure(
   }
 }
 
+/** The value a stat quest needs: absolute, or `by` above where it started (never past the stat's maximum). */
+export function statTarget(
+  content: GameContent,
+  goal: Extract<QuestGoal, { kind: 'stat' }>,
+  baseline: number,
+): number {
+  if (goal.atLeast !== undefined) return goal.atLeast;
+  const max = content.balance.statRanges[goal.stat].max ?? Number.POSITIVE_INFINITY;
+  return Math.min(baseline + (goal.by ?? 0), max);
+}
+
 /** How far along a quest is, in basis points of done (10 000 = done). */
 export function questProgressBp(
   content: GameContent,
@@ -65,8 +76,10 @@ export function questProgressBp(
   switch (goal.kind) {
     case 'save':
       return ratio(now - baseline, goal.amount);
-    case 'stat':
-      return now >= goal.atLeast ? 10_000 : ratio(now - baseline, goal.atLeast - baseline);
+    case 'stat': {
+      const target = statTarget(content, goal, baseline);
+      return now >= target ? 10_000 : ratio(now - baseline, target - baseline);
+    }
     case 'hired':
       return now === 1 ? 10_000 : 0;
     case 'promoted':

@@ -98,6 +98,37 @@ describe("Jones's highlight reel and rival tension (FR-82, ENG-13, ENG-14)", () 
   });
 });
 
+describe("Jones's quiet and busy weeks (FR-82)", () => {
+  const withThresholds = (quietBp: number, quietNetWorth: number) => {
+    const content = {
+      ...fixtureContent,
+      balance: {
+        ...fixtureContent.balance,
+        rival: { ...fixtureContent.balance.rival, quietBp, quietNetWorth },
+      },
+    };
+    const { start: begin, play: go } = harness(content);
+    const { events } = go(begin({ seed: 'feed', players: [human('Ada'), jones] }), endWeek);
+    return eventsOf(events, 'rivalPost')
+      .filter((p) => p.about === null)
+      .map((p) => p.moment);
+  };
+
+  it('never calls a week quiet when its numbers moved past the thresholds', () => {
+    const moments = withThresholds(0, 0);
+    expect(moments).not.toContain('quiet-week');
+  });
+
+  it('never calls a week busy when its numbers stayed under the thresholds', () => {
+    const moments = withThresholds(10_000, 1_000_000);
+    expect(moments).not.toContain('busy-week');
+  });
+
+  it('posts a quiet week only when Jones has nothing else to report', () => {
+    expect(withThresholds(10_000, 1_000_000)).toHaveLength(1);
+  });
+});
+
 describe("Jones's viral moment (FR-82)", () => {
   it('posts about going viral when its weekend card was a viral one', () => {
     const viral = {

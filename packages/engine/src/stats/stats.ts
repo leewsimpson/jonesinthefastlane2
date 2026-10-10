@@ -72,7 +72,7 @@ export function collectModifiers(
       ai.maxOutputBp,
       skillPoints(content, player, ai.track) * ai.outputPerPointBp,
     );
-    if (bp > 0) found.push({ source: `track.${ai.track}`, target, bp });
+    if (bp > 0) found.push({ source: `modifier.skill.${ai.track}`, target, bp });
   }
   return found;
 }

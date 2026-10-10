@@ -18,6 +18,8 @@ import type { Cause, FlowReason } from '../types/events.ts';
 export interface ActionHandler {
   /** The parameter variants `listActions` offers, e.g. one per job or per duration. Defaults to one per duration. */
   options?(ctx: PlanCtx, def: LocationAction): PerformParams[];
+  /** Durations the player may pick when they differ from the data's `durations` (e.g. a study block that just finishes the course). */
+  durations?(ctx: PlanCtx, def: LocationAction): number[];
   /** Pure and RNG-free (`PlanCtx` has no RNG). Returns a rule error if this kind has its own requirements. */
   plan(ctx: PlanCtx, def: LocationAction, params: PerformParams): Plan | RuleError;
   /** Carries out the plan the player saw, so the shown cost is the charged cost. May roll on `ctx.rng`. */
@@ -49,17 +51,17 @@ export function planFromData(ctx: PlanCtx, def: LocationAction, params: PerformP
     const effect = def.effects[stat];
     if (effect === undefined) continue;
     if (typeof effect === 'number')
-      effects.push({ stat, delta: scaleGain(effect * blocks, modifiers) });
+      effects.push({ stat, delta: scaleGain(Math.round(effect * blocks), modifiers) });
     else
       outcomes.push({
         stat,
-        min: scaleGain(effect.min * blocks, modifiers),
-        max: scaleGain(effect.max * blocks, modifiers),
+        min: scaleGain(Math.round(effect.min * blocks), modifiers),
+        max: scaleGain(Math.round(effect.max * blocks), modifiers),
       });
   }
   return {
     time: minutes,
-    money: price(ctx.state.world, def.cost) * blocks,
+    money: Math.round(price(ctx.state.world, def.cost) * blocks),
     effects,
     modifiers,
     outcomes,

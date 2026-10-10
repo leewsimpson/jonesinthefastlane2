@@ -126,7 +126,19 @@ export type News = z.infer<typeof NewsSchema>;
 /** What a quest asks for. Progress is measured from the moment it was issued. */
 export const QuestGoalSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('save'), amount: Cents.min(1) }),
-  z.object({ kind: z.literal('stat'), stat: StatKeySchema, atLeast: z.number().int() }),
+  z
+    .object({
+      kind: z.literal('stat'),
+      stat: StatKeySchema,
+      /** An absolute target. */
+      atLeast: z.number().int().optional(),
+      /** A target relative to the stat when the quest is issued, capped at the stat's maximum. */
+      by: z.number().int().positive().optional(),
+    })
+    .refine(
+      (g) => (g.atLeast === undefined) !== (g.by === undefined),
+      'set exactly one of atLeast, by',
+    ),
   z.object({ kind: z.literal('hired') }),
   z.object({ kind: z.literal('promoted') }),
   z.object({ kind: z.literal('credential') }),
@@ -219,9 +231,32 @@ export const UtilityTuningSchema = z.object({
 
 export type UtilityTuning = z.infer<typeof UtilityTuningSchema>;
 
+/**
+ * Jones's rubber band (FR-83). It acts only on strategy choice, never on state or rules: when Jones's score leads the
+ * best other player's by more than `thresholdBp` it plays looser and riskier, and when it trails by that much it
+ * plays tighter. Strength ramps from 0 at the threshold to full at `thresholdBp + spanBp`.
+ */
+export const RubberBandSchema = z.object({
+  /** Score lead (basis points of a full score) before the band starts to act. */
+  thresholdBp: z.number().int().nonnegative(),
+  /** Further lead, past the threshold, at which the band is at full strength. */
+  spanBp: z.number().int().positive(),
+  /** Ahead, at full strength: best-move rate falls by this much, so Jones slacks and picks lesser moves. */
+  bestMoveDropBp: Chance,
+  /** Ahead, at full strength: runners-up Jones picks from grows by this many. */
+  runnersUpExtra: z.number().int().nonnegative(),
+  /** Ahead, at full strength: risk appetite rises by this much (behind: falls by it). */
+  riskShiftBp: Chance,
+  /** Behind, at full strength: best-move rate rises by this much. */
+  catchUpBp: Chance,
+});
+
+export type RubberBand = z.infer<typeof RubberBandSchema>;
+
 /** The AI rival (FR-80–FR-83): scorer tuning and Jones's personas. `byDifficulty` picks one per preset (FR-83). */
 export const AiSchema = z.object({
   utility: UtilityTuningSchema,
+  rubberBand: RubberBandSchema,
   rivals: z.array(PersonaSchema).min(1),
   byDifficulty: z.record(z.enum(DIFFICULTIES), Id),
 });

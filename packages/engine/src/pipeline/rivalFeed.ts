@@ -87,6 +87,16 @@ function setback(content: GameContent, now: WeekRecord, before: WeekRecord): boo
   );
 }
 
+/** A week where nothing really moved: score, every goal and net worth all changed by less than the thresholds. */
+function quiet(content: GameContent, now: WeekRecord, before: WeekRecord): boolean {
+  const { quietBp, quietNetWorth } = content.balance.rival;
+  return (
+    Math.abs(now.scoreBp - before.scoreBp) < quietBp &&
+    Math.abs(now.netWorth - before.netWorth) < quietNetWorth &&
+    GOAL_KEYS.every((g) => Math.abs(now.progressBp[g] - before.progressBp[g]) < quietBp)
+  );
+}
+
 const REACTIONS: Partial<Record<FeedMoment, FeedMoment>> = {
   promoted: 'react-promoted',
   hired: 'react-hired',
@@ -159,7 +169,7 @@ export const rivalFeed: PipelineStep<RoundCtx> = {
       const post = (moment: FeedMoment, about: PlayerId | null, params: Params) =>
         ctx.emit({ type: 'rivalPost', player: ai.id, moment, about, params });
       if (best) post(best.moment, null, best.params);
-      else post('quiet-week', null, {});
+      else post(quiet(content, own.now, own.before) ? 'quiet-week' : 'busy-week', null, {});
       for (const human of state.players) {
         if (human.controller !== 'human') continue;
         const theirs = get(human.id);

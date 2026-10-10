@@ -104,6 +104,8 @@ export const FEED_MOMENTS = {
   /** Jones drew a viral weekend card: it spins any attention as a win (FR-82). */
   'went-viral': [],
   'quiet-week': [],
+  /** Nothing milestone-worthy, but score, goals or net worth still moved: Jones spins the grind (FR-82). */
+  'busy-week': [],
   'react-hired': ['player', 'job'],
   'react-promoted': ['player', 'job'],
   'react-credential': ['player', 'course'],

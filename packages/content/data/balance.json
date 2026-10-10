@@ -31,7 +31,7 @@
     }
   ],
   "hungerPenalty": { "energy": -15, "health": -8, "happiness": -3 },
-  "weeklyDrift": { "energy": 35, "happiness": -4, "social": -5 },
+  "weeklyDrift": { "energy": 35, "happiness": -4, "social": -3 },
   "jobs": {
     "maxWeeklyMinutes": 2400,
     "ratingStart": 50,
@@ -150,5 +150,11 @@
   "news": { "chanceBp": 2500, "maxActive": 2 },
   "quests": { "active": 2, "cooldownWeeks": 6 },
   "teasers": { "promotionRatingGap": 10, "credentialMinutes": 600 },
-  "rival": { "nearMissBp": 9000, "netWorthJump": 50000, "closeBp": 500 }
+  "rival": {
+    "nearMissBp": 9000,
+    "netWorthJump": 50000,
+    "closeBp": 500,
+    "quietBp": 300,
+    "quietNetWorth": 25000
+  }
 }

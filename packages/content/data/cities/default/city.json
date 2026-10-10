@@ -100,8 +100,8 @@
       "unlockWeek": 3,
       "kind": "basic",
       "minutes": 180,
-      "cost": 2500,
-      "effects": { "social": { "min": 5, "max": 10 }, "happiness": 4, "energy": -4 }
+      "cost": 2000,
+      "effects": { "social": { "min": 6, "max": 12 }, "happiness": 4, "energy": -4 }
     },
     {
       "id": "wfh",
@@ -256,8 +256,8 @@
       "location": "burger-bot",
       "kind": "basic",
       "minutes": 180,
-      "cost": 1800,
-      "effects": { "social": { "min": 4, "max": 8 }, "happiness": 3, "energy": -3 }
+      "cost": 1500,
+      "effects": { "social": { "min": 5, "max": 9 }, "happiness": 3, "energy": -3 }
     },
     {
       "id": "work-burger-bot",

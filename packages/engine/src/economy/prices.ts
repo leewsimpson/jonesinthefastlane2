@@ -2,12 +2,20 @@
 import { applyBp } from '../math/fixed.ts';
 import type { WorldState } from '../types/state.ts';
 
-/** Shop prices move in nickel steps so inflation never leaves a stray cent ($25.01) on a $25 item. */
-const PRICE_STEP_CENTS = 5;
+/** Under $10 prices move in nickel steps; from $10 up they move in whole dollars, so inflation never leaves a stray cent. */
+const SMALL_STEP_CENTS = 5;
+const WHOLE_DOLLAR_FROM_CENTS = 1000;
+const DOLLAR_CENTS = 100;
 
-/** A base price in today's money, rounded to the nearest 5 cents. */
+/** Round an inflated amount in cents to a shop-friendly figure: nearest nickel below $10, nearest dollar from $10. */
+export function roundPrice(cents: number): number {
+  const step = cents >= WHOLE_DOLLAR_FROM_CENTS ? DOLLAR_CENTS : SMALL_STEP_CENTS;
+  return Math.round(cents / step) * step;
+}
+
+/** A base price in today's money, rounded by `roundPrice`. */
 export function price(world: Readonly<WorldState>, cents: number): number {
-  return Math.round(applyBp(cents, world.priceIndexBp) / PRICE_STEP_CENTS) * PRICE_STEP_CENTS;
+  return roundPrice(applyBp(cents, world.priceIndexBp));
 }
 
 /** A base wage in today's money. Wages lag prices (FR-50). */
