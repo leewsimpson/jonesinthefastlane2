@@ -16,7 +16,8 @@ export default defineConfig({
       manifest: {
         name: 'Fast Lane 2026',
         short_name: 'Fast Lane',
-        description: 'Keep up with the Joneses. The rent is already due.',
+        description:
+          'Keep up with the Joneses. Your parents’ basement is free; your dignity is not.',
         lang: 'en',
         start_url: '/',
         scope: '/',

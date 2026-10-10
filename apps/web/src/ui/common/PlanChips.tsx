@@ -2,6 +2,7 @@
  * An action's preview as chips (FR-03, FR-21): time, money, stat effects, random ranges, modifiers and ledger
  * moves, all before the player commits.
  */
+import type { StatKey } from '@fastlane/content/keys';
 import type { ChoicePlan, Plan } from '@fastlane/engine';
 import { useTranslation } from 'react-i18next';
 import { placeLabel } from '../../game/copy.ts';
@@ -111,4 +112,25 @@ export function PlanChips({ plan }: { plan: Plan | ChoicePlan }) {
   }
   if (chips.length === 0) chips.push(<Chip key="free">{t('plan.free')}</Chip>);
   return <span className="flex flex-wrap gap-1">{chips}</span>;
+}
+
+/** What a home does to the player every week (FR-03): "+3 ⚡/wk". Nothing for a home without weekly effects. */
+export function WeeklyChips({ effects }: { effects: Partial<Record<StatKey, number>> }) {
+  const { t } = useTranslation();
+  const chips = Object.entries(effects).filter(([, delta]) => delta !== 0) as [StatKey, number][];
+  if (chips.length === 0) return null;
+  return (
+    <span className="flex flex-wrap gap-1">
+      {chips.map(([stat, delta]) => (
+        <Chip key={stat} tone={delta > 0 ? 'chip-good' : 'chip-bad'}>
+          {signed(delta)}{' '}
+          <span aria-hidden="true" className={STAT_TONE[stat]}>
+            {STAT_ICON[stat]}
+          </span>
+          <span className="sr-only"> {t(`stat.${stat}`)}</span>
+          {t('plan.wk')}
+        </Chip>
+      ))}
+    </span>
+  );
 }

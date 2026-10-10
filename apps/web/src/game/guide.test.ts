@@ -2,7 +2,7 @@ import type { Action, GameState } from '@fastlane/engine';
 import { describe, expect, it } from 'vitest';
 import { createGameStore } from '../store/game.ts';
 import { content, engine } from './engine.ts';
-import { mealPlaces, nextHint, pickTrip, weekNeeds } from './guide.ts';
+import { defaultMode, mealPlaces, nextHint, pickTrip, tripOptions, weekNeeds } from './guide.ts';
 
 function game() {
   const store = createGameStore();
@@ -90,5 +90,21 @@ describe('pickTrip (FR-02)', () => {
     // No e-scooter owned: fall back to the free mode.
     expect(pickTrip(previews, 'joblink', 'e-scooter')?.action.mode).toBe('walk');
     expect(pickTrip(previews, g.me().location, 'walk')).toBeNull();
+  });
+});
+
+describe('travel defaults (FR-02)', () => {
+  it('starts on the cheapest mode that is not much slower than the quickest', () => {
+    // Transit: dearer than walking, but walking is far slower; rideshare is quicker but dearer.
+    expect(defaultMode(content)).toBe('transit');
+  });
+
+  it('lists the modes that can go, cheapest first', () => {
+    const g = game();
+    const previews = engine.listActions(g.state());
+    const options = tripOptions(previews, 'joblink');
+    expect(options.length).toBeGreaterThan(1);
+    const costs = options.map((o) => o.plan.money);
+    expect(costs).toEqual([...costs].sort((a, b) => a - b));
   });
 });

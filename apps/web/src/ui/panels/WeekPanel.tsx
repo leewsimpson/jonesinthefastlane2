@@ -10,7 +10,7 @@ import type { GameState, PlayerState, Preview } from '@fastlane/engine';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { content } from '../../game/engine.ts';
-import { type Hint, pickTrip, type WeekNeeds } from '../../game/guide.ts';
+import { type Hint, pickTrip, tripOptions, type WeekNeeds } from '../../game/guide.ts';
 import { duration, money } from '../../i18n/format.ts';
 import { STAT_ICON } from '../common/stats.ts';
 
@@ -165,6 +165,16 @@ export function WeekPanel({
       trip.plan.money > 0 ? money(trip.plan.money) : t('week.free'),
     ].join(' · ');
 
+  // What the other modes would cost for the same trip, so the picker's choice is visible (FR-03).
+  const alternatives = (dest: string | null, chosen: string | undefined) =>
+    dest
+      ? tripOptions(previews, dest)
+          .filter((x) => x.action.mode !== chosen)
+          .map(tripText)
+          .join(' | ')
+      : '';
+  const altText = hintTrip ? alternatives(hint.dest, hintTrip.action.mode) : '';
+
   const goButton = hint.dest && (
     <button
       type="button"
@@ -223,6 +233,12 @@ export function WeekPanel({
           {endButton}
           {modePicker}
         </div>
+        {hintTrip && (
+          <span className="text-fg-muted text-xs">
+            {tripText(hintTrip)}
+            {altText && ` · ${t('week.orElse', { list: altText })}`}
+          </span>
+        )}
       </section>
     );
 
@@ -268,6 +284,9 @@ export function WeekPanel({
               {endButton}
               {hintTrip && <span className="text-fg-muted text-xs">{tripText(hintTrip)}</span>}
             </div>
+          )}
+          {altText && (
+            <span className="text-fg-muted text-xs">{t('week.orElse', { list: altText })}</span>
           )}
         </div>
       )}

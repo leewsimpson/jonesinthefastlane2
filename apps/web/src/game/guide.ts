@@ -175,3 +175,38 @@ export function pickTrip(
     })[0] ?? null
   );
 }
+
+/** A mode counts as "not wasting the week" when its trips take at most this many times the quickest mode's. */
+const SLOWEST_FACTOR = 2;
+
+/**
+ * The transport mode a new game starts on: the cheapest in money among those no slower than `SLOWEST_FACTOR` times the
+ * quickest, judged over every trip length on the loop. With the default city that is transit, not rideshare (dearer)
+ * or walking (free, but several times slower and tiring).
+ */
+export function defaultMode(content: GameContent): string {
+  const { transportModes, locations } = content.city.board;
+  const longest = Math.max(1, Math.floor(locations.length / 2));
+  const steps = Array.from({ length: longest }, (_, i) => i + 1);
+  const avg = (f: (s: number) => number) => steps.reduce((sum, s) => sum + f(s), 0) / steps.length;
+  const rows = transportModes
+    .filter((m) => !m.requiresItem) // owned later, not a starting choice
+    .map((m) => ({
+      id: m.id,
+      time: avg((s) => m.minutesBase + m.minutesPerStep * s),
+      money: avg((s) => m.costBase + m.costPerStep * s),
+    }));
+  const quickest = Math.min(...rows.map((r) => r.time));
+  const fit = rows.filter((r) => r.time <= quickest * SLOWEST_FACTOR);
+  fit.sort((a, b) => a.money - b.money || a.time - b.time);
+  return fit[0]?.id ?? transportModes[0]?.id ?? '';
+}
+
+/** Every mode that can reach `dest` now, cheapest first: what the player trades when picking a mode. */
+export function tripOptions(previews: readonly Preview[], dest: string): TravelPreview[] {
+  return previews
+    .filter(
+      (p): p is TravelPreview => p.action.type === 'travel' && p.action.to === dest && p.available,
+    )
+    .sort((a, b) => a.plan.money - b.plan.money || a.plan.time - b.plan.time);
+}

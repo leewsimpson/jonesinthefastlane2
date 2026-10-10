@@ -2,8 +2,9 @@
  * Turns engine ids and slot values into copy. Content holds ids only; their text lives under derived keys
  * (engine-design §13). Slots carry ids for things with their own copy, cents for money and plain numbers otherwise.
  */
+import { SAVINGS_ID } from '@fastlane/content/keys';
 import type { GameState, Place, SlotParams, WorldState } from '@fastlane/engine';
-import { duration, money, percent } from '../i18n/format.ts';
+import { duration, money, percent, signed } from '../i18n/format.ts';
 import { i18n, t } from '../i18n/i18n.ts';
 import { content } from './engine.ts';
 
@@ -89,6 +90,24 @@ export const locationName = (id: string): string => t(`location.${id}`);
 /** Today's money for a launch-day amount (FR-50), as the engine works it out. Display only. */
 const indexed = (cents: number, bp: number) => Math.round((cents * bp) / 10_000);
 
+/** Savings interest (balance `finance.savingsWeeklyPpm`) as a yearly rate in percent, one decimal: 3.9. */
+export function savingsYearlyPercent(weeklyPpm: number): number {
+  return Math.round(((1 + weeklyPpm / 1_000_000) ** 52 - 1) * 1000) / 10;
+}
+
+/** The weekly return range of a market asset over all regimes, in whole percent: its worst and best week. */
+export function assetWeeklyRange(assetId: string): { min: number; max: number } | null {
+  const returns = content.balance.market.regimes.flatMap((r) => {
+    const range = r.returnsBp[assetId];
+    return range ? [range] : [];
+  });
+  if (returns.length === 0) return null;
+  return {
+    min: Math.round(Math.min(...returns.map((r) => r.min)) / 100),
+    max: Math.round(Math.max(...returns.map((r) => r.max)) / 100),
+  };
+}
+
 /** What a target costs or pays over time, which an action's own preview doesn't show: wages, rent, fees, study. */
 export function targetInfo(
   actionId: string,
@@ -131,6 +150,16 @@ export function targetInfo(
       return jobs.length
         ? `${base} · ${t('info.unlocks', { list: jobs.map((j) => t(`job.${j.id}`)).join(', ') })}`
         : base;
+    }
+    case 'deposit': {
+      if (target === SAVINGS_ID)
+        return t('info.savings', {
+          rate: savingsYearlyPercent(content.balance.finance.savingsWeeklyPpm),
+        });
+      const range = assetWeeklyRange(target);
+      return range
+        ? t('info.risky', { min: `${signed(range.min)}%`, max: `${signed(range.max)}%` })
+        : null;
     }
     default:
       return null;

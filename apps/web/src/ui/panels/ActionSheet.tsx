@@ -8,12 +8,12 @@ import type { Action, Preview, SmartDefault, WorldState } from '@fastlane/engine
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { buildingFrame } from '../../board/frames.ts';
-import { targetInfo, targetLabel } from '../../game/copy.ts';
+import { actionKind, targetInfo, targetLabel } from '../../game/copy.ts';
 import { content } from '../../game/engine.ts';
 import { duration, money } from '../../i18n/format.ts';
 import { BuildingArt, ItemArt, interiorFor, itemFrame } from '../common/AtlasArt.tsx';
 import { KEY_END_WEEK, KEY_TRAVEL, keyLabel, QUICK_KEYS } from '../common/hotkeys.ts';
-import { PlanChips } from '../common/PlanChips.tsx';
+import { PlanChips, WeeklyChips } from '../common/PlanChips.tsx';
 
 /** Action kinds per action id. */
 const ACTION_KIND = new Map(content.city.actions.map((a) => [a.id, a.kind]));
@@ -192,6 +192,10 @@ function Row({
   const label = optionLabel(preview.action);
   const { actionId, target } = preview.action;
   const info = target === undefined ? null : targetInfo(actionId, target, world);
+  const home =
+    target !== undefined && actionKind(actionId) === 'rent-home'
+      ? content.city.housing.find((h) => h.id === target)
+      : undefined;
   return (
     <button
       type="button"
@@ -216,6 +220,7 @@ function Row({
       </span>
       {info && <span className="text-fg-muted text-xs">{info}</span>}
       {preview.plan && <PlanChips plan={preview.plan} />}
+      {home && <WeeklyChips effects={home.weekly} />}
     </button>
   );
 }

@@ -9,6 +9,7 @@ import { content } from '../../game/engine.ts';
 import { standingOf } from '../../game/standing.ts';
 import { duration, money, percent } from '../../i18n/format.ts';
 import { ItemArt } from '../common/AtlasArt.tsx';
+import { WeeklyChips } from '../common/PlanChips.tsx';
 import { STAT_ICON, STAT_TONE } from '../common/stats.ts';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -37,6 +38,7 @@ export function DetailsDialog({
     ? content.city.courses.find((c) => c.id === me.enrollment?.course)
     : undefined;
   const standing = standingOf(state, me);
+  const home = content.city.housing.find((h) => h.id === me.housing.tier);
   const wardrobe = content.balance.wardrobeTiers[me.stats.wardrobe] ?? 'casual';
 
   return (
@@ -121,6 +123,7 @@ export function DetailsDialog({
                 weeks: me.housing.leaseWeeksLeft,
               })}
             </p>
+            {home && <WeeklyChips effects={home.weekly} />}
           </Section>
 
           <Section title={t('details.money')}>

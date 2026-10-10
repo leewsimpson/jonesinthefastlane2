@@ -47,6 +47,12 @@ describe('copy (NFR-06)', () => {
     expect(targetInfo('apply-job', 'picker', state().world)).toContain('$18/h');
   });
 
+  it('shows a savings rate and an index fund risk on deposit targets, from content', () => {
+    const w = state().world;
+    expect(targetInfo('deposit', 'savings', w)).toMatch(/earns about \d+(\.\d)?% a year/);
+    expect(targetInfo('deposit', 'index-fund', w)).toMatch(/Risky.*−\d+%.*\+\d+%/);
+  });
+
   it('gives every action that can be taken a unique shortcut, local actions first', () => {
     const s = state();
     const groups = groupActions(engine.listActions(s), (n) => `k${n}`);

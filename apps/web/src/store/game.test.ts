@@ -167,4 +167,25 @@ describe('game store', () => {
       { player: 'p1', week: 1, ms: pace.playMs + 5_000 },
     ]);
   });
+
+  it('shows the weekend card in every week that drew an event (FR-05, FR-70)', () => {
+    const store = createGameStore();
+    store.getState().start('slot-ev', { ...solo, seed: 'weekend-cards' });
+    let drawn = 0;
+    for (let week = 0; week < 25; week++) {
+      if (store.getState().session?.state.phase.kind !== 'turn') break;
+      store.getState().dispatch({ type: 'endWeek' });
+      const { report, session } = store.getState();
+      const r = must(report, 'report');
+      const shown = reportSteps(r, must(session, 'session').state).includes('event');
+      finishReport(store);
+      // Events collected over the whole sequence, including those after a choice.
+      const happened = r.events.some((e) => e.type === 'weekendEvent' && e.player === 'p1');
+      if (happened) drawn++;
+      expect(shown, `week ${week + 1}`).toBe(happened);
+      store.getState().takeHandoff();
+    }
+    expect(drawn).toBeGreaterThan(0);
+    expect(drawn).toBeGreaterThan(0);
+  });
 });

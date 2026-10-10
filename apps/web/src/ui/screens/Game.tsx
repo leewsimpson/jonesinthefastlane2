@@ -11,7 +11,7 @@ import { boardLayout, feedbackPoint, innerRect } from '../../board/layout.ts';
 import { FxLayer } from '../../fx/FxLayer.tsx';
 import { coachStep, hasWorked } from '../../game/coach.ts';
 import { content, engine } from '../../game/engine.ts';
-import { nextHint, pickTrip, weekNeeds } from '../../game/guide.ts';
+import { defaultMode, nextHint, pickTrip, weekNeeds } from '../../game/guide.ts';
 import { activeHuman } from '../../game/report.ts';
 import { duration } from '../../i18n/format.ts';
 import { useReducedMotion, useWideLayout } from '../../settings/hooks.ts';
@@ -45,12 +45,15 @@ const PANEL_MAX = { w: 320, h: 420 };
 /** The loop's middle shows the clock when it fits; the week panel lives in the sheet (portrait) or the left column. */
 const CLOCK_MIN = 96;
 const MODE_KEY = 'fastlane.travelMode';
-const DEFAULT_MODE = 'transit';
+const DEFAULT_MODE = defaultMode(content);
 
 /** A per-viewer convenience: storage can be missing or throw (private windows), so the default always works. */
 function storedMode(): string {
   try {
-    return localStorage.getItem(MODE_KEY) ?? DEFAULT_MODE;
+    const stored = localStorage.getItem(MODE_KEY);
+    return content.city.board.transportModes.some((m) => m.id === stored) && stored
+      ? stored
+      : DEFAULT_MODE;
   } catch {
     return DEFAULT_MODE;
   }
