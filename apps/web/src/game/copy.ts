@@ -99,13 +99,17 @@ export function targetInfo(
   switch (actionKind(actionId)) {
     case 'apply-job': {
       const job = city.jobs.find((j) => j.id === target);
-      return job
-        ? t('info.job', {
-            wage: money(indexed(job.wage, world.wageIndexBp)),
-            location: locationName(job.location),
-            risk: percent(job.aiExposureBp),
-          })
-        : null;
+      if (!job) return null;
+      const base = t('info.job', {
+        wage: money(indexed(job.wage, world.wageIndexBp)),
+        location: locationName(job.location),
+        risk: percent(job.aiExposureBp),
+      });
+      const needs = [
+        ...job.requires.credentials.map((c) => t(`course.${c}`)),
+        ...Object.entries(job.requires.skills).map(([track, n]) => `${t(`track.${track}`)} ${n}`),
+      ];
+      return needs.length ? `${base} · ${t('info.needs', { list: needs.join(', ') })}` : base;
     }
     case 'subscribe': {
       const sub = city.subscriptions.find((s) => s.id === target);
@@ -121,7 +125,12 @@ export function targetInfo(
     }
     case 'enroll': {
       const course = city.courses.find((c) => c.id === target);
-      return course ? t('info.study', { time: duration(course.studyMinutes) }) : null;
+      if (!course) return null;
+      const base = t('info.study', { time: duration(course.studyMinutes) });
+      const jobs = city.jobs.filter((j) => j.requires.credentials.includes(course.id));
+      return jobs.length
+        ? `${base} · ${t('info.unlocks', { list: jobs.map((j) => t(`job.${j.id}`)).join(', ') })}`
+        : base;
     }
     default:
       return null;

@@ -58,11 +58,14 @@ export type RuleErrorCode =
   | 'ALREADY_SUBSCRIBED'
   | 'NOT_SUBSCRIBED'
   | 'OVER_LIMIT'
-  | 'NO_DEBT';
+  | 'NO_DEBT'
+  | 'NOT_UNLOCKED';
 
 /** A rule the player broke. Bugs in the engine throw instead (engine-design §3). */
 export interface RuleError {
   code: RuleErrorCode;
+  /** With `NOT_UNLOCKED`: the week the option opens (FR-15). The UI hides it until then. */
+  unlockWeek?: number;
 }
 
 export interface StatDelta {

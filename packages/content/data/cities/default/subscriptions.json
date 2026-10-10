@@ -1,7 +1,14 @@
 [
-  { "id": "streaming", "weeklyCost": 400, "modifiers": [], "weekly": { "happiness": 1 } },
+  {
+    "id": "streaming",
+    "unlockWeek": 2,
+    "weeklyCost": 400,
+    "modifiers": [],
+    "weekly": { "happiness": 1 }
+  },
   {
     "id": "cloud-storage",
+    "unlockWeek": 3,
     "weeklyCost": 200,
     "modifiers": [{ "target": "studyOutput", "bp": 200 }],
     "weekly": {},
@@ -9,14 +16,22 @@
   },
   {
     "id": "ai-assistant",
+    "unlockWeek": 4,
     "weeklyCost": 500,
     "modifiers": [{ "target": "workOutput", "bp": 1000 }, { "target": "studyOutput", "bp": 1000 }],
     "weekly": {},
     "requiresItem": "laptop"
   },
-  { "id": "gym-pass", "weeklyCost": 600, "modifiers": [], "weekly": { "health": 2, "energy": 2 } },
+  {
+    "id": "gym-pass",
+    "unlockWeek": 2,
+    "weeklyCost": 600,
+    "modifiers": [],
+    "weekly": { "health": 2, "energy": 2 }
+  },
   {
     "id": "delivery-pass",
+    "unlockWeek": 5,
     "weeklyCost": 2500,
     "modifiers": [],
     "weekly": { "happiness": 1, "health": -1 },

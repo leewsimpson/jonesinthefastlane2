@@ -323,6 +323,8 @@ export const LocationActionSchema = z.object({
   loan: z.boolean().optional(),
   /** `work-shift`: work here for a remote job (FR-46) instead of at the employer. */
   remote: z.boolean().optional(),
+  /** First week this is offered (FR-15). Absent means week 1. */
+  unlockWeek: z.number().int().min(2).optional(),
 });
 
 export type LocationAction = z.infer<typeof LocationActionSchema>;
@@ -416,6 +418,8 @@ export const SubscriptionSchema = z.object({
   /** Meals delivered each week; they count for the food check. */
   meals: z.number().int().nonnegative().optional(),
   requiresItem: Id.optional(),
+  /** First week this can be started (FR-15). Absent means week 1. */
+  unlockWeek: z.number().int().min(2).optional(),
 });
 
 export type Subscription = z.infer<typeof SubscriptionSchema>;

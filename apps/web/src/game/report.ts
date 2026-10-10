@@ -2,12 +2,12 @@
  * The end-of-week sequence (FR-05, ENG-10): what the player sees between ending a week and starting the next.
  * A report collects the domain events from the moment a human's turn ends until a human must act again: their own
  * end-of-turn steps, any decision, other players' turns (Jones's included) and the round steps. The pages are
- * worked out from those events, in the order the plan gives: bills → event card → news → goal progress → Jones
- * recap → teaser.
+ * worked out from those events: the weekend event card (only when there is one), then one recap page
+ * ("week") holding Jones's feed, goals, bills, news (only when there is any) and the teaser.
  */
 import type { DomainEvent, GameState, PlayerId } from '@fastlane/engine';
 
-export const REPORT_STEPS = ['summary', 'event', 'news', 'goals', 'rival', 'teaser'] as const;
+export const REPORT_STEPS = ['event', 'week'] as const;
 export type ReportStep = (typeof REPORT_STEPS)[number];
 
 export interface WeekReport {
@@ -21,21 +21,19 @@ export interface WeekReport {
 const has = (events: readonly DomainEvent[], test: (e: DomainEvent) => boolean) =>
   events.some(test);
 
+/** Whether the recap has a news section: a story starting or ending. A bare market move is a footnote, not news. */
+export function hasNews(events: readonly DomainEvent[]): boolean {
+  return has(events, (e) => e.type === 'newsStarted' || e.type === 'newsEnded');
+}
+
 /** The pages to show, given what has happened so far. Later pages appear once a pending decision is made. */
 export function reportSteps(report: WeekReport, state: GameState): ReportStep[] {
   const { events, player } = report;
   const shown: Record<ReportStep, boolean> = {
-    summary: true,
     event:
       state.pending?.player === player ||
       has(events, (e) => e.type === 'weekendEvent' && e.player === player),
-    news: has(
-      events,
-      (e) => e.type === 'newsStarted' || e.type === 'newsEnded' || e.type === 'marketMoved',
-    ),
-    goals: has(events, (e) => e.type === 'standings'),
-    rival: has(events, (e) => e.type === 'rivalPost' || e.type === 'overtaken'),
-    teaser: has(events, (e) => e.type === 'teaser'),
+    week: true,
   };
   return REPORT_STEPS.filter((s) => shown[s]);
 }

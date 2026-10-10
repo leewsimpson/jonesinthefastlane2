@@ -155,3 +155,9 @@ export function innerRect(
   }
   return best;
 }
+
+/** Where a building's feedback (floating numbers) appears: just above its roof, in board pixels. */
+export function feedbackPoint(layout: BoardLayout, index: number): { x: number; y: number } {
+  const { x, y } = pointAt(layout, index);
+  return { x, y: Math.max(layout.cell * 0.2, y - layout.cell * 0.95) };
+}

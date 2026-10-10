@@ -1,6 +1,14 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { boardLayout, buildingBox, innerRect, loopDelta, pointAt, stepToward } from './layout.ts';
+import {
+  boardLayout,
+  buildingBox,
+  feedbackPoint,
+  innerRect,
+  loopDelta,
+  pointAt,
+  stepToward,
+} from './layout.ts';
 
 const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
   Math.hypot(a.x - b.x, a.y - b.y);
@@ -77,6 +85,18 @@ describe('innerRect', () => {
         const clear = b.r <= r.x || b.l >= r.x + r.w || b.b <= r.y || b.t >= r.y + r.h;
         expect(clear).toBe(true);
       }
+    }
+  });
+});
+
+describe('feedbackPoint', () => {
+  it('sits above its building and stays on the board', () => {
+    const layout = boardLayout(800, 500, 10);
+    for (let i = 0; i < 10; i++) {
+      const f = feedbackPoint(layout, i);
+      expect(f.y).toBeLessThan(pointAt(layout, i).y);
+      expect(f.y).toBeGreaterThan(0);
+      expect(f.x).toBeCloseTo(pointAt(layout, i).x);
     }
   });
 });

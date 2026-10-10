@@ -6,12 +6,13 @@
 import type { Action, Preview } from '@fastlane/engine';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { boardLayout, innerRect } from '../../board/layout.ts';
+import { boardLayout, feedbackPoint, innerRect } from '../../board/layout.ts';
 import { FxLayer } from '../../fx/FxLayer.tsx';
 import { coachStep, hasWorked } from '../../game/coach.ts';
 import { content, engine } from '../../game/engine.ts';
 import { nextHint, pickTrip, weekNeeds } from '../../game/guide.ts';
 import { activeHuman } from '../../game/report.ts';
+import { duration } from '../../i18n/format.ts';
 import { useReducedMotion, useWideLayout } from '../../settings/hooks.ts';
 import { useSettings } from '../../settings/settings.ts';
 import { useApp } from '../../store/app.ts';
@@ -244,6 +245,16 @@ export function Game() {
     <div className="game-layout">
       <div className="hud-area contents wide:block wide:min-h-0 wide:overflow-y-auto">
         <Hud state={state} me={me} onDetails={() => setDetails(true)} onQuit={quit} />
+        {coach && wide && (
+          <div className="px-3 py-2">
+            <Coach
+              step={coach}
+              canGo={!!coach.location && !!pickTrip(previews, coach.location, mode)}
+              onGo={goTo}
+              onSkip={() => setCoached(new Set([...coached, me.id]))}
+            />
+          </div>
+        )}
         <div className="hidden px-3 py-2 text-fg-muted text-xs wide:block">
           <p>{t('menu.help')}</p>
         </div>
@@ -265,17 +276,19 @@ export function Game() {
             />
           </Suspense>
         </div>
-        <FxLayer fx={fx} id={tick} shakeTarget={shakeEl} />
-        {coach && roomy && (
-          <div className="pointer-events-none absolute inset-x-2 bottom-2 z-30 flex justify-center">
-            <Coach
-              step={coach}
-              canGo={!!coach.location && !!pickTrip(previews, coach.location, mode)}
-              onGo={goTo}
-              onSkip={() => setCoached(new Set([...coached, me.id]))}
-            />
-          </div>
-        )}
+        <FxLayer
+          fx={fx}
+          id={tick}
+          shakeTarget={shakeEl}
+          boardEl={shakeEl}
+          anchor={feedbackPoint(
+            boardLayout(boardSize.w, boardSize.h, content.city.board.locations.length),
+            Math.max(
+              0,
+              content.city.board.locations.findIndex((l) => l.id === me.location),
+            ),
+          )}
+        />
         {!roomy && clockSize >= CLOCK_MIN && (
           <div
             className="pointer-events-none absolute z-10 flex items-center justify-center"
@@ -304,10 +317,20 @@ export function Game() {
         world={state.world}
         groups={groups}
         smart={smart}
+        studyNote={(() => {
+          const course = content.city.courses.find((c) => c.id === me.enrollment?.course);
+          return course && me.enrollment
+            ? t('quick.studyProgress', {
+                course: t(`course.${course.id}`),
+                done: duration(me.enrollment.minutes),
+                needed: duration(course.studyMinutes),
+              })
+            : undefined;
+        })()}
         canAct={canAct}
         onPick={dispatch}
       >
-        {coach && !roomy && (
+        {coach && !wide && (
           <Coach
             step={coach}
             compact

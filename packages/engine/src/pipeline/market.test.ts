@@ -105,8 +105,8 @@ describe('inflation (FR-50)', () => {
     const atB = edit(state, (p) => {
       p.location = 'b';
     });
-    // The 400 snack now costs 404.
-    expect(h.engine.preview(atB, perform('snack'))).toMatchObject({ plan: { money: 404 } });
+    // The 400 snack now costs 404, rounded to the nearest 5 cents (FR-50).
+    expect(h.engine.preview(atB, perform('snack'))).toMatchObject({ plan: { money: 405 } });
   });
 });
 

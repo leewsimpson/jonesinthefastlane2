@@ -68,6 +68,7 @@ At the start of a game the player sets targets for four goals (the original's We
 | FR-12 | Loss/timeout options: an optional week limit (e.g. 52 weeks). If time runs out, the highest **score** wins: the average of progress toward each target, each capped at 100%. The same formula is used for the Daily Run score. | S |
 | FR-14 | **No game-overs, no softlocks.** Running out of money leads to setbacks, not a dead end: missed rent → warning → eviction to *Parents' Basement* (always available, $0 rent, −Happiness); unpaid debt → collections and a credit-score hit; a jobless, broke player can always do GigHub work or a free basic job. Every state must have at least one action that earns money. | M |
 | FR-13 | Goal progress is always visible as four rings or bars. Progress animates at the end of each week. | M |
+| FR-15 | **Progressive unlock:** the first week shows only what a new player needs (eat, rest, work, shop, travel). Home extras unlock on set weeks, from data: each action or subscription may carry an `unlockWeek`. Before then it is unavailable with reason `NOT_UNLOCKED` and the unlock week, so the UI hides it instead of greying it. Unlock weeks are balance data (NFR-15). Never gates the last way to earn money (FR-14). | M |
 
 ---
 

@@ -4,7 +4,7 @@
  * here is decoration: the ticker under the action sheet is what screen readers hear.
  */
 import { AnimatePresence, animate, m } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { money, signed, signedMoney } from '../i18n/format.ts';
 import { t } from '../i18n/i18n.ts';
 import { useReducedMotion } from '../settings/hooks.ts';
@@ -37,27 +37,50 @@ export function momentText(m: Moment): string {
   }
 }
 
+/** Where the numbers appear in this layer's own coordinates: the anchor, shifted to the viewport when it is fixed. */
+function popPoint(
+  layer: HTMLElement | null,
+  board: HTMLElement | null | undefined,
+  anchor: { x: number; y: number } | undefined,
+): { x: number; y: number } | null {
+  if (!anchor) return null;
+  if (!layer || !board || getComputedStyle(layer).position !== 'fixed') return anchor;
+  const r = board.getBoundingClientRect();
+  return { x: anchor.x + r.left, y: anchor.y + r.top };
+}
+
 const good = (m: Moment) => m.kind !== 'laidOff' && m.kind !== 'letGo' && m.kind !== 'evicted';
 
 export function FxLayer({
   fx,
   id,
   shakeTarget,
+  anchor,
+  boardEl,
 }: {
   fx: Fx;
   /** Changes once per batch. */
   id: number;
   shakeTarget: HTMLElement | null;
+  /** Where the acted building is, in board pixels: the numbers float up from there. */
+  anchor?: { x: number; y: number };
+  /** The board, to place the anchor when this layer is fixed to the viewport (phone layout). */
+  boardEl?: HTMLElement | null;
 }) {
+  const layer = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
-  const [shown, setShown] = useState<{ id: number; fx: Fx } | null>(null);
+  const [shown, setShown] = useState<{
+    id: number;
+    fx: Fx;
+    at: { x: number; y: number } | null;
+  } | null>(null);
   const [banner, setBanner] = useState<{ id: number; moment: Moment } | null>(null);
 
   // One run per batch id: fx changes with it. A batch with nothing to show leaves the last one to finish.
   // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on the batch id
   useEffect(() => {
     if (fx.pops.length === 0 && !fx.moment) return;
-    setShown({ id, fx });
+    setShown({ id, fx, at: popPoint(layer.current, boardEl, anchor) });
     if (fx.moment) setBanner({ id, moment: fx.moment });
     if (!reduced && shakeTarget && fx.shake !== 'none') {
       const a = fx.shake === 'big' ? 8 : 4;
@@ -78,8 +101,19 @@ export function FxLayer({
   }, [banner]);
 
   return (
-    <div className="fx-layer pointer-events-none inset-0 overflow-hidden" aria-hidden="true">
-      <div className="absolute inset-x-0 top-3 flex flex-wrap justify-center gap-2">
+    <div
+      ref={layer}
+      className="fx-layer pointer-events-none inset-0 overflow-hidden"
+      aria-hidden="true"
+    >
+      <div
+        className={
+          shown?.at
+            ? 'absolute flex w-48 -translate-x-1/2 -translate-y-full flex-wrap justify-center gap-2'
+            : 'absolute inset-x-0 top-3 flex flex-wrap justify-center gap-2'
+        }
+        style={shown?.at ? { left: shown.at.x, top: shown.at.y } : undefined}
+      >
         <AnimatePresence>
           {shown?.fx.pops.map((p, i) => (
             <m.span
@@ -108,7 +142,7 @@ export function FxLayer({
         {banner && (
           <m.div
             key={banner.id}
-            className="absolute inset-0 flex items-center justify-center p-4"
+            className="absolute inset-x-0 top-[12%] flex justify-center p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

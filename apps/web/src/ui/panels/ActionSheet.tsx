@@ -15,6 +15,9 @@ import { BuildingArt, ItemArt, interiorFor, itemFrame } from '../common/AtlasArt
 import { KEY_END_WEEK, KEY_TRAVEL, keyLabel, QUICK_KEYS } from '../common/hotkeys.ts';
 import { PlanChips } from '../common/PlanChips.tsx';
 
+/** Action kinds per action id. */
+const ACTION_KIND = new Map(content.city.actions.map((a) => [a.id, a.kind]));
+
 type PerformAction = Extract<Action, { type: 'perform' }>;
 
 export interface ActionRow {
@@ -53,6 +56,38 @@ export function groupActions(
   return ordered;
 }
 
+/**
+ * Split the groups into what can be done now and what is locked (FR-03): the first holds only available rows, the
+ * second only unavailable ones, each keeping its group, so locked options collapse into one expandable line.
+ */
+export function splitLocked(groups: readonly ActionGroup[]): {
+  open: ActionGroup[];
+  locked: ActionGroup[];
+  lockedCount: number;
+} {
+  const open: ActionGroup[] = [];
+  const locked: ActionGroup[] = [];
+  let lockedCount = 0;
+  for (const g of groups) {
+    const shown = g.rows.filter(
+      (r) => r.preview.available || r.preview.reason.code !== 'NOT_UNLOCKED',
+    ); // not revealed yet (FR-15)
+    const on = shown.filter((r) => r.preview.available);
+    const off = shown.filter((r) => !r.preview.available);
+    if (on.length > 0) open.push({ ...g, rows: on });
+    if (off.length > 0) locked.push({ ...g, rows: off });
+    lockedCount += off.length;
+  }
+  return { open, locked, lockedCount };
+}
+
+/** The meal the "Eat now" quick move points at; its row is marked instead of repeating it (ENG-02). */
+export function recommendedKeys(smart: readonly SmartDefault[]): Set<string> {
+  return new Set(
+    smart.filter((d) => d.kind === 'eat').map((d) => JSON.stringify(d.preview.action)),
+  );
+}
+
 /** The reason every row of a group is unavailable, when they all share one; such a group shows as one line. */
 export function sharedReason(g: ActionGroup): string | null {
   const codes = new Set<string>();
@@ -89,22 +124,25 @@ export function quickLabel(t: TFunction, d: SmartDefault, groups: readonly Actio
 function QuickBar({
   smart,
   groups,
+  studyNote,
   onPick,
 }: {
   smart: readonly SmartDefault[];
   groups: readonly ActionGroup[];
+  studyNote?: string | undefined;
   onPick(a: Action): void;
 }) {
   const { t: tr } = useTranslation();
-  if (smart.length === 0) return null;
+  // The meal is marked in the list below instead of being offered twice; its shortcut still works (Game.tsx).
+  const shown = smart.flatMap((d, i) => (d.kind === 'eat' ? [] : [{ d, key: QUICK_KEYS[i] }]));
+  if (shown.length === 0) return null;
   return (
     <section
       aria-label={tr('quick.title')}
       className="flex flex-col gap-1 px-3 pt-2"
       data-coach="quick"
     >
-      {smart.map((d, i) => {
-        const key = QUICK_KEYS[i];
+      {shown.map(({ d, key }) => {
         return (
           <button
             key={d.kind}
@@ -118,6 +156,9 @@ function QuickBar({
               {key && <kbd>{keyLabel(key)}</kbd>}
               <span className="flex-1 text-left font-bold">{quickLabel(tr, d, groups)}</span>
             </span>
+            {d.kind === 'study' && studyNote && (
+              <span className="text-fg-muted text-xs">{studyNote}</span>
+            )}
             <PlanChips plan={d.preview.plan} />
           </button>
         );
@@ -138,10 +179,12 @@ export function optionLabel(action: PerformAction): string {
 function Row({
   row,
   world,
+  recommended = false,
   onPick,
 }: {
   row: ActionRow;
   world: Readonly<WorldState>;
+  recommended?: boolean;
   onPick(a: Action): void;
 }) {
   const { t } = useTranslation();
@@ -152,8 +195,11 @@ function Row({
   return (
     <button
       type="button"
-      className="action-row"
+      className={
+        recommended ? 'action-row border-coral bg-coral/10 dark:border-coral' : 'action-row'
+      }
       disabled={!preview.available}
+      data-recommended={recommended || undefined}
       onClick={() => onPick(preview.action)}
       aria-keyshortcuts={key}
     >
@@ -163,6 +209,7 @@ function Row({
         <span className="flex-1 text-left font-bold">
           {label || t(`action.${preview.action.actionId}`)}
         </span>
+        {recommended && <span className="chip chip-good">{t('sheet.recommended')}</span>}
         {!preview.available && (
           <span className="text-bad text-xs">{t(`error.${preview.reason.code}`)}</span>
         )}
@@ -180,6 +227,7 @@ export function ActionSheet({
   world,
   groups,
   smart = [],
+  studyNote,
   canAct,
   onPick,
   children,
@@ -190,32 +238,36 @@ export function ActionSheet({
   world: Readonly<WorldState>;
   groups: ActionGroup[];
   smart?: readonly SmartDefault[];
+  /** Where the enrolled course stands, shown under the Study shortcut. */
+  studyNote?: string | undefined;
   canAct: boolean;
   onPick(a: Action): void;
   children?: React.ReactNode;
 }) {
   const { t } = useTranslation();
-  const local = groups.filter((g) => !g.anywhere);
-  const anywhere = groups.filter((g) => g.anywhere);
+  const { open, locked, lockedCount } = splitLocked(groups);
+  const recommended = recommendedKeys(smart);
+  const local = open.filter((g) => !g.anywhere);
+  const anywhere = open.filter((g) => g.anywhere);
+  const lockedJobs = locked.some((g) => ACTION_KIND.get(g.actionId) === 'apply-job');
 
   const renderGroup = (g: ActionGroup) => {
-    const reason = sharedReason(g);
-    if (reason)
-      return (
-        <li key={g.actionId}>
-          <div className="flex flex-wrap items-center gap-x-2 rounded-xl border-2 border-ink/15 border-dashed px-2 py-1.5 text-fg-muted text-sm dark:border-cream/20">
-            <span className="flex-1 font-bold">{t(`action.${g.actionId}`)}</span>
-            <span className="text-bad text-xs">{t(`error.${reason}`)}</span>
-          </div>
-        </li>
-      );
     const single = g.rows.length === 1 && g.rows[0] && !optionLabel(g.rows[0].preview.action);
     return (
       <li key={g.actionId} className="flex flex-col gap-1">
         {!single && <h3 className="font-bold text-sm">{t(`action.${g.actionId}`)}</h3>}
         {g.rows.map((r) => (
-          <Row key={JSON.stringify(r.preview.action)} row={r} world={world} onPick={onPick} />
+          <Row
+            key={JSON.stringify(r.preview.action)}
+            row={r}
+            world={world}
+            recommended={recommended.has(JSON.stringify(r.preview.action))}
+            onPick={onPick}
+          />
         ))}
+        {lockedJobs && ACTION_KIND.get(g.actionId) === 'apply-job' && (
+          <p className="text-fg-muted text-xs">{t('sheet.betterJobs')}</p>
+        )}
       </li>
     );
   };
@@ -245,13 +297,16 @@ export function ActionSheet({
         </div>
       </div>
       {children}
-      {canAct && <QuickBar smart={smart} groups={groups} onPick={onPick} />}
+      {canAct && <QuickBar smart={smart} groups={groups} studyNote={studyNote} onPick={onPick} />}
       <div
         className="relative px-3 pt-1 pb-4 wide:min-h-0 wide:flex-1 wide:overflow-y-auto wide:pb-2"
         data-coach="actions"
       >
         {local.length === 0 && anywhere.length === 0 && (
           <p className="text-fg-muted">{t('sheet.nothing')}</p>
+        )}
+        {lockedJobs && !local.some((g) => ACTION_KIND.get(g.actionId) === 'apply-job') && (
+          <p className="mb-2 text-fg-muted text-sm">{t('sheet.betterJobs')}</p>
         )}
         <ul className="flex flex-col gap-3">{local.map(renderGroup)}</ul>
         {anywhere.length > 0 && (
@@ -261,6 +316,28 @@ export function ActionSheet({
             </h3>
             <ul className="flex flex-col gap-3">{anywhere.map(renderGroup)}</ul>
           </>
+        )}
+        {lockedCount > 0 && (
+          <details className="mt-3" data-testid="locked">
+            <summary className="cursor-pointer text-fg-muted text-sm">
+              {t('sheet.locked', { count: lockedCount })}
+            </summary>
+            <ul className="mt-2 flex flex-col gap-3">
+              {locked.map((g) => (
+                <li key={g.actionId} className="flex flex-col gap-1">
+                  <h3 className="font-bold text-sm">{t(`action.${g.actionId}`)}</h3>
+                  {g.rows.map((r) => (
+                    <Row
+                      key={JSON.stringify(r.preview.action)}
+                      row={r}
+                      world={world}
+                      onPick={onPick}
+                    />
+                  ))}
+                </li>
+              ))}
+            </ul>
+          </details>
         )}
       </div>
     </section>

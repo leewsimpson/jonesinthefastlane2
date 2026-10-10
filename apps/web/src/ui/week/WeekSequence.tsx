@@ -1,7 +1,8 @@
 /**
- * The end-of-week sequence (FR-05, ENG-10, ENG-13, ENG-14): bills and life → weekend event card with choices →
- * news → goal progress → Jones's feed → next-week teaser. It can't be dismissed; Enter moves on, and number keys
- * pick a weekend choice.
+ * The end-of-week sequence (FR-05, ENG-10, ENG-13, ENG-14): the weekend event card with choices (when there is one),
+ * then one recap page: Jones's feed, goal progress, bills and life, news (when there is any) and the next-week
+ * teaser. It can't be dismissed; Enter moves on, and number keys pick a weekend choice. The button is pinned to the
+ * bottom of the dialog, so it stays put from page to page.
  */
 
 import { GOAL_KEYS } from '@fastlane/content/keys';
@@ -14,6 +15,7 @@ import { feedLine, playerName, slotValues } from '../../game/copy.ts';
 import { content } from '../../game/engine.ts';
 import {
   eventsFor,
+  hasNews,
   type ReportStep,
   reportSteps,
   statTotals,
@@ -267,10 +269,11 @@ function moneyFromEvent(events: readonly DomainEvent[], player: string): number 
 
 function NewsPage({ report }: { report: WeekReport }) {
   const { t } = useTranslation();
+  const news = hasNews(report.events);
   return (
     <div className="flex flex-col gap-3">
       {report.events.map((e, i) => {
-        if (e.type === 'newsStarted')
+        if (e.type === 'newsStarted' && news)
           return (
             // biome-ignore lint/suspicious/noArrayIndexKey: events are an ordered log
             <Rise key={i} index={i}>
@@ -354,6 +357,7 @@ function RivalPage({ report, state }: { report: WeekReport; state: GameState }) 
   const { t } = useTranslation();
   const posts = eventsFor(report.events, 'rivalPost');
   const overtakes = eventsFor(report.events, 'overtaken');
+  if (posts.length === 0 && overtakes.length === 0) return null;
   return (
     <div className="flex flex-col gap-3">
       {overtakes.map((e) => (
@@ -361,7 +365,6 @@ function RivalPage({ report, state }: { report: WeekReport; state: GameState }) 
           {t('week.overtaken', { by: playerName(state, e.by), name: playerName(state, e.player) })}
         </p>
       ))}
-      {posts.length === 0 && <p className="text-fg-muted">{t('week.noPosts')}</p>}
       {posts.map((e, i) => {
         const seat = seatOf(state.players, e.player);
         return (
@@ -397,6 +400,25 @@ function TeaserPage({ report, state }: { report: WeekReport; state: GameState })
   );
 }
 
+/** The one recap page: Jones's feed leads, then goals, bills and life, news, and the teaser. */
+function WeekPage({ report, state }: { report: WeekReport; state: GameState }) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col gap-4">
+      <RivalPage report={report} state={state} />
+      <GoalsPage report={report} state={state} />
+      <SummaryPage report={report} state={state} />
+      {hasNews(report.events) && (
+        <section>
+          <h3 className="font-bold">{t('week.news')}</h3>
+          <NewsPage report={report} />
+        </section>
+      )}
+      <TeaserPage report={report} state={state} />
+    </div>
+  );
+}
+
 export function WeekSequence({
   report,
   state,
@@ -412,7 +434,7 @@ export function WeekSequence({
 }) {
   const { t } = useTranslation();
   const steps = reportSteps(report, state);
-  const current: ReportStep = steps[step] ?? 'summary';
+  const current: ReportStep = steps[step] ?? 'week';
   const last = step >= steps.length - 1;
   const blocked = current === 'event' && state.pending !== null;
   const over = state.phase.kind === 'gameOver';
@@ -438,7 +460,7 @@ export function WeekSequence({
       <Dialog.Portal>
         <Dialog.Overlay className="dialog-overlay" />
         <Dialog.Content
-          className="dialog-content"
+          className="dialog-content flex h-[34rem] flex-col overflow-hidden"
           onEscapeKeyDown={(e) => e.preventDefault()}
           onPointerDownOutside={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
@@ -447,29 +469,32 @@ export function WeekSequence({
         >
           <div className="flex items-baseline justify-between gap-2">
             <Dialog.Title className="font-bold font-display text-2xl">
-              {t(`week.${current}`)}
+              {current === 'event' ? t('week.event') : t('week.title', { week: report.week })}
             </Dialog.Title>
-            <span className="text-fg-muted text-sm">
-              {t('week.title', { week: report.week })} ·{' '}
-              {t('week.step', { n: step + 1, total: steps.length })}
-            </span>
+            {steps.length > 1 && (
+              <span className="text-fg-muted text-sm">
+                {t('week.step', { n: step + 1, total: steps.length })}
+              </span>
+            )}
           </div>
           {/* biome-ignore lint/a11y/noStaticElementInteractions: a click skips decoration only; nothing is lost without it */}
           {/* biome-ignore lint/a11y/useKeyWithClickEvents: Enter moves on, which skips too */}
-          <div className="mt-3" aria-live="polite" onClick={() => setSkip(true)}>
+          <div
+            // biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollable region must be keyboard-focusable (axe)
+            tabIndex={0}
+            className="mt-3 min-h-0 flex-1 overflow-y-auto"
+            aria-live="polite"
+            onClick={() => setSkip(true)}
+          >
             <SkipReveal.Provider value={skip}>
-              {current === 'summary' && <SummaryPage report={report} state={state} />}
               {current === 'event' && <EventPage report={report} state={state} onPick={onPick} />}
-              {current === 'news' && <NewsPage report={report} />}
-              {current === 'goals' && <GoalsPage report={report} state={state} />}
-              {current === 'rival' && <RivalPage report={report} state={state} />}
-              {current === 'teaser' && <TeaserPage report={report} state={state} />}
+              {current === 'week' && <WeekPage report={report} state={state} />}
             </SkipReveal.Provider>
           </div>
           {!blocked && (
             <button
               type="button"
-              className="btn btn-primary mt-4 w-full"
+              className="btn btn-primary mt-3 w-full shrink-0"
               onClick={onNext}
               // biome-ignore lint/a11y/noAutofocus: Enter moves the sequence on
               autoFocus

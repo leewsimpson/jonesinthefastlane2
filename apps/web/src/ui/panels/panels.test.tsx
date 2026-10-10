@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { engine } from '../../game/engine.ts';
 import '../../i18n/i18n.ts';
 import { rowKey } from '../common/hotkeys.ts';
-import { ActionSheet, groupActions } from './ActionSheet.tsx';
+import { ActionSheet, groupActions, recommendedKeys, splitLocked } from './ActionSheet.tsx';
 import { EndWeekDialog } from './EndWeekDialog.tsx';
 
 afterEach(cleanup);
@@ -43,8 +43,38 @@ describe('ActionSheet', () => {
     expect(nap.textContent).toMatch(/2h/);
     fireEvent.click(nap);
     expect(onPick).toHaveBeenCalledWith(expect.objectContaining({ type: 'perform' }));
-    // A blocked row says why instead of offering a key.
-    expect(screen.getByText(/Nothing in the fridge/)).toBeTruthy();
+    // A blocked row says why instead of offering a key, folded under one "Locked (n)" line.
+    const locked = screen.getByTestId('locked');
+    expect(locked.textContent).toMatch(/Locked \(\d+\)/);
+    expect(within(locked).getByText(/Nothing in the fridge/)).toBeTruthy();
+    expect(screen.queryAllByText(/Nothing in the fridge/)).toHaveLength(1);
+  });
+
+  it('shows only doable rows outside the locked fold, and marks the recommended meal once', () => {
+    const { state, me } = newGame();
+    const groups = groupActions(engine.listActions(state), rowKey);
+    const { open, locked, lockedCount } = splitLocked(groups);
+    expect(open.every((g) => g.rows.every((r) => r.preview.available))).toBe(true);
+    expect(locked.every((g) => g.rows.every((r) => !r.preview.available))).toBe(true);
+    expect(lockedCount).toBeGreaterThan(0);
+    const smart = engine.smartDefaults(state);
+    render(
+      <ActionSheet
+        location={me.location}
+        week={state.week}
+        housingTier={me.housing.tier}
+        world={state.world}
+        groups={groups}
+        smart={smart}
+        canAct
+        onPick={() => {}}
+      />,
+    );
+    expect(screen.queryByText(/^Eat now/)).toBeNull();
+    expect(recommendedKeys(smart).size).toBe(smart.some((d) => d.kind === 'eat') ? 1 : 0);
+    expect(document.querySelectorAll('[data-recommended]').length).toBe(
+      recommendedKeys(smart).size,
+    );
   });
 });
 

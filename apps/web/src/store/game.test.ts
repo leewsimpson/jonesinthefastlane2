@@ -53,7 +53,7 @@ describe('game store', () => {
     const { report, session } = store.getState();
     expect(report?.player).toBe('p1');
     expect(report?.events[0]).toMatchObject({ type: 'turnEnded', player: 'p1' });
-    expect(reportSteps(must(report, 'report'), must(session, 'session').state)[0]).toBe('summary');
+    expect(reportSteps(must(report, 'report'), must(session, 'session').state)[0]).toBe('event');
 
     finishReport(store);
     const after = must(store.getState().session, 'session');

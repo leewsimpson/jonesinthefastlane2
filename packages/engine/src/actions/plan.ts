@@ -84,6 +84,14 @@ export function previewAction(
       const def = actions.find((a) => a.id === action.actionId);
       if (!def) return unavailable('UNKNOWN_ACTION');
       const params = paramsOf(action);
+      const opens = unlockWeekOf(content, def, params);
+      if (opens > state.week)
+        return {
+          action,
+          available: false,
+          reason: { code: 'NOT_UNLOCKED', unlockWeek: opens },
+          plan: null,
+        };
       const bad = checkParams(def, params);
       if (bad) return unavailable(bad);
       const result = HANDLERS[def.kind].plan({ content, state, player }, def, params);
@@ -105,6 +113,15 @@ export function previewAction(
   if (plan.time > player.timeLeft) return unavailable('NOT_ENOUGH_TIME', plan);
   if (plan.money > player.stats.cash) return unavailable('NOT_ENOUGH_MONEY', plan);
   return { action, available: true, plan };
+}
+
+/** The first week an action (and, for `subscribe`, its target) is offered (FR-15). */
+function unlockWeekOf(content: GameContent, def: LocationAction, params: PerformParams): number {
+  const sub =
+    def.kind === 'subscribe'
+      ? content.city.subscriptions.find((s) => s.id === params.target)
+      : undefined;
+  return Math.max(def.unlockWeek ?? 1, sub?.unlockWeek ?? 1);
 }
 
 /** The `perform` parameters, without the keys that aren't set (state and logs stay plain JSON). */

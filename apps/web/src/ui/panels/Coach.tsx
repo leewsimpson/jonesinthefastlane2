@@ -38,7 +38,7 @@ export function Coach({
       className={
         compact
           ? 'mx-3 mt-2 flex flex-col gap-1 rounded-xl border-2 border-coral bg-surface p-2'
-          : 'card pointer-events-auto flex w-full max-w-md flex-col gap-1 p-3 shadow-[0_4px_0_var(--color-ink)]'
+          : 'card flex w-full flex-col gap-1 p-3 text-sm shadow-[0_4px_0_var(--color-ink)]'
       }
       aria-labelledby="coach-heading"
       data-testid="coach"

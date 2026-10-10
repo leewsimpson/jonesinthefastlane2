@@ -97,6 +97,7 @@
     {
       "id": "host-friends",
       "location": "your-place",
+      "unlockWeek": 3,
       "kind": "basic",
       "minutes": 180,
       "cost": 2500,
@@ -144,6 +145,7 @@
     {
       "id": "subscription-audit",
       "location": "your-place",
+      "unlockWeek": 4,
       "kind": "subscription-audit",
       "minutes": 15,
       "cost": 0,
@@ -152,6 +154,7 @@
     {
       "id": "gig-shift",
       "location": "*",
+      "unlockWeek": 2,
       "kind": "gig",
       "minutes": 60,
       "durations": [60, 120, 240],

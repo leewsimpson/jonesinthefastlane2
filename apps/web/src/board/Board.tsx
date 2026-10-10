@@ -31,7 +31,7 @@ import { useSettings } from '../settings/settings.ts';
 import { seatOf } from '../ui/common/stats.ts';
 import { type Coin, spawn, step } from './coins.ts';
 import { buildingFrame } from './frames.ts';
-import { type BoardLayout, boardLayout, pointAt, stepToward } from './layout.ts';
+import { type BoardLayout, boardLayout, loopDelta, pointAt, stepToward } from './layout.ts';
 
 extend({ Container, Graphics, ParticleContainer, Sprite, Text });
 
@@ -43,6 +43,10 @@ const MUSTARD = 0xffc23d;
 
 /** Steps of the loop a token covers per second. */
 const TOKEN_SPEED = 5;
+/** The longest a token may take to arrive, in seconds. */
+const MAX_TRIP_S = 1;
+/** Spacing between tokens sharing a building, in token widths: clear of each other, the active one is bigger. */
+const TOKEN_GAP = 1.2;
 
 interface Sheets {
   locations: Spritesheet;
@@ -54,8 +58,23 @@ function loadSheets(): Promise<Sheets> {
   sheetsPromise ??= Promise.all([
     Assets.load<Spritesheet>('/assets/atlases/locations.json'),
     Assets.load<Spritesheet>('/assets/atlases/busts.json'),
-  ]).then(([locations, busts]) => ({ locations, busts }));
+  ]).then(([locations, busts]) => {
+    smooth(locations);
+    smooth(busts);
+    return { locations, busts };
+  });
   return sheetsPromise;
+}
+
+/**
+ * The atlases are drawn at about half their size, which is jagged without mipmaps. Set before the first render, so
+ * the texture is uploaded with its mip chain; it costs no download.
+ */
+function smooth(sheet: Spritesheet) {
+  const source = sheet.textureSource;
+  source.autoGenerateMipmaps = true;
+  source.style.scaleMode = 'linear';
+  source.style.mipmapFilter = 'linear';
 }
 
 /** A burst of the active player's coins and their mood for a moment (ENG-01), keyed so each plays once. */
@@ -262,7 +281,11 @@ function Token({
           pop.current = 0;
         } else {
           const moving = pos.current !== target;
-          pos.current = stepToward(pos.current, target, TOKEN_SPEED * dt, layout.count);
+          // A long trip (the walk home at week's end) is caught up in about a second, so the token isn't still
+          // in transit when the header already says where the player is.
+          const left = Math.abs(loopDelta(pos.current, target, layout.count));
+          const speed = Math.max(TOKEN_SPEED, left / MAX_TRIP_S);
+          pos.current = stepToward(pos.current, target, speed * dt, layout.count);
           // Squash on arrival: a quick down-and-up as the token lands.
           if (moving && pos.current === target) squash.current = 1;
           squash.current = Math.max(0, squash.current - dt * 3.5);
@@ -343,7 +366,7 @@ function Coins({ burst, x, y, scale }: { burst: BoardFx; x: number; y: number; s
   );
 }
 
-/** Lit windows for the dark board (art-direction §4): warm dots on each building, the same every night. */
+/** Lit windows for the dark board (art-direction §4): a couple of soft panes per building, the same every night. */
 function Windows({ layout, count }: { layout: BoardLayout; count: number }) {
   const draw = useCallback(
     (g: Graphics) => {
@@ -351,15 +374,14 @@ function Windows({ layout, count }: { layout: BoardLayout; count: number }) {
       const { cell } = layout;
       for (let i = 0; i < count; i++) {
         const { x, y } = pointAt(layout, i);
-        for (let k = 0; k < 4; k++) {
+        for (let k = 0; k < 2; k++) {
           // A fixed scatter per building, so windows don't flicker between renders.
           const wx = x + (((i * 7 + k * 13) % 9) / 9 - 0.5) * cell * 0.5;
           const wy = y - cell * (0.25 + (((i * 5 + k * 11) % 7) / 7) * 0.45);
-          g.roundRect(wx - cell * 0.03, wy - cell * 0.03, cell * 0.06, cell * 0.06, 2).fill({
+          g.roundRect(wx - cell * 0.04, wy - cell * 0.05, cell * 0.08, cell * 0.1, 2).fill({
             color: MUSTARD,
-            alpha: 0.9,
+            alpha: 0.55,
           });
-          g.circle(wx, wy, cell * 0.09).fill({ color: MUSTARD, alpha: 0.18 });
         }
       }
     },
@@ -373,6 +395,8 @@ let night: ColorMatrixFilter | null = null;
 function nightFilter(): ColorMatrixFilter {
   if (night) return night;
   night = new ColorMatrixFilter();
+  // Filters render at 1x by default, which blurs the whole board on a hi-dpi screen.
+  night.resolution = 'inherit';
   night.brightness(0.62, false);
   night.saturate(-0.15, true);
   night.tint(0x9fa8ff, true);
@@ -482,7 +506,7 @@ function Scene({
             const index = locations.indexOf(p.location);
             const here = byLocation.get(p.location) ?? [];
             const k = here.indexOf(p.id);
-            const offset = k * layout.token * 0.7;
+            const offset = k * layout.token * TOKEN_GAP;
             const seat = seatOf(state.players, p.id);
             return (
               <Token

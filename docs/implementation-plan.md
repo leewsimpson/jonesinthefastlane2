@@ -178,7 +178,7 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
 | Token movement along the loop with travel-time display | FR-02 |
 | HUD: compact stats, Time and Energy bars, four goal rings, Jones progress; tap for detail | FR-13, FR-20, ENG-14 |
 | Location panels (Radix dialogs): action list with previews, job board, shops, NeoBank, LeaseLord | FR-03 |
-| End-of-week sequence UI: bills → event card with choices → news → goal progress → Jones recap → teaser | FR-05, ENG-10 |
+| End-of-week sequence UI: event card with choices (only when there is one), then one recap page: Jones's feed first, goal progress, bills and stat changes, news (only when there is any), teaser; the Next / Start-week button stays pinned in place | FR-05, ENG-10 |
 | Hotseat: player handoff screen | FR-06 |
 | Persistence: Dexie save slots, autosave after every action and week end | NFR-13 |
 | Responsive layouts: portrait (board top, action sheet bottom), landscape (board centre, side panels) | NFR-02 |
@@ -269,6 +269,7 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
 | Privacy notice, consent flow, "about real financial help" credits link | NFR-14, ENG-35 |
 | Monetization spec: rewarded-video rewards, caps, excluded modes, ad provider and consent | ENG-31 |
 | Ethical guardrail review against ENG-30…33 | §13.3 |
+| Progressive unlock of home extras: `unlockWeek` on actions and subscriptions (engine gate `NOT_UNLOCKED`, data in `city.json`/`subscriptions.json`); the UI hides locked rows. Prices step in 5 cents so inflation never shows a stray cent | FR-15, FR-50 |
 
 **Exit criteria**
 - Production deploy and rollback both rehearsed (rollback first on the preview env's `main` alias).

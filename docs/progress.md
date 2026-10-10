@@ -508,6 +508,12 @@ the open items are listed under "Left for the owner" below.
   - `pnpm sim optimize` takes about 55 s a game at the defaults; `--candidates 2 --rollouts 1 --horizon 2` is a
     quick look.
 
+### Progressive unlock and whole-nickel prices — 2026-10-10
+
+- FR-15: `unlockWeek` on actions and subscriptions (host friends 3, subscription audit 4, gig shifts 2; streaming and gym 2, cloud storage 3, AI assistant 4, delivery pass 5). Locked options are unavailable with `NOT_UNLOCKED` and `reason.unlockWeek`. `ENGINE_VERSION` 0.5.1.
+- Stray cent ($25.01): the price index drifted 2500 to 2501 by week 2. `price()` now rounds to 5 cents (FR-50).
+- Sim (2001 games, seed `fastlane`, content `1900590ea5f1`): no hard band fails. `balanced` wins 53.4%, median week 32, Jones 9.3/46.6/81.9% on Chill/Standard/Hustle Culture, dominance 8.2 points, seat gap 14.3. Hustle Culture's 82% was already there before the gating (82.4% with exact-cent prices), so it is drift from earlier Phase 6 changes, not this work.
+
 ### M requirement audit (2026-10-08)
 
 Scope rule: game-requirements §16. An M row that asks for more than the MVP is Deferred to the phase that owns it.
