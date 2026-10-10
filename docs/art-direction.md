@@ -124,7 +124,7 @@ swaps, particles (coins, confetti, sweat drops). Image generation cannot keep a 
 frames. "Paper-puppet" motion avoids the problem and suits the board-game look. All of it respects reduced motion.
 
 **Dark theme:** sprites are the same in both themes. The outlines keep them readable. At night (or in dark theme) the
-board gets a Pixi colour-matrix tint and lit windows: two soft panes per building, no halo, so they read as light and not as specks. We don't regenerate art. The atlases are drawn at about half size, so the board loads them with mipmaps and linear filtering (no extra download).
+board gets a Pixi colour-matrix tint. No overlay lights: the sprites' own windows carry the night look, and drawn-on panes didn't line up with the art. We don't regenerate art. The atlases are drawn at about half size, so the board loads them with mipmaps and linear filtering (no extra download).
 
 ---
 

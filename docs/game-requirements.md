@@ -41,8 +41,8 @@ Set life goals ─► Week starts (60 hrs of time, energy bar)
 | ID | Requirement | Pri |
 |---|---|---|
 | FR-01 | The game is turn-based. 1 turn = 1 in-game week. Each player has a **Time** budget per week (default 60 hours). These are *discretionary waking hours*: sleep is not spent from the budget, but its quality comes from housing, Energy and stress. | M |
-| FR-02 | Travelling between locations costs time, based on distance around the board. The transport mode changes the cost (walk / e-scooter / transit / car / rideshare). | M |
-| FR-03 | Every action shows its time cost, money cost and stat effects **before** the player commits. | M |
+| FR-02 | Travelling between locations costs time, based on distance around the board. The transport mode changes the cost (walk / e-scooter / transit / car / rideshare). The default mode is the cheapest one that is at most 2x slower than the fastest (ignoring modes that need an item); the week panel shows the alternatives' time and cost. A saved preference wins. | M |
+| FR-03 | Every action shows its time cost, money cost and stat effects **before** the player commits, including the weekly effects of housing on LeaseLord cards and the savings rate and risk range on NeoBank cards. | M |
 | FR-04 | The turn ends when time runs out or the player chooses "End Week". Any time left over gives a small rest bonus. | M |
 | FR-05 | End-of-week processing runs in this fixed order. **Per player**, straight after their turn: food check → bills/rent/subscriptions → interest/debt payments → job/AI-disruption checks → stat decay & recovery (Energy, Health, Social, Relationships) → weekend event → quest progress. **Once per round**, after every player (including Jones) has played the week: market move → news → goal check (FR-11) → next-week teasers. | M |
 | FR-05a | **Rounds:** in multiplayer, everyone plays the same calendar week in sequence. Shared world state (prices, market, news, job openings) only changes between rounds, so no player gets a better market by going later. | M |
@@ -66,7 +66,7 @@ At the start of a game the player sets targets for four goals (the original's We
 | FR-10 | Players choose a difficulty preset (**Chill / Standard / Hustle Culture**) or set custom targets for each goal (sliders). | M |
 | FR-11 | Win: the first player to reach all four targets, checked at the **end of a round** so turn order gives no advantage. If several players qualify in the same round, the biggest total overshoot wins. | M |
 | FR-12 | Loss/timeout options: an optional week limit (e.g. 52 weeks). If time runs out, the highest **score** wins: the average of progress toward each target, each capped at 100%. The same formula is used for the Daily Run score. | S |
-| FR-14 | **No game-overs, no softlocks.** Running out of money leads to setbacks, not a dead end: missed rent → warning → eviction to *Parents' Basement* (always available, $0 rent, −Happiness); unpaid debt → collections and a credit-score hit; a jobless, broke player can always do GigHub work or a free basic job. Every state must have at least one action that earns money. | M |
+| FR-14 | **No game-overs, no softlocks.** Running out of money leads to setbacks, not a dead end: missed rent → warning → eviction to *Parents' Basement* (always available, $0 rent, a weekly −Happiness and −Social push to move out); unpaid debt → collections and a credit-score hit; a jobless, broke player can always do GigHub work or a free basic job. Every state must have at least one action that earns money. | M |
 | FR-13 | Goal progress is always visible as four rings or bars. Progress animates at the end of each week. | M |
 | FR-15 | **Progressive unlock:** the first week shows only what a new player needs (eat, rest, work, shop, travel). Home extras unlock on set weeks, from data: each action or subscription may carry an `unlockWeek`. Before then it is unavailable with reason `NOT_UNLOCKED` and the unlock week, so the UI hides it instead of greying it. Unlock weeks are balance data (NFR-15). Never gates the last way to earn money (FR-14). | M |
 
@@ -273,7 +273,7 @@ Life doesn't stop for your career. Relationships, family and life stages add the
 | FR-80 | Jones plays under the same rules as human players (no cheating) using a utility-based AI. | M |
 | FR-81 | Rival personalities with different strategies and difficulty: *Jones the Grinder* (career), *Crypto Jones* (high risk), *Wellness Jones* (balanced), *Influencer Jones* (clout). | S |
 | FR-82 | Jones posts a "highlight reel" social feed of their week, smug and funny, and reacts to the player's milestones. | M |
-| FR-83 | Rubber-banding is allowed **only** through strategy choice, never by bending the rules. Difficulty changes how often Jones picks the best move. | M |
+| FR-83 | Rubber-banding is allowed **only** through strategy choice, never by bending the rules. Difficulty changes how often Jones picks the best move. A transparent catch-up shift in strategy from the public score lead is allowed (`ai.json` `rubberBand`); it never reads hidden state. | M |
 | FR-84 | Jones's feed lines and NPC dialogue (FR-32) are **LLM-generated during development**: written once with templates and game-state slots, reviewed, and committed as content data. No LLM calls at build time or runtime, so the game stays offline-capable (NFR-11). | M |
 
 ---
@@ -286,7 +286,25 @@ Life doesn't stop for your career. Relationships, family and life stages add the
 | **Daily Run** | One seeded scenario per day, the same for everyone, with a 26-week limit and a score. Shareable result card. Leaderboard | S |
 | **Career Mode** | A meta-progression campaign: unlock backgrounds, perks and new districts across runs (roguelite). Defaults to **Long Life** length (FR-91) so life stages get full screen time | S |
 | **Seasonal Scenarios** | Monthly themed rules (e.g. "Recession 2026", "AI Gold Rush", "Housing Bubble") | C |
-| **Online async multiplayer** | Play turns with friends at your own pace | C |
+| **Online multiplayer** | Classic with friends on their own devices: async turns at your own pace, live when everyone is in the room at once (§12.1) | S |
+
+### 12.1 Online multiplayer
+
+One room model serves both styles: a room is an online Classic game, and "live" is just the same room with several
+players connected at the same moment. Async ships first; live is a layer on top.
+
+| ID | Requirement | Pri |
+|---|---|---|
+| MP-01 | **Rooms:** a host creates a room from the Classic setup (goals, difficulty, AI rivals) for 2–4 humans (FR-06) plus optional AI rivals. Friends join by link or a 6-character code into a lobby, pick a name and avatar, and the host starts the game. A device can be in at most 5 active rooms. | S |
+| MP-02 | **Async turns:** players take their weeks whenever it suits them. The server holds the game. A "My games" list shows every room with "Your turn" or "Waiting for <name>". | S |
+| MP-03 | **Catch-up recap:** when your turn comes round, a skippable recap plays what happened since your last turn (other players' and Jones's weeks, news, the round end), built on the hotseat handoff (FR-06). | S |
+| MP-04 | **Turn notifications:** opt-in Web Push, "Your turn in <room>". At most one per room per day; never a nag or a countdown (ENG-32). Turn notifications are the one exception to ENG-33's one-per-day cap, because the player asked for them room by room. | S |
+| MP-05 | **Absent players:** no turn timer (ENG-32). After 48 hours on one player's turn, any other player may put that seat on **autopilot** for one week: the server plays it with the Standard Jones policy. After 7 days the host may hand the seat to autopilot for the rest of the game. A room with no action for 30 days is archived and read-only. | S |
+| MP-06 | **Live play:** when two or more players have a room open, the active player's moves stream to the others as they happen (token travel, dice, cards, event playback), with presence dots on the seat list. Same rules and turns as async. | S |
+| MP-07 | **Identity:** no account (NFR-14). An anonymous device ID holds the seat; a one-time transfer code moves your seats to another device. Names are 16 characters, checked against a word list. No free-text chat; preset reactions only. | S |
+| MP-08 | **Fairness:** the server is the authority and checks every action with the shared engine. Rooms have no leaderboard, so a modded client simulating outcomes locally is an accepted risk. No ads in a room (MON-03). | S |
+| MP-09 | **Updates mid-game:** a room keeps going across releases. When a release changes the rules, the server migrates each room's snapshot forward and continues under the new rules; a client on an older build must update before it can act. | S |
+| MP-10 | **Offline turns:** on your turn you can keep playing offline; the actions queue and submit when you reconnect. If the room moved on meanwhile (autopilot), the queued actions are dropped and the client resyncs, with a message saying so. | C |
 
 ---
 
@@ -326,7 +344,7 @@ Use proven, modern retention techniques **with ethical guardrails**.
 | ENG-30 | No real-money loot boxes, gacha or paid randomness. | M |
 | ENG-31 | No pay-to-win. Monetization is opt-in **rewarded video** (e.g. watch an ad for extra credits), plus optionally cosmetics or expansion packs. Rewards, caps and which modes they apply to are specified in §13.4. | M |
 | ENG-32 | No energy/wait timers that block play, and no FOMO countdowns that punish absence. | M |
-| ENG-33 | No manipulative notifications. Push/email is opt-in and capped at one per day (e.g. "Daily Run is ready"). | M |
+| ENG-33 | No manipulative notifications. Push/email is opt-in and capped at one per day (e.g. "Daily Run is ready"). Online turn notifications have their own per-room cap (MP-04). | M |
 | ENG-34 | Optional session reminder ("You've played 60 min — Jones is also taking a break"). | S |
 | ENG-35 | Sensitive themes (debt, mental health, layoffs) are handled with satire aimed at systems, not at players. The credits include an "about real financial help" link. | S |
 
@@ -339,7 +357,7 @@ inside a run would change its outcome. Rewarded video arrives with Career Mode m
 |---|---|
 | MON-01 | **What a video gives:** "credits", a meta currency that only buys what meta-progression unlocks (cosmetic outfits and apartments, backgrounds, event packs, ENG-15). One video = the credits of about one finished run, so watching speeds unlocks up but never gates them. |
 | MON-02 | **Never in a run:** a video never changes `GameState` (cash, time, stats, rerolls, undo). Saves, replays and the engine stay ad-free (NFR-12), and every unlock is earnable by playing. |
-| MON-03 | **Excluded modes:** none in the Daily Run (ENG-17) or anything with a leaderboard; none during hotseat turns. Offered only on the run summary and the unlocks screen. |
+| MON-03 | **Excluded modes:** none in the Daily Run (ENG-17) or anything with a leaderboard; none during hotseat turns or in an online room (MP-08). Offered only on the run summary and the unlocks screen. |
 | MON-04 | **Caps:** at most 3 rewarded videos a day per device; the offer is hidden once the cap is reached. No streak or timer asks the player to come back for one (ENG-32). |
 | MON-05 | **Opt-in and calm:** the player taps "Watch a video for credits"; there are no interstitials, no autoplay and no copy that says watching helps us (provider policy). Closing early gives nothing and costs nothing. |
 | MON-06 | **Consent and privacy:** the ad SDK loads only after the player's ad consent (NFR-14), from a lazy chunk outside the initial bundle (NFR-10), and the CSP is widened only for the provider's hosts. Offline or no fill: the offer is hidden; the game never waits on an ad (NFR-11). |
@@ -362,7 +380,7 @@ platform are the owner's.
 | NFR-03 | Fully playable by mouse, touch or keyboard. Every action has a keyboard shortcut. | M |
 | NFR-04 | Accessibility: WCAG 2.2 AA contrast, colour-blind-safe stat colours with icons, a reduced-motion setting, scalable text, screen-reader labels for UI panels. | M |
 | NFR-05 | Audio: a lo-fi adaptive soundtrack, SFX for every action, and separate volume sliders. | S |
-| NFR-06 | Localisation-ready: all strings in resource files, currency and number formatting by locale. English at launch. | S |
+| NFR-06 | Localisation-ready: all strings in resource files, currency and number formatting by locale (whole dollars, cents only under $10). English at launch. | S |
 | NFR-07 | Satirical tone guide for all copy: punch up, not down. Short and witty (tone guide: Appendix). | M |
 
 ---
@@ -397,7 +415,8 @@ platform are the owner's.
 - Life stages & relationships: ageing, dating, partners, moving in, engagement, weddings, marriage, home buying, pets, breakups and divorce (§9)
 
 **Post-launch**
-- StartupGarage, Civic Center/taxes, seasonal scenarios, async online multiplayer, home decoration, localisation
+- Online multiplayer (§12.1): async rooms first, then live play
+- StartupGarage, Civic Center/taxes, seasonal scenarios, home decoration, localisation
 - Kids and parenting stages, daycare, custody, ageing parents, prenups, the optional "Family & Love" goal
 
 ---

@@ -17,7 +17,7 @@ Running ledger of finished phases, deferrals and deviations from [implementation
 - Deferred:
   - CI-02 (affected-only builds, **S**) → when CI time warrants it. The full pipeline takes about 1 min today.
   - CI-05 Lighthouse CI → Phase 5 (plan puts Lighthouse budgets on the preview URL there).
-  - CD-09 preview cleanup (**C**) → Phase 10.
+  - CD-09 preview cleanup (**C**) → Phase 11 (backlog).
   - `main` and production deploy workflows → Phase 6 as planned. D1/KV/Worker envs for them already exist.
 - Deviations:
   - Repo made **public** (user decision) so rulesets, CodeQL and secret-scanning push protection work on the free plan.
@@ -513,6 +513,15 @@ the open items are listed under "Left for the owner" below.
 - FR-15: `unlockWeek` on actions and subscriptions (host friends 3, subscription audit 4, gig shifts 2; streaming and gym 2, cloud storage 3, AI assistant 4, delivery pass 5). Locked options are unavailable with `NOT_UNLOCKED` and `reason.unlockWeek`. `ENGINE_VERSION` 0.5.1.
 - Stray cent ($25.01): the price index drifted 2500 to 2501 by week 2. `price()` now rounds to 5 cents (FR-50).
 - Sim (2001 games, seed `fastlane`, content `1900590ea5f1`): no hard band fails. `balanced` wins 53.4%, median week 32, Jones 9.3/46.6/81.9% on Chill/Standard/Hustle Culture, dominance 8.2 points, seat gap 14.3. Hustle Culture's 82% was already there before the gating (82.4% with exact-cent prices), so it is drift from earlier Phase 6 changes, not this work.
+
+### Playtest polish pass — 2026-10-10
+
+- **Exit evidence:** 355 tests, typecheck and lint clean. Sim (600 games, seed `fastlane`): all hard bands pass. `jonesWin` balanced-standard 40.2%, chill 16.4%, hustle 56.4%; `win.balanced-standard` 59.8%.
+- **Changes:** basement push (FR-14) and housing effects on LeaseLord (FR-03); prices to the nickel under $10, whole dollars from $10 (FR-50, NFR-06); study blocks capped to finish the course; "AI skills" work bonus label; stat quests gained a `by` target; passive Social decay and hang-out/host-friends retuned; NeoBank savings rate and risk range; cheapest-reasonable default travel mode (FR-02); rival feed `busy-week` moment; tagline and coach copy.
+- **Jones (FR-80..83):** Skills jumps came from uncapped cheap study valued about 15x work per hour (the study cap is the fix); Wellbeing sat at 100% because upkeep was too weak for every bot. Weights retuned and a transparent `rubberBand` block added in `ai.json`, for Jones only; parity holds.
+- **Deferred:** soft warnings: `careerist` win 74.1% (was 59.3%, band <= 20%), `gambler` 48.1% (was 55.0%), hardship 6.7% (was 0.2%, band 30-60%). The `careerist` regression is unexplained. Weekend events drew 17 of 25 weeks in a store test (matches `events.chanceBp`), but empty-deck weeks (cooldown and `when` filters) are unmeasured.
+- **Deviations:** none from the plan.
+- **Notes:** the free basement gave no rent pressure (by FR-14 design); the push above addresses it. Skill bonus counts partial course progress by design. `packages/sim/scripts/jones-profile.ts` is a tuning aid for Jones's scores.
 
 ### M requirement audit (2026-10-08)
 

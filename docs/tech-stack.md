@@ -91,9 +91,12 @@
 │  │  ├─ src/fx/           # event → animation/sound mapping ("juice")
 │  │  ├─ src/store/        # Zustand stores
 │  │  ├─ src/persistence/  # Dexie save/load, migrations
+│  │  ├─ src/online/       # lazy chunk: rooms, lobby, remote session, push (§5.1)
 │  │  └─ public/assets/    # spritesheets, audio sprites, fonts
-│  └─ api/                 # Cloudflare Worker (Hono) — daily seeds, leaderboards
+│  ├─ api/                 # Cloudflare Worker (Hono) — daily seeds, leaderboards, room routing
+│  └─ rooms/               # Cloudflare Worker that owns the Room Durable Object (§5.1)
 ├─ packages/
+│  ├─ protocol/            # room messages and endpoint types (zod/mini), shared by web, api and rooms
 │  ├─ engine/              # pure game rules, RNG, AI rival, scoring
 │  ├─ content/             # cities/<id>/ (board, prices, wages), jobs.json, events/*.json, items.json, partners/ (name pools, traits, wants), life-stages.json, schemas.ts
 │  └─ sim/                 # headless batch simulator for balancing (Node CLI), see simulator.md
@@ -131,7 +134,48 @@
 - **Identity:** anonymous device ID by default. Optional sign-in later (Cloudflare Access is not for players, so use passkeys
   or OAuth through a lightweight auth library) when cross-device sync is added.
 - **Anti-cheat:** server-side replay verification + per-IP rate limiting (Cloudflare WAF / rate-limit rules).
-- **Async multiplayer (post-launch):** Durable Objects, one per game room, storing the action log.
+- **Online multiplayer:** Durable Objects, one per room (§5.1).
+
+### 5.1 Online rooms (game-requirements §12.1)
+
+```
+web ──HTTPS / WebSocket──► api Worker (Hono) ──service binding──► rooms Worker ─► Room DO (one per room, SQLite)
+                              │  /rooms/* routes, auth, rate limits                 setup · log · snapshot · seats
+                              ▼                                                     alarms: push, autopilot, archive
+                              D1: room_members, push_subscriptions ◄──────────────── turn changes
+```
+
+- **The Room DO is the authority.** It holds the `GameSetup`, the human action log, the latest snapshot and the seat
+  map (device ID hash → seat). The engine already fits: actions carry no player id and apply to `phase.player`
+  (engine-design §7), so the DO only checks that the caller holds that seat, then runs `engine.reduce`. Jones and
+  other AI seats run inside the engine, so nobody submits AI moves.
+- **Submitting an action:** `POST /rooms/:id/actions {seq, action}`. `seq` must equal the log length (optimistic
+  concurrency: a stale client gets `409` with the missing actions). The DO reduces, appends, saves a snapshot at each
+  turn end and broadcasts `{seq, action}` to connected sockets. Offline play (MP-10) sends the queued actions in one
+  request; the DO applies them in order and stops at the first rejection.
+- **Clients run the same engine.** The client reduces its own action at once (no waiting on the network) and replays
+  other players' actions from the log to get their domain events for the recap and live animation (MP-03, MP-06). The
+  DO sends `engine.hash` at each turn end; a mismatch makes the client reload the snapshot.
+- **Autopilot (MP-05)** is the AI policy picking actions for a human seat. The DO logs them as that seat's actions, so
+  replay stays valid without engine changes.
+- **Versions (MP-09).** A room stores `engineVersion` and `contentHash`. When the deployed engine differs, the DO
+  migrates the snapshot with the save migrations (engine-design §14) and continues from it; the old log becomes
+  diagnostic only. Responses carry the server's engine version, and an older client shows the PWA update prompt before
+  it may act.
+- **Live layer (MP-06):** the WebSocket Hibernation API, so idle sockets cost nothing. `GET /rooms/:id/ws` upgrades
+  in the api Worker and forwards to the DO. Presence is the set of open sockets. Without a socket the client polls
+  `GET /rooms/:id/log?from=<seq>` when it comes to the foreground.
+- **Notifications (MP-04):** Web Push with VAPID (keys are Worker secrets), subscriptions in D1. DO alarms send the
+  turn push and run the autopilot and archive timers.
+- **Why a separate rooms Worker:** Cloudflare doesn't generate preview URLs for a Worker that implements a Durable
+  Object, and `wrangler versions upload` can't change Durable Object classes. Keeping the DO in `apps/rooms` lets the
+  api Worker keep its per-PR preview URLs (CD-01). The rooms Worker deploys with `wrangler deploy`, one per
+  environment, so every PR preview shares the preview environment's rooms.
+- **Client seam:** the game store's `dispatch` (`apps/web/src/store/game.ts`) stays the only way the UI changes the
+  game. An online game adds a submitter next to the saver and an `applyRemote(action)` path, so the game screen doesn't
+  know whether it is local, hotseat or online. All online code is a lazy chunk (NFR-10).
+- **Testing:** `@cloudflare/vitest-pool-workers` for the DO (concurrency, seat checks, alarms, migration), Playwright
+  with two or three browser contexts for lobby, async turns and live play.
 
 ---
 

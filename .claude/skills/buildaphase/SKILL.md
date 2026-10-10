@@ -12,7 +12,7 @@ disable-model-invocation: true
 
 - Phase = the argument. With no argument, take the lowest phase that `docs/progress.md` does not mark done, and confirm it with the user.
 - **Gate:** every phase this one depends on (the dependency diagram in the plan) is marked done in `docs/progress.md`, with its exit criteria evidenced. If a dependency is missing or a criterion was waived, stop and ask the user whether to proceed.
-- Phase 10 is a backlog, not a phase: ask the user which item to build, then treat that item as the phase.
+- Phase 11 is a backlog, not a phase: ask the user which item to build, then treat that item as the phase.
 
 Done when: phase number confirmed and the gate passes.
 

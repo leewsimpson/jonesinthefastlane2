@@ -29,15 +29,19 @@ This plan turns [game-requirements.md](game-requirements.md), [tech-stack.md](te
 | 7 | Online: Daily Run | Worker API, replay verification, leaderboard, share card | v1.0 |
 | 8 | Depth & retention | Meta-progression, achievements, backgrounds, new locations, side hustles, audio | v1.0 |
 | 9 | Life stages & relationships | Ageing, dating, partners, marriage, homes, pets, divorce | **v1.0** |
-| 10 | Post-launch | StartupGarage, taxes, seasons, async multiplayer, kids, localisation | Post-launch |
+| 10 | Online multiplayer | Rooms with friends: async turns, push, autopilot, then live play | Post-launch |
+| 11 | Post-launch | StartupGarage, taxes, seasons, kids, localisation | Post-launch |
 
 ```
-Phase 0 ─► 1 ─► 2 ─► 3 ─┬─► 4 ─► 5 ─► 6 (MVP) ─┬─► 7 ─┐
-                        │                       ├─► 8 ─┼─► v1.0 ─► 10
-Art track: anchor ─► cast ─► locations ─► items/events ─► backdrops   └─► 9 ─┘
+Phase 0 ─► 1 ─► 2 ─► 3 ─► 4 ─► 5 ─► 6 (MVP) ─┬─► 7 ─┐
+                                              ├─► 8 ─┼─► v1.0 ─► 11
+                                              ├─► 9 ─┘
+                                              └─► 10
+
+Art track: anchor ─► cast ─► locations ─► items/events ─► backdrops
 ```
 
-Phases 7, 8 and 9 are independent of each other and can run in parallel or in any order.
+Phases 7, 8, 9 and 10 are independent of each other and can run in parallel or in any order.
 
 Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold human-only steps, open questions and gotchas;
 `docs/progress.md` records what each finished phase delivered, deferred and changed.
@@ -213,7 +217,7 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
 | Reveal animations (≤1.5 s, skippable) for event cards, market moves, promotions | ENG-03 |
 | Paper-puppet motion: idle bob, squash on arrival, emotion swaps; all respect reduced motion | art-direction §4 |
 | Integrate final art from the art track: key-sprite script, WebP export, spritesheet packing | art-direction §6 |
-| Dark theme: board colour-matrix tint, lit windows | art-direction §4 |
+| Dark theme: board colour-matrix tint | art-direction §4 |
 | Tutorial woven into week 1: first job + first paycheck in under 3 minutes | ENG-20, FR-43 |
 | Run summary: timeline, best/worst week, net-worth chart, "your 2026 in review" | ENG-21 |
 | Turn-pacing pass: one-tap smart defaults ("Work full shift"); measure 60–120 s weeks | ENG-02 |
@@ -290,6 +294,7 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
 - Built 2026-10-08 (`docs/progress.md`, Phase 6): save fixture test, `upskill-u` rename, About & privacy with
   consent and help links, monetization spec (§13.4), visual snapshots (`visual.yml`), NFR-10 budgets, `optimizer`
   and `nightly.yml`, the M audit. Open: the deploy and rollback rehearsal and every human-only step above.
+- Deferred from the 2026-10-10 playtest polish pass (`docs/progress.md`): soft bands for hardship, `careerist` and `gambler`, the unexplained `careerist` regression, and measuring empty-deck event weeks.
 - `sim optimize` found the utility scorer short-sighted in weeks 1–6 (optimizer 19/20 vs `balanced` 8/20 on the same
   seeds): consider a longer early horizon in `ai.json` during playtest tuning, then re-check Jones's bands.
 
@@ -354,10 +359,44 @@ Build in this order, since each step depends on the one before:
 - Each step is its own PR, merged before the next starts.
 - Step 7: present guardrail findings to the user; the content rating is their call.
 
-## Phase 10 — Post-launch backlog
+## Phase 10 — Online multiplayer
 
-StartupGarage, Civic Center and taxes, seasonal scenarios, opening hours, async online multiplayer (Durable Objects),
-home decoration and collections, localisation beyond English, kids and parenting stages, daycare, custody, ageing
+**Goal:** friends play Classic together on their own devices, async first, then live. Requirements are game-requirements
+§12.1 (MP-01…10); the design is tech-stack §5.1.
+
+Build in this order; each step is its own PR, merged before the next starts:
+
+| Step | Task | Refs |
+|---|---|---|
+| 1 | **Seam and protocol:** `packages/protocol` (room messages, endpoint types, zod/mini schemas). Game store gets a submitter and `applyRemote(action)`; local and hotseat games behave exactly as before | tech-stack §5.1 |
+| 2 | **Rooms backend:** `apps/rooms` Worker with the Room DO (create, join, start, actions with `seq`, log, snapshot, seat checks); api Worker routes `/rooms/*` over a service binding; D1 `room_members`; anonymous device ID (shared with Phase 7); rate limits | MP-01, MP-02, MP-07, MP-08 |
+| 3 | **Pipeline:** rooms Worker in `main.yml`, `production.yml` and `rollback.yml` (order: D1 migrations → rooms → api); smoke test hits a room round trip; runbook entry | CD-02…06 |
+| 4 | **Lobby:** "Play online" on the Classic setup, invite link and code, seat list, names and avatars, host start | MP-01, MP-07 |
+| 5 | **Async play:** "My games" list, playing a turn through the remote session, catch-up recap, stale-client resync, offline queue | MP-02, MP-03, MP-10 |
+| 6 | **Absence and notifications:** Web Push opt-in and subscriptions, DO alarms for the turn push, autopilot (one week and permanent), archive | MP-04, MP-05 |
+| 7 | **Live layer:** WebSocket Hibernation in the DO, presence dots, live playback of the active player's moves, reconnect with fallback to polling | MP-06 |
+| 8 | **Hardening:** the version migration path (deploy a rules change under a running room), seat transfer code, preset reactions, load test (1k rooms), multi-context E2E, privacy notice update, guardrail review against ENG-30…33 | MP-07, MP-09, NFR-14 |
+
+**Exit criteria**
+- Three people on three devices finish a 10-week room asynchronously over at least two days, with turn notifications.
+- Two players on phones play a live room; one drops off the network and rejoins without losing state.
+- A release that changes content ships while a room is mid-game, and the room carries on after the update prompt.
+- Replaying every finished room's log on the server matches its stored snapshot (or is flagged as migrated).
+- The initial bundle stays within CI-05; online code loads only when the player opens "Play online".
+
+**Notes**
+- **Human-only:** first `wrangler deploy` of the rooms Worker in each environment, VAPID keys as Worker secrets, WAF
+  rules for `/rooms/*`, a playtest with real friend groups, privacy notice wording for push subscriptions.
+- Shares the device ID, rate limiting and Sentry with Phase 7; whichever phase comes first builds them.
+- **Confirm with the user before step 2:** the ENG-33 exception for turn notifications (MP-04), forward migration of
+  running rooms instead of keeping old engines deployable (MP-09), and the autopilot thresholds (MP-05).
+- PR previews share the preview environment's rooms Worker (tech-stack §5.1), so a PR that changes the Room DO is only
+  testable locally (`wrangler dev`) or after it merges to `main`.
+- iOS delivers Web Push only to an installed PWA; the push opt-in should say so on iOS.
+
+## Phase 11 — Post-launch backlog
+
+StartupGarage, Civic Center and taxes, seasonal scenarios, opening hours, home decoration and collections, localisation beyond English, kids and parenting stages, daycare, custody, ageing
 parents, prenups, optional "Family & Love" goal, PR preview cleanup (CD-09). Prioritise from telemetry and player feedback.
 
 **Notes**
@@ -403,5 +442,7 @@ Art style (open question 2): flat vector (art-direction §1).
 | Game isn't fun once the systems are in | Phase 4 alpha is deliberately ugly so fun is tested early; tune through data, not code |
 | Balance sim too slow for the 8-minute PR budget | Smaller PR game count, full runs nightly; keep the engine allocation-light. More sim risks in simulator §11 |
 | Image generation style drift | Style anchor attached to every prompt; acceptance checklist; prompts saved next to images |
+| Durable Objects block Worker preview URLs and versioned uploads | Room DO lives in its own `apps/rooms` Worker (tech-stack §5.1) |
+| Client and server engines drift in an online room | Hash check at each turn end, snapshot reload on mismatch; forced update for old clients (MP-09) |
 | Determinism bugs break Daily Run verification | Replay-stability property tests from Phase 1; state hash checked in CI |
 | IP exposure from original names | Original names only; rename Hi-Tech U art IDs; legal check before public launch |

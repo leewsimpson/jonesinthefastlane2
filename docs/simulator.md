@@ -69,7 +69,7 @@ interface Policy {
 ```
 
 Most personas are **one utility scorer with different weights**: the same scorer that powers Jones (FR-80) lives in
-`packages/engine` (`ai/utility.ts`), and Jones's difficulty is how often the bot picks its top-scored move (FR-83). It
+`packages/engine` (`ai/utility.ts`), and Jones's difficulty is how often the bot picks its top-scored move (FR-83), plus the `rubberBand` shift in `ai.json`, which only Jones's persona uses. It
 values a position as weighted goal progress plus what the persona expects over its horizon, and scores each option
 by value gained per hour; travel is scored by the best thing to do on arrival. Goal value is concave (progress past
 a target is worth less, and the weakest goal earns a bottleneck bonus, because winning needs all four), expected

@@ -366,30 +366,6 @@ function Coins({ burst, x, y, scale }: { burst: BoardFx; x: number; y: number; s
   );
 }
 
-/** Lit windows for the dark board (art-direction §4): a couple of soft panes per building, the same every night. */
-function Windows({ layout, count }: { layout: BoardLayout; count: number }) {
-  const draw = useCallback(
-    (g: Graphics) => {
-      g.clear();
-      const { cell } = layout;
-      for (let i = 0; i < count; i++) {
-        const { x, y } = pointAt(layout, i);
-        for (let k = 0; k < 2; k++) {
-          // A fixed scatter per building, so windows don't flicker between renders.
-          const wx = x + (((i * 7 + k * 13) % 9) / 9 - 0.5) * cell * 0.5;
-          const wy = y - cell * (0.25 + (((i * 5 + k * 11) % 7) / 7) * 0.45);
-          g.roundRect(wx - cell * 0.04, wy - cell * 0.05, cell * 0.08, cell * 0.1, 2).fill({
-            color: MUSTARD,
-            alpha: 0.55,
-          });
-        }
-      }
-    },
-    [layout, count],
-  );
-  return <pixiGraphics draw={draw} blendMode="add" />;
-}
-
 /** The night grade for the dark theme: darker, cooler, a little less saturated. One shared filter for the app. */
 let night: ColorMatrixFilter | null = null;
 function nightFilter(): ColorMatrixFilter {
@@ -526,7 +502,6 @@ function Scene({
             );
           })}
       </pixiContainer>
-      {dark && <Windows layout={layout} count={locations.length} />}
       {order.map(({ id, index }) => (
         <Label
           key={id}
