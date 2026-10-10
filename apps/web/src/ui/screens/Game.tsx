@@ -27,7 +27,7 @@ import {
   useHotkeys,
 } from '../common/hotkeys.ts';
 import { Hud } from '../hud/Hud.tsx';
-import { ActionDock, ActionSheet, groupActions, LocationCard } from '../panels/ActionSheet.tsx';
+import { ActionDock, ActionSheet, groupActions } from '../panels/ActionSheet.tsx';
 import { Coach } from '../panels/Coach.tsx';
 import { DetailsDialog } from '../panels/DetailsDialog.tsx';
 import { EndWeekDialog, endWeekWarnings } from '../panels/EndWeekDialog.tsx';
@@ -257,13 +257,6 @@ export function Game() {
               </div>
             )}
             <div className="px-3">
-              <LocationCard
-                location={me.location}
-                week={state.week}
-                housingTier={me.housing.tier}
-              />
-            </div>
-            <div className="px-3">
               <WeekPanel {...panelProps} side />
             </div>
             <div className="px-3">
@@ -332,7 +325,6 @@ export function Game() {
             : undefined;
         })()}
         canAct={canAct}
-        showHeader={!wide}
         onPick={dispatch}
       >
         {coach && !wide && (

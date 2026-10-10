@@ -67,8 +67,9 @@ function Stat({
       <span aria-hidden="true" className={STAT_TONE[stat]}>
         {STAT_ICON[stat]}
       </span>
-      <span className="sr-only">{t(`stat.${stat}`)}</span>
-      <span className="tabular">{value}</span>
+      {/* Named on the wide layout, where the column has room; an icon alone on phones. */}
+      <span className="sr-only wide:not-sr-only wide:text-fg-muted">{t(`stat.${stat}`)}</span>
+      <span className="tabular font-bold">{value}</span>
     </span>
   );
 }
@@ -140,25 +141,28 @@ export function Hud({
       </div>
 
       <div className="hud-more flex flex-col gap-2 border-ink/20 border-t-2 border-b-2 bg-surface-raised px-3 py-2 wide:border-0 wide:bg-transparent wide:p-0 dark:border-cream/20">
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1.5 wide:[&_.chip]:gap-1 wide:[&_.chip]:px-2.5 wide:[&_.chip]:py-1 wide:[&_.chip]:text-sm">
           <Stat stat="health" value={me.stats.health} />
           <Stat stat="happiness" value={me.stats.happiness} />
           <Stat stat="social" value={me.stats.social} />
           <Stat stat="creditScore" value={me.stats.creditScore} />
           <span className="chip" title={t('stat.meals')}>
             <span aria-hidden="true">{STAT_ICON.meals}</span>
-            <span className="sr-only">{t('stat.meals')}</span>
-            <span className="tabular">{me.mealsThisWeek}</span>
+            <span className="sr-only wide:not-sr-only wide:text-fg-muted">{t('stat.meals')}</span>
+            <span className="tabular font-bold">{me.mealsThisWeek}</span>
           </span>
         </div>
 
         <button
           type="button"
           onClick={onDetails}
-          className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg text-left"
+          className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg text-left wide:mt-1 wide:rounded-xl wide:border wide:border-ink/15 wide:bg-surface wide:p-2 wide:hover:border-ink/40 dark:wide:border-cream/15 dark:wide:hover:border-cream/40"
           aria-label={t('hud.details')}
         >
-          <GoalRings progress={mine.progress} size={40} />
+          <span className="section-label hidden w-full wide:block" aria-hidden="true">
+            {t('hud.goals')}
+          </span>
+          <GoalRings progress={mine.progress} size={44} />
           <span className="flex flex-col gap-1">
             <span className="tabular font-bold">
               {t('hud.score', { score: percent(mine.score) })}
@@ -187,14 +191,14 @@ export function Hud({
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            className="btn btn-sm flex-1"
+            className="btn btn-sm btn-ghost flex-1"
             onClick={onDetails}
             aria-keyshortcuts={KEY_DETAILS}
           >
             {t('hud.details')} <kbd>{KEY_DETAILS.toUpperCase()}</kbd>
           </button>
-          <SettingsButton className="btn btn-sm flex-1" />
-          <button type="button" className="btn btn-sm flex-1" onClick={onQuit}>
+          <SettingsButton className="btn btn-sm btn-ghost flex-1" />
+          <button type="button" className="btn btn-sm btn-ghost flex-1" onClick={onQuit}>
             {t('menu.quit')}
           </button>
         </div>

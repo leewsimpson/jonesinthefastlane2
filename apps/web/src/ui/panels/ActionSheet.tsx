@@ -220,22 +220,19 @@ function Row({
   );
 }
 
-/** Where the player is: the building, its owner's line and, at home, the room. Landscape shows it in the left column. */
-export function LocationCard({
+/** Where the player is: the building, its owner's line and, at home, the room. It heads the action sheet. */
+function LocationCard({
   location,
   week,
   housingTier,
-  bare = false,
 }: {
   location: string;
   week: number;
   housingTier: string;
-  /** Without the card frame, for the top of the portrait sheet. */
-  bare?: boolean;
 }) {
   const { t } = useTranslation();
   return (
-    <div className={bare ? 'flex flex-col' : 'card flex flex-col overflow-hidden pb-2'}>
+    <div className="flex flex-col">
       {location === content.city.board.home && (
         <div
           aria-hidden="true"
@@ -267,7 +264,6 @@ export function ActionSheet({
   smart = [],
   studyNote,
   canAct,
-  showHeader = true,
   onPick,
   children,
 }: {
@@ -280,8 +276,6 @@ export function ActionSheet({
   /** Where the enrolled course stands, shown under the Study shortcut. */
   studyNote?: string | undefined;
   canAct: boolean;
-  /** False when the location card sits elsewhere (landscape). */
-  showHeader?: boolean;
   onPick(a: Action): void;
   children?: React.ReactNode;
 }) {
@@ -319,9 +313,9 @@ export function ActionSheet({
       className="sheet flex min-h-0 flex-col border-ink border-t-2 bg-surface-raised dark:border-cream/30"
       aria-label={t('sheet.here', { location: t(`location.${location}`) })}
     >
-      {showHeader && (
-        <LocationCard location={location} week={week} housingTier={housingTier} bare />
-      )}
+      <div className="wide:border-ink/15 wide:border-b wide:pb-2 dark:wide:border-cream/15">
+        <LocationCard location={location} week={week} housingTier={housingTier} />
+      </div>
       {children}
       {canAct && <QuickBar smart={smart} groups={groups} studyNote={studyNote} onPick={onPick} />}
       <div
@@ -337,9 +331,7 @@ export function ActionSheet({
         <ul className="flex flex-col gap-3 wide:gap-2">{local.map(renderGroup)}</ul>
         {anywhere.length > 0 && (
           <>
-            <h3 className="mt-3 mb-1 text-fg-muted text-xs uppercase tracking-wide">
-              {t('sheet.everywhere')}
-            </h3>
+            <h3 className="section-label mt-4 mb-1">{t('sheet.everywhere')}</h3>
             <ul className="flex flex-col gap-3 wide:gap-2">{anywhere.map(renderGroup)}</ul>
           </>
         )}

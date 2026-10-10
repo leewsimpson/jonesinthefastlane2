@@ -144,22 +144,45 @@ body {
     display: grid;
     overflow: hidden;
     height: 100dvh;
-    grid-template-columns: minmax(240px, 28%) minmax(0, 1fr) minmax(280px, 27%);
+    /* Side columns are capped so wide screens give the extra width to the board, not to stretched panels. */
+    grid-template-columns: minmax(250px, min(26%, 22rem)) minmax(0, 1fr) minmax(
+        290px,
+        min(30%, 26rem)
+      );
     grid-template-rows: minmax(0, 1fr) auto;
     grid-template-areas: "hud board sheet" "hud board dock";
   }
   .hud-area {
     grid-area: hud;
-    border-right: 2px solid color-mix(in srgb, var(--fg) 25%, transparent);
+    background: var(--surface-raised);
+    border-right: 1px solid color-mix(in srgb, var(--fg) 18%, transparent);
+    box-shadow: 4px 0 16px rgb(0 0 0 / 0.12);
+    z-index: 1;
   }
   .board-area {
     grid-area: board;
     height: auto;
+    /* A soft pool of light in the loop, so the open ground reads as the city's centre rather than empty space. */
+    background: radial-gradient(
+      ellipse 70% 60% at 50% 55%,
+      color-mix(in srgb, var(--color-lilac) 14%, transparent),
+      transparent 70%
+    );
+  }
+  .board-backdrop {
+    height: 100%;
+    mask-image: linear-gradient(to bottom, black 55%, transparent 95%);
   }
   .sheet,
   .dock {
     border-top: 0;
-    border-left: 2px solid color-mix(in srgb, var(--fg) 25%, transparent);
+    border-left: 1px solid color-mix(in srgb, var(--fg) 18%, transparent);
+    box-shadow: -4px 0 16px rgb(0 0 0 / 0.12);
+    z-index: 1;
+  }
+  .dock {
+    border-top: 1px solid color-mix(in srgb, var(--fg) 12%, transparent);
+    padding-top: 0.5rem;
   }
   .sheet {
     grid-area: sheet;
@@ -214,6 +237,13 @@ body {
   }
   .btn-sm {
     @apply px-2 py-1 text-sm;
+  }
+  /* Secondary controls (Details, Settings, Quit): present but quieter than the game's own buttons. */
+  .btn-ghost {
+    @apply border border-ink/25 bg-transparent font-semibold text-fg-muted shadow-none hover:border-ink hover:text-fg dark:border-cream/25 dark:hover:border-cream/70;
+  }
+  .section-label {
+    @apply font-bold text-fg-muted text-xs uppercase tracking-wide;
   }
   .card {
     @apply rounded-xl border-2 border-ink bg-surface-raised dark:border-cream/40;
