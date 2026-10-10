@@ -26,7 +26,7 @@ Running ledger of finished phases, deferrals and deviations from [implementation
     `production`. Staging was removed from GitHub, Cloudflare (D1/KV deleted while empty), `wrangler.jsonc` and the
     docs. CD-02 now deploys `main` to the preview env, and production promotes that build.
   - Preview and production share one Cloudflare token (user decision). This departs from OPS-01's separate tokens.
-    The token is set in both GitHub environments. `production` requires a reviewer and allows only `main`/`v*`.
+    The token is set in both GitHub environments. `production` has no required reviewer (removed 2026-10-10) and allows only `main`/`v*`.
   - Preview has its own D1 (`fastlane-db-preview`) and KV namespace, separate from production.
   - Wrangler runs through `pnpm exec wrangler` (pinned in the lockfile) instead of `cloudflare/wrangler-action`.
     That's one less third-party action, and the version always matches local dev.

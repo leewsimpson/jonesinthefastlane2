@@ -9,7 +9,7 @@ export type Bindings = {
 };
 
 const allowedOrigin =
-  /^https:\/\/([a-z0-9-]+\.)?fastlane-e6g\.pages\.dev$|^http:\/\/localhost:\d+$/;
+  /^https:\/\/([a-z0-9-]+\.)?fastlane-e6g\.pages\.dev$|^https:\/\/fastlane\.bitsquid\.work$|^http:\/\/localhost:\d+$/;
 
 export const app = new Hono<{ Bindings: Bindings }>();
 

@@ -6,7 +6,7 @@
   dispatched manually on a branch, and a PR gets a live preview URL when it carries the `preview` label.
 - `main` is always deployable and auto-deploys to the **preview** environment under a stable `main` alias.
 - Two environments only: **preview** (PRs + `main`) and **production**. There is no separate staging.
-- Production deploys are one click, gated by approval, and easy to roll back.
+- Production deploys are one click (no approval gate, removed 2026-10-10, user decision), and easy to roll back.
 - The pipeline is fast: checks should finish in **under 8 minutes**.
 
 ## 2. Targets
@@ -34,7 +34,7 @@
 | CI-07 | `main` has no ruleset or branch protection (removed 2026-10-05, user decision). Direct pushes are allowed and no status checks are required, because CI runs on `main` itself (CI-01); a red `main` is fixed forward. | M |
 | CD-01 | **Preview (opt-in):** a PR labelled `preview` deploys the web app to a Pages preview (`--branch=pr-<n>`). The URL is posted as a sticky PR comment. The Worker is uploaded with `wrangler versions upload --env preview --preview-alias pr-<n>`, which gives every PR its own Worker preview URL. (A single shared `preview` deploy would let parallel PRs overwrite each other mid-E2E.) The PR's web preview is built with that API URL. | M |
 | CD-02 | **Main:** merging to `main` deploys web + API to the preview environment under the stable `main` alias (Pages `--branch=main`, Worker `--preview-alias main`), runs D1 migrations on the preview DB, runs smoke E2E, and uploads the web build as artifact `web-dist-<sha>` for production to promote. | M |
-| CD-03 | **Production:** triggered by publishing a GitHub Release (tag `v*`) or a manual `workflow_dispatch`. Uses a GitHub **Environment `production`** with required reviewers. Deploys the *same build artifact* that passed on `main` (CD-02) (build once, promote). It doesn't rebuild. The web build must therefore not bake in environment-specific values: the API base URL and similar config are picked at runtime from the hostname or a `/config.json`. | M |
+| CD-03 | **Production:** triggered by publishing a GitHub Release (tag `v*`) or a manual `workflow_dispatch`. Uses a GitHub **Environment `production`** (holds the secrets and limits deploys to `main`/`v*`; no required reviewers). Deploys the *same build artifact* that passed on `main` (CD-02) (build once, promote). It doesn't rebuild. The web build must therefore not bake in environment-specific values: the API base URL and similar config are picked at runtime from the hostname or a `/config.json`. | M |
 | CD-04 | D1 migrations run **before** the Worker deploy and must be backward-compatible (expand → migrate → contract) so a rollback is always safe. | M |
 | CD-05 | Rollback: a `rollback.yml` workflow (manual) re-promotes a previous Pages deployment and runs `wrangler rollback` for the Worker. Documented in a runbook. | M |
 | CD-06 | Post-deploy smoke test: hit `/`, `/daily` and `/healthz`, and check the version header matches the released SHA. On failure, auto-alert and suggest a rollback. | M |
@@ -54,7 +54,7 @@
 ├─ codeql.yml       # main + weekly: CodeQL (CI-06)
 ├─ preview.yml      # PR labelled `preview`: deploy Pages preview + Worker preview, comment URL, run E2E + Lighthouse
 ├─ main.yml         # after ci is green on main: migrate preview D1, deploy `main` alias (Worker + Pages), smoke, upload artifact
-├─ production.yml   # release published / dispatch: approval gate → migrate → deploy → smoke
+├─ production.yml   # release published / dispatch: migrate → deploy → smoke
 ├─ rollback.yml     # manual: roll back Pages + Worker to a chosen version
 ├─ visual.yml       # manual: render visual baselines (e2e/visual.spec.ts) on CI's runner and commit them
 └─ nightly.yml      # manual (cron when switched on): full sim, assess, optimize, full E2E matrix, audit
@@ -67,10 +67,10 @@ PR + `preview` label ─► preview.yml ─► Pages preview + Worker preview �
                                    │
 merge to main ─► ci.yml ─► main.yml ─► D1 migrate ─► Worker ─► Pages (main alias) ─► smoke ─► artifact
                                    │
-Release v1.2.0 ─► production.yml ─► [manual approval] ─► D1 migrate ─► Worker ─► Pages ─► smoke ─► Sentry release
+Release v1.2.0 ─► production.yml ─► D1 migrate ─► Worker ─► Pages ─► smoke ─► Sentry release
 ```
 
-Live URLs: production web `https://fastlane-e6g.pages.dev`, API `https://fastlane-api-production.leewsimpson.workers.dev`;
+Live URLs: production web `https://fastlane.bitsquid.work` (custom domain on the Pages project; `https://fastlane-e6g.pages.dev` still works), API `https://fastlane-api-production.leewsimpson.workers.dev`;
 main alias web `https://main.fastlane-e6g.pages.dev`, API `https://main-fastlane-api-preview.leewsimpson.workers.dev`.
 The Pages project's production branch is `production` (the deploy workflows set it), so `main` deploys never reach the
 production URL. Security headers are `apps/web/public/_headers`. The SPA fallback is Pages' own: a deploy with no top-level
@@ -90,7 +90,7 @@ concurrency: { group: production, cancel-in-progress: false }
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: production          # required reviewers configured in repo settings
+    environment: production          # secrets + branch policy; no required reviewers
     steps:
       - uses: actions/checkout@<sha>
       - uses: pnpm/action-setup@<sha>
@@ -142,7 +142,7 @@ jobs:
 
 **Ship to production (CD-03).** Merge to `main` and wait for `ci` then `main` to go green (the `main` run uploads
 `web-dist-<sha>`). Then either publish a GitHub Release (tag `v*`) on that commit, or run **Actions → production →
-Run workflow** (empty `sha` = the latest green `main` deploy). A reviewer approves the `production` environment; the
+Run workflow** (empty `sha` = the latest green `main` deploy). The
 job migrates D1, deploys the Worker, deploys the promoted build and runs `smoke.sh`. The job summary links both URLs.
 
 **Production smoke test failed.** The workflow opens an issue titled "Production deploy failed". Check the live site

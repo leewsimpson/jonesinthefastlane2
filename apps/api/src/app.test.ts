@@ -20,6 +20,14 @@ describe('api', () => {
     expect(ok.headers.get('Access-Control-Allow-Origin')).toBe(
       'https://pr-1.fastlane-e6g.pages.dev',
     );
+    const custom = await app.request(
+      '/healthz',
+      { headers: { Origin: 'https://fastlane.bitsquid.work' } },
+      env,
+    );
+    expect(custom.headers.get('Access-Control-Allow-Origin')).toBe(
+      'https://fastlane.bitsquid.work',
+    );
     const bad = await app.request('/healthz', { headers: { Origin: 'https://evil.example' } }, env);
     expect(bad.headers.get('Access-Control-Allow-Origin')).toBeNull();
   });

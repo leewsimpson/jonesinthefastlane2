@@ -1,4 +1,4 @@
-# CD-03: promote a build that passed on main to production, behind the `production` environment's required reviewers.
+# CD-03: promote a build that passed on main to production, from the `production` environment (no required reviewers).
 # Triggered by publishing a release (tag v*) or by hand. It never rebuilds: it deploys the `web-dist-<sha>` artifact
 # main.yml uploaded. Migrations run before the Worker (CD-04); the smoke test checks the released SHA (CD-06) and,
 # on failure, opens an issue that says how to roll back (CD-05, runbook in ci-cd.md §6).
@@ -23,7 +23,7 @@ concurrency:
 
 env:
   PAGES_PROJECT: fastlane
-  WEB_URL: https://fastlane-e6g.pages.dev
+  WEB_URL: https://fastlane.bitsquid.work
   API_URL: https://fastlane-api-production.leewsimpson.workers.dev
 
 jobs:
@@ -32,7 +32,7 @@ jobs:
     timeout-minutes: 15
     environment:
       name: production
-      url: https://fastlane-e6g.pages.dev
+      url: https://fastlane.bitsquid.work
     permissions:
       contents: read
       actions: read # download the main build's artifact
