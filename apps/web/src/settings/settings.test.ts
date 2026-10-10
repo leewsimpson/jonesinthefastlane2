@@ -19,12 +19,31 @@ describe('parseSettings', () => {
           shareData: true,
         }),
       ),
-    ).toEqual({ theme: 'dark', motion: 'reduce', textSize: 130, tutorial: false, shareData: true });
+    ).toEqual({
+      ...DEFAULT_SETTINGS,
+      theme: 'dark',
+      motion: 'reduce',
+      textSize: 130,
+      tutorial: false,
+      shareData: true,
+    });
     expect(
       parseSettings(
         JSON.stringify({ theme: 'neon', textSize: 200, tutorial: 'yes', shareData: 'yes' }),
       ),
     ).toEqual(DEFAULT_SETTINGS);
+  });
+});
+
+describe('volumes', () => {
+  it('keeps numbers in range and defaults anything else', () => {
+    const v = parseSettings(JSON.stringify({ musicVolume: 140, sfxVolume: -5 }));
+    expect([v.musicVolume, v.sfxVolume]).toEqual([100, 0]);
+    const bad = parseSettings(JSON.stringify({ musicVolume: 'loud', sfxVolume: null }));
+    expect([bad.musicVolume, bad.sfxVolume]).toEqual([
+      DEFAULT_SETTINGS.musicVolume,
+      DEFAULT_SETTINGS.sfxVolume,
+    ]);
   });
 });
 

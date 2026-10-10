@@ -195,15 +195,15 @@ function Row({
   return (
     <button
       type="button"
-      className={
-        recommended ? 'action-row border-coral bg-coral/10 dark:border-coral' : 'action-row'
-      }
+      className={`action-row wide:flex-row wide:flex-wrap wide:items-center wide:gap-x-2 wide:gap-y-1 wide:py-1.5 ${
+        recommended ? 'border-coral bg-coral/10 dark:border-coral' : ''
+      }`}
       disabled={!preview.available}
       data-recommended={recommended || undefined}
       onClick={() => onPick(preview.action)}
       aria-keyshortcuts={key}
     >
-      <span className="flex w-full flex-wrap items-center gap-x-2 gap-y-0.5">
+      <span className="flex w-full flex-wrap items-center gap-x-2 gap-y-0.5 wide:w-auto wide:flex-[1_1_9rem]">
         {key && <kbd>{keyLabel(key)}</kbd>}
         {target !== undefined && itemFrame(target) && <ItemArt id={target} size={32} />}
         <span className="flex-1 text-left font-bold">
@@ -220,6 +220,44 @@ function Row({
   );
 }
 
+/** Where the player is: the building, its owner's line and, at home, the room. Landscape shows it in the left column. */
+export function LocationCard({
+  location,
+  week,
+  housingTier,
+  bare = false,
+}: {
+  location: string;
+  week: number;
+  housingTier: string;
+  /** Without the card frame, for the top of the portrait sheet. */
+  bare?: boolean;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className={bare ? 'flex flex-col' : 'card flex flex-col overflow-hidden pb-2'}>
+      {location === content.city.board.home && (
+        <div
+          aria-hidden="true"
+          className="h-16 shrink-0 bg-center bg-cover wide:h-24 dark:brightness-75"
+          style={{ backgroundImage: `url(${interiorFor(housingTier)})` }}
+        />
+      )}
+      <div className="flex items-end gap-2 px-3 pt-2">
+        <BuildingArt frame={buildingFrame(location, housingTier)} width={56} />
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <h2 id="sheet-heading" className="font-bold font-display text-lg leading-tight">
+            {t('sheet.here', { location: t(`location.${location}`) })}
+          </h2>
+          <p className="self-start rounded-xl border-2 border-ink/25 bg-surface px-2 py-1 text-fg-muted text-xs italic dark:border-cream/25">
+            “{t(ownerLine(location, week))}”
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ActionSheet({
   location,
   week,
@@ -229,6 +267,7 @@ export function ActionSheet({
   smart = [],
   studyNote,
   canAct,
+  showHeader = true,
   onPick,
   children,
 }: {
@@ -241,6 +280,8 @@ export function ActionSheet({
   /** Where the enrolled course stands, shown under the Study shortcut. */
   studyNote?: string | undefined;
   canAct: boolean;
+  /** False when the location card sits elsewhere (landscape). */
+  showHeader?: boolean;
   onPick(a: Action): void;
   children?: React.ReactNode;
 }) {
@@ -276,26 +317,11 @@ export function ActionSheet({
     <section
       id="sheet"
       className="sheet flex min-h-0 flex-col border-ink border-t-2 bg-surface-raised dark:border-cream/30"
-      aria-labelledby="sheet-heading"
+      aria-label={t('sheet.here', { location: t(`location.${location}`) })}
     >
-      {location === content.city.board.home && (
-        <div
-          aria-hidden="true"
-          className="h-16 shrink-0 bg-center bg-cover dark:brightness-75"
-          style={{ backgroundImage: `url(${interiorFor(housingTier)})` }}
-        />
+      {showHeader && (
+        <LocationCard location={location} week={week} housingTier={housingTier} bare />
       )}
-      <div className="flex items-end gap-2 px-3 pt-2">
-        <BuildingArt frame={buildingFrame(location, housingTier)} width={56} />
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <h2 id="sheet-heading" className="font-bold font-display text-lg leading-tight">
-            {t('sheet.here', { location: t(`location.${location}`) })}
-          </h2>
-          <p className="self-start rounded-xl border-2 border-ink/25 bg-surface px-2 py-1 text-fg-muted text-xs italic dark:border-cream/25">
-            “{t(ownerLine(location, week))}”
-          </p>
-        </div>
-      </div>
       {children}
       {canAct && <QuickBar smart={smart} groups={groups} studyNote={studyNote} onPick={onPick} />}
       <div
@@ -308,13 +334,13 @@ export function ActionSheet({
         {lockedJobs && !local.some((g) => ACTION_KIND.get(g.actionId) === 'apply-job') && (
           <p className="mb-2 text-fg-muted text-sm">{t('sheet.betterJobs')}</p>
         )}
-        <ul className="flex flex-col gap-3">{local.map(renderGroup)}</ul>
+        <ul className="flex flex-col gap-3 wide:gap-2">{local.map(renderGroup)}</ul>
         {anywhere.length > 0 && (
           <>
             <h3 className="mt-3 mb-1 text-fg-muted text-xs uppercase tracking-wide">
               {t('sheet.everywhere')}
             </h3>
-            <ul className="flex flex-col gap-3">{anywhere.map(renderGroup)}</ul>
+            <ul className="flex flex-col gap-3 wide:gap-2">{anywhere.map(renderGroup)}</ul>
           </>
         )}
         {lockedCount > 0 && (
@@ -363,7 +389,7 @@ export function ActionDock({
   const { t } = useTranslation();
   return (
     <div className="dock flex flex-col border-ink border-t-2 bg-surface-raised shadow-[0_-4px_12px_rgb(0_0_0/0.08)] dark:border-cream/30">
-      <div className="max-h-24 overflow-y-auto pt-1">{children}</div>
+      {children && <div className="max-h-24 overflow-y-auto pt-1">{children}</div>}
       <div className="flex gap-2 px-3 pt-1 pb-2">
         <button
           type="button"

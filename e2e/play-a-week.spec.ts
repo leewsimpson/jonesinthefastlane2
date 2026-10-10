@@ -26,7 +26,7 @@ test('play a week vs Jones, then reload and continue', async ({ page }) => {
   await page.getByRole('button', { name: 'Start' }).click();
 
   const sheet = page.getByRole('region', { name: /You're at/ });
-  await expect(sheet).toContainText("You're at Your Place");
+  await expect(sheet).toHaveAccessibleName("You're at Your Place");
   await expect(page.getByText('Week 1', { exact: false }).first()).toBeVisible();
 
   // Do something with a visible preview, then go to JobLink and get a job.
@@ -38,15 +38,15 @@ test('play a week vs Jones, then reload and continue', async ({ page }) => {
     .filter({ hasText: 'Travel to JobLink Hub' })
     .getByRole('button', { name: /Transit/ })
     .click();
-  await expect(sheet).toContainText("You're at JobLink Hub");
+  await expect(sheet).toHaveAccessibleName("You're at JobLink Hub");
   await sheet.getByRole('button', { name: /Picker/ }).click();
-  // The ticker sits in the Travel / End week dock, under the sheet.
-  await expect(page.locator('.dock')).toContainText('Hired as Picker');
+  // The ticker sits in the left column in landscape and in the Travel / End week dock in portrait.
+  await expect(page.getByRole('status').filter({ hasText: 'Hired as Picker' })).toBeVisible();
 
   // The week guide points at the new job; its Go button travels in one click.
   await expect(page.getByTestId('next-step').first()).toContainText('Fulfillment Center');
   await page.getByRole('button', { name: 'Go to Fulfillment Center' }).first().click();
-  await expect(sheet).toContainText("You're at Fulfillment Center");
+  await expect(sheet).toHaveAccessibleName("You're at Fulfillment Center");
 
   // Ending the week without a meal asks first.
   await page.getByRole('button', { name: /^End week/ }).click();
@@ -60,7 +60,7 @@ test('play a week vs Jones, then reload and continue', async ({ page }) => {
   await page.waitForTimeout(500);
   await page.reload();
   await page.getByRole('button', { name: 'Continue' }).click();
-  await expect(page.getByRole('region', { name: /You're at/ })).toContainText(
+  await expect(page.getByRole('region', { name: /You're at/ })).toHaveAccessibleName(
     "You're at Your Place",
   );
   await expect(page.getByText('Week 2', { exact: false }).first()).toBeVisible();

@@ -335,7 +335,7 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
 
 **Notes**
 - Many small features: one PR per row is reasonable.
-- **Ask the user** where audio comes from.
+- Audio (NFR-05) is started: one music loop and 18 effects, wired to `fxFor` moments and the settings sliders; asset sources and tooling are in tech-stack.md. Still open: adaptive music variants, effects for travel/dice/cards/rent-due/robot (clips exist, no trigger yet), and confirming the Suno and ElevenLabs plans allow commercial use before launch.
 - Test the notification caps (ENG-33, ENG-34).
 
 ## Phase 9 — Life stages & relationships (v1.0)

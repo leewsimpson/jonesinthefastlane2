@@ -21,6 +21,9 @@ export interface Settings {
    * check it before it loads, and stop when it is turned off.
    */
   shareData: boolean;
+  /** Music and sound-effect volume, 0–100 each (NFR-05). */
+  musicVolume: number;
+  sfxVolume: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -29,6 +32,8 @@ export const DEFAULT_SETTINGS: Settings = {
   textSize: 100,
   tutorial: true,
   shareData: false,
+  musicVolume: 50,
+  sfxVolume: 80,
 };
 
 const KEY = 'fastlane.settings';
@@ -44,12 +49,18 @@ export function parseSettings(raw: string | null): Settings {
   }
   const pick = <T>(value: unknown, allowed: readonly T[], fallback: T): T =>
     allowed.includes(value as T) ? (value as T) : fallback;
+  const volume = (value: unknown, fallback: number) =>
+    typeof value === 'number' && Number.isFinite(value)
+      ? Math.min(100, Math.max(0, Math.round(value)))
+      : fallback;
   return {
     theme: pick(v.theme, ['system', 'light', 'dark'] as const, DEFAULT_SETTINGS.theme),
     motion: pick(v.motion, ['system', 'reduce', 'full'] as const, DEFAULT_SETTINGS.motion),
     textSize: pick(v.textSize, TEXT_SIZES, DEFAULT_SETTINGS.textSize),
     tutorial: typeof v.tutorial === 'boolean' ? v.tutorial : DEFAULT_SETTINGS.tutorial,
     shareData: v.shareData === true,
+    musicVolume: volume(v.musicVolume, DEFAULT_SETTINGS.musicVolume),
+    sfxVolume: volume(v.sfxVolume, DEFAULT_SETTINGS.sfxVolume),
   };
 }
 

@@ -158,7 +158,10 @@
 - Conventional Commits. Changesets or release-please for versioning and changelog.
 - Renovate for dependency updates. GitHub Dependabot security alerts on.
 - Asset pipeline: Aseprite/Figma source → exported PNG → packed spritesheets (script in `apps/web/scripts`).
-  Audio: `.ogg` + `.m4a` audio sprites.
+  Audio: `.ogg` + `.m4a` audio sprites. Music is a Suno loop; effects are ElevenLabs Sound Effects clips kept in
+  `art/audio/sfx-src/`, regenerated with `scripts/gen-sfx.mjs` (needs `ELEVENLABS_API_KEY` in `.env`) and bundled by
+  `scripts/build-sfx-sprite.mjs` into `apps/web/public/assets/audio/sfx.{ogg,m4a,json}`. Event → sound rules are in
+  `src/audio/cues.ts`; Howler loads lazily (`src/audio/audio.ts`).
 - Feature flags through PostHog for A/B testing engagement features (e.g. teaser copy, quest frequency).
 
 ---

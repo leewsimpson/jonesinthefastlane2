@@ -6,6 +6,7 @@
 import type { Action, Preview } from '@fastlane/engine';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { startMusic } from '../../audio/audio.ts';
 import { boardLayout, feedbackPoint, innerRect } from '../../board/layout.ts';
 import { FxLayer } from '../../fx/FxLayer.tsx';
 import { coachStep, hasWorked } from '../../game/coach.ts';
@@ -26,7 +27,7 @@ import {
   useHotkeys,
 } from '../common/hotkeys.ts';
 import { Hud } from '../hud/Hud.tsx';
-import { ActionDock, ActionSheet, groupActions } from '../panels/ActionSheet.tsx';
+import { ActionDock, ActionSheet, groupActions, LocationCard } from '../panels/ActionSheet.tsx';
 import { Coach } from '../panels/Coach.tsx';
 import { DetailsDialog } from '../panels/DetailsDialog.tsx';
 import { EndWeekDialog, endWeekWarnings } from '../panels/EndWeekDialog.tsx';
@@ -39,11 +40,9 @@ import { WeekSequence } from '../week/WeekSequence.tsx';
 const Board = lazy(() => import('../../board/Board.tsx'));
 const Summary = lazy(() => import('./Summary.tsx'));
 
-/** The week panel needs at least this much open ground in the loop; smaller boards show it in the sheet. */
-const PANEL_MIN = { w: 230, h: 250 };
-/** Past this the panel stops growing (Tailwind max-w-80). */
+/** The open ground in the loop is never taller than this; the clock in its middle is sized to fit. */
 const PANEL_MAX = { w: 320, h: 420 };
-/** Portrait keeps the week panel in the sheet; the loop's middle shows just the clock when it fits. */
+/** The loop's middle shows the clock when it fits; the week panel lives in the sheet (portrait) or the left column. */
 const CLOCK_MIN = 96;
 const MODE_KEY = 'fastlane.travelMode';
 const DEFAULT_MODE = 'transit';
@@ -116,6 +115,7 @@ export function Game() {
   const [hover, setHover] = useState<string | null>(null);
   const [boardRef, boardSize] = useSize();
   const wide = useWideLayout();
+  useEffect(startMusic, []);
 
   const state = session?.state;
   const canAct = !!state && state.phase.kind === 'turn' && !state.pending && !report && !handoff;
@@ -225,7 +225,6 @@ export function Game() {
     boardLayout(boardSize.w, boardSize.h, content.city.board.locations.length),
     PANEL_MAX,
   );
-  const roomy = wide && inner.w >= PANEL_MIN.w && inner.h >= PANEL_MIN.h;
   const clockSize = Math.min(inner.w, inner.h, 140);
   const panelProps = {
     state,
@@ -243,21 +242,36 @@ export function Game() {
 
   return (
     <div className="game-layout">
-      <div className="hud-area contents wide:block wide:min-h-0 wide:overflow-y-auto">
+      <div className="hud-area contents wide:flex wide:min-h-0 wide:flex-col wide:gap-3 wide:overflow-y-auto wide:pb-3">
         <Hud state={state} me={me} onDetails={() => setDetails(true)} onQuit={quit} />
-        {coach && wide && (
-          <div className="px-3 py-2">
-            <Coach
-              step={coach}
-              canGo={!!coach.location && !!pickTrip(previews, coach.location, mode)}
-              onGo={goTo}
-              onSkip={() => setCoached(new Set([...coached, me.id]))}
-            />
-          </div>
+        {wide && (
+          <>
+            {coach && (
+              <div className="px-3">
+                <Coach
+                  step={coach}
+                  canGo={!!coach.location && !!pickTrip(previews, coach.location, mode)}
+                  onGo={goTo}
+                  onSkip={() => setCoached(new Set([...coached, me.id]))}
+                />
+              </div>
+            )}
+            <div className="px-3">
+              <LocationCard
+                location={me.location}
+                week={state.week}
+                housingTier={me.housing.tier}
+              />
+            </div>
+            <div className="px-3">
+              <WeekPanel {...panelProps} side />
+            </div>
+            <div className="px-3">
+              <Ticker events={lastEvents} state={state} player={me.id} error={error} />
+            </div>
+            <p className="mt-auto px-3 text-fg-muted text-xs">{t('menu.help')}</p>
+          </>
         )}
-        <div className="hidden px-3 py-2 text-fg-muted text-xs wide:block">
-          <p>{t('menu.help')}</p>
-        </div>
       </div>
       <div ref={boardRef} className="board-area relative min-h-0 overflow-hidden">
         {/* The skyline backdrop (art-direction §9.5), faded so the board reads first; darker at night. */}
@@ -289,23 +303,13 @@ export function Game() {
             ),
           )}
         />
-        {!roomy && clockSize >= CLOCK_MIN && (
+        {clockSize >= CLOCK_MIN && (
           <div
             className="pointer-events-none absolute z-10 flex items-center justify-center"
             style={{ left: inner.x, top: inner.y, width: inner.w, height: inner.h }}
           >
             <div className="rounded-full bg-surface-raised/80 shadow-[0_3px_0_var(--color-ink)]">
               <Clock left={me.timeLeft} total={content.balance.weekMinutes} size={clockSize} />
-            </div>
-          </div>
-        )}
-        {roomy && (
-          <div
-            className="pointer-events-none absolute z-10 flex items-center justify-center"
-            style={{ left: inner.x, top: inner.y, width: inner.w, height: inner.h }}
-          >
-            <div className="pointer-events-auto flex max-h-full w-full max-w-80">
-              <WeekPanel {...panelProps} />
             </div>
           </div>
         )}
@@ -328,6 +332,7 @@ export function Game() {
             : undefined;
         })()}
         canAct={canAct}
+        showHeader={!wide}
         onPick={dispatch}
       >
         {coach && !wide && (
@@ -339,10 +344,10 @@ export function Game() {
             onSkip={() => setCoached(new Set([...coached, me.id]))}
           />
         )}
-        {!roomy && <WeekPanel {...panelProps} compact />}
+        {!wide && <WeekPanel {...panelProps} compact />}
       </ActionSheet>
       <ActionDock canAct={canAct} onTravel={() => setTravel({ dest: null })} onEndWeek={endWeek}>
-        <Ticker events={lastEvents} state={state} player={me.id} error={error} />
+        {!wide && <Ticker events={lastEvents} state={state} player={me.id} error={error} />}
       </ActionDock>
 
       <TravelDialog

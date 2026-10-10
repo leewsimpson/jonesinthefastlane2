@@ -1,11 +1,10 @@
 /**
- * The week panel (ENG-20, FR-03, FR-02). It sits in the open middle of the board, where the original game kept its
- * clock and messages, and holds:
+ * The week panel (ENG-20, FR-03, FR-02). Landscape keeps it in the left column under the location card; portrait puts
+ * a compact version at the top of the action sheet. It holds:
  * - a clock face for the hours left this week
  * - this week's needs: a meal, rent, work hours
  * - one suggested next step with a Go button
  * - the transport mode a click on the board uses
- * On a board too small for it, a compact version sits at the top of the action sheet.
  */
 import type { GameState, PlayerState, Preview } from '@fastlane/engine';
 import type { TFunction } from 'i18next';
@@ -123,6 +122,8 @@ export interface WeekPanelProps {
   hover: string | null;
   canAct: boolean;
   compact?: boolean;
+  /** The left column in landscape: the clock and week number are in the HUD, so only the mode picker leads. */
+  side?: boolean;
   onMode(mode: string): void;
   onGo(dest: string): void;
   onEndWeek(): void;
@@ -138,6 +139,7 @@ export function WeekPanel({
   hover,
   canAct,
   compact = false,
+  side = false,
   onMode,
   onGo,
   onEndWeek,
@@ -229,17 +231,21 @@ export function WeekPanel({
       className="card flex max-h-full w-full flex-col gap-2 overflow-y-auto p-3 shadow-[0_4px_0_var(--color-ink)]"
       aria-label={t('week.title')}
     >
-      <div className="flex items-center gap-3">
-        <Clock left={me.timeLeft} total={content.balance.weekMinutes} size={64} />
-        <div className="flex min-w-0 flex-col gap-1">
-          <div className="font-bold font-display text-lg leading-tight">
-            {limit
-              ? t('hud.weekOf', { week: state.week, limit })
-              : t('hud.week', { week: state.week })}
+      {side ? (
+        modePicker
+      ) : (
+        <div className="flex items-center gap-3">
+          <Clock left={me.timeLeft} total={content.balance.weekMinutes} size={64} />
+          <div className="flex min-w-0 flex-col gap-1">
+            <div className="font-bold font-display text-lg leading-tight">
+              {limit
+                ? t('hud.weekOf', { week: state.week, limit })
+                : t('hud.week', { week: state.week })}
+            </div>
+            {modePicker}
           </div>
-          {modePicker}
         </div>
-      </div>
+      )}
       <ul className="flex flex-col gap-0.5">
         {needLines(t, needs).map((n) => (
           <Need key={n.id} ok={n.ok} icon={n.icon} text={n.text} />

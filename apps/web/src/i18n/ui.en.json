@@ -43,6 +43,8 @@
   "settings.motion.reduce": "Reduced",
   "settings.motion.full": "Full",
   "settings.textSize": "Text size",
+  "settings.musicVolume": "Music volume",
+  "settings.sfxVolume": "Sound effects volume",
   "settings.tutorial": "Coach me through week 1",
   "settings.shareData": "Share anonymous play data",
   "settings.shareDataHint": "Helps balance the game: weeks played, goals reached, where people quit. Never your name or saves. Off unless you turn it on.",

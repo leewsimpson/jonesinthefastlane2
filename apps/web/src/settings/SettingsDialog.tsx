@@ -42,6 +42,31 @@ function Choice<T extends string | number>({
   );
 }
 
+function Volume({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange(v: number): void;
+}) {
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="font-bold">{label}</span>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        step={10}
+        value={value}
+        className="w-full accent-coral"
+        onChange={(e) => onChange(Number(e.target.value))}
+      />
+    </label>
+  );
+}
+
 export default function SettingsDialog({ open, onClose }: { open: boolean; onClose(): void }) {
   const { t } = useTranslation();
   const s = useSettings();
@@ -77,6 +102,16 @@ export default function SettingsDialog({ open, onClose }: { open: boolean; onClo
             options={TEXT_SIZES}
             label={(v) => `${v}%`}
             onChange={(textSize) => set({ textSize })}
+          />
+          <Volume
+            label={t('settings.musicVolume')}
+            value={s.musicVolume}
+            onChange={(musicVolume) => set({ musicVolume })}
+          />
+          <Volume
+            label={t('settings.sfxVolume')}
+            value={s.sfxVolume}
+            onChange={(sfxVolume) => set({ sfxVolume })}
           />
           <label className="flex items-center gap-2">
             <input

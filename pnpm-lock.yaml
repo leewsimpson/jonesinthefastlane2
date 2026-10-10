@@ -230,6 +230,9 @@ importers:
       dexie:
         specifier: 4.4.6
         version: 4.4.6
+      howler:
+        specifier: 2.2.4
+        version: 2.2.4
       i18next:
         specifier: 26.4.2
         version: 26.4.2(typescript@7.0.2)
@@ -267,6 +270,9 @@ importers:
       '@testing-library/react':
         specifier: 16.3.3
         version: 16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      '@types/howler':
+        specifier: 2.2.13
+        version: 2.2.13
       '@types/react':
         specifier: 19.3.0
         version: 19.3.0
@@ -1919,6 +1925,9 @@ packages:
   '@types/estree@1.0.9':
     resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
 
+  '@types/howler@2.2.13':
+    resolution: {integrity: sha512-40+EBjqIHHrC4VShlz/7i0lBUsE3QkgzZinQQji74Hd8sBkJZUBaT7LWFLK6rcabsDOOQpoMbEJvtaFQwxOu/g==}
+
   '@types/node@24.19.1':
     resolution: {integrity: sha512-aS3/DG0oM05K0RIXXP+hKjinGG5IgSSVGzswZxW3O0sS3pH4/fycXundUC9XsszgKCk4gHXylTEK6hyFxVxnoQ==}
 
@@ -2536,6 +2545,9 @@ packages:
   hono@4.13.13:
     resolution: {integrity: sha512-CQ46U0ZkAGmbT/4UxdzzGJpacP2IeKgY4a5/tOI9AABbpOMfK739wfDXmv1usCk+3RkKj1hQy4/fjhiwa2xlrA==}
     engines: {node: '>=16.9.0'}
+
+  howler@2.2.4:
+    resolution: {integrity: sha512-iARIBPgcQrwtEr+tALF+rapJ8qSc+Set2GJQl7xT1MQzWaVkFebdJhR3alVlSiUf5U7nAANKuj3aWpwerocD5w==}
 
   html-parse-stringify@4.0.1:
     resolution: {integrity: sha512-0zHsZJrK7S3K2aucXWL6ycoYJ/iNtIcFHC/nYQgFklPtrv5LpJctIiSCroWZWeuoXvuyFdzp6KzjJQ+OT5MfFw==}
@@ -5067,6 +5079,8 @@ snapshots:
 
   '@types/estree@1.0.9': {}
 
+  '@types/howler@2.2.13': {}
+
   '@types/node@24.19.1':
     dependencies:
       undici-types: 7.24.6
@@ -5678,6 +5692,8 @@ snapshots:
       function-bind: 1.1.2
 
   hono@4.13.13: {}
+
+  howler@2.2.4: {}
 
   html-parse-stringify@4.0.1: {}
 

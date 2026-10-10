@@ -5,6 +5,8 @@
  */
 import { AnimatePresence, animate, m } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
+import { playSfx } from '../audio/audio.ts';
+import { sfxFor } from '../audio/cues.ts';
 import { money, signed, signedMoney } from '../i18n/format.ts';
 import { t } from '../i18n/i18n.ts';
 import { useReducedMotion } from '../settings/hooks.ts';
@@ -82,6 +84,7 @@ export function FxLayer({
     if (fx.pops.length === 0 && !fx.moment) return;
     setShown({ id, fx, at: popPoint(layer.current, boardEl, anchor) });
     if (fx.moment) setBanner({ id, moment: fx.moment });
+    for (const name of sfxFor(fx)) playSfx(name);
     if (!reduced && shakeTarget && fx.shake !== 'none') {
       const a = fx.shake === 'big' ? 8 : 4;
       animate(shakeTarget, { x: [0, -a, a, -a / 2, a / 2, 0] }, { duration: 0.35 });
