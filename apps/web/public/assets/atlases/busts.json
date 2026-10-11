@@ -1011,7 +1011,7 @@
   },
   "meta": {
     "app": "@fastlane/web scripts/sprites",
-    "image": "busts.webp",
+    "image": "busts.webp?v=7bc4622adb",
     "format": "RGBA8888",
     "size": {
       "w": 2004,

@@ -32,7 +32,8 @@ const meta = JSON.parse(await readFile(join(atlas, 'locations.json'), 'utf8')) a
 };
 const f = meta.frames[FRAME]?.frame;
 if (!f) throw new Error(`no ${FRAME} frame in the locations atlas`);
-const source = await sharp(join(atlas, meta.meta.image))
+// The image name carries a cache-busting `?v=` hash (scripts/sprites/build.ts).
+const source = await sharp(join(atlas, meta.meta.image.split('?')[0] ?? ''))
   .extract({ left: f.x, top: f.y, width: f.w, height: f.h })
   .png()
   .toBuffer();

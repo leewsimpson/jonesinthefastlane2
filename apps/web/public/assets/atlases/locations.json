@@ -363,7 +363,7 @@
   },
   "meta": {
     "app": "@fastlane/web scripts/sprites",
-    "image": "locations.webp",
+    "image": "locations.webp?v=58f053fa8b",
     "format": "RGBA8888",
     "size": {
       "w": 2008,

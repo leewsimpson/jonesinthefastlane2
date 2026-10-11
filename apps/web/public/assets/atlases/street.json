@@ -435,7 +435,7 @@
   },
   "meta": {
     "app": "@fastlane/web scripts/sprites",
-    "image": "street.webp",
+    "image": "street.webp?v=e83124f077",
     "format": "RGBA8888",
     "size": {
       "w": 2009,

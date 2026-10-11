@@ -39,6 +39,9 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,woff2,webp,png,json,ogg,m4a}'],
         globIgnores: ['config.json'],
+        // Atlas images are requested with a content-hash `v` parameter (scripts/sprites/build.ts); serve the
+        // precached file, which comes from the same deploy as its precached JSON.
+        ignoreURLParametersMatching: [/^utm_/, /^fbclid$/, /^v$/],
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
         runtimeCaching: [

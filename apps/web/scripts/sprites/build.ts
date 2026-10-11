@@ -8,8 +8,9 @@
  *
  *   pnpm --filter @fastlane/web sprites
  */
+import { createHash } from 'node:crypto';
 import { readdirSync, rmSync } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
@@ -176,6 +177,13 @@ async function writeAtlas(spec: AtlasSpec): Promise<void> {
       )
       .webp({ quality: 90, alphaQuality: 100, effort: 6 })
       .toFile(out(`atlases/${image}`));
+    // The page's URL carries its content hash, so a browser never pairs a fresh atlas JSON (served no-cache) with a
+    // stale cached image: the frames would cut the wrong art. The service worker ignores the `v` parameter
+    // (vite.config.ts), since it precaches both files from the same deploy.
+    const hash = createHash('sha256')
+      .update(await readFile(out(`atlases/${image}`)))
+      .digest('hex')
+      .slice(0, 10);
 
     const frames = Object.fromEntries(
       onPage
@@ -194,7 +202,7 @@ async function writeAtlas(spec: AtlasSpec): Promise<void> {
     );
     const meta = {
       app: '@fastlane/web scripts/sprites',
-      image,
+      image: `${image}?v=${hash}`,
       format: 'RGBA8888',
       size: { w: size.width, h: size.height },
       scale: SCALE,

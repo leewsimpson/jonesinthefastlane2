@@ -291,7 +291,7 @@
   },
   "meta": {
     "app": "@fastlane/web scripts/sprites",
-    "image": "items.webp",
+    "image": "items.webp?v=9ecbc7846e",
     "format": "RGBA8888",
     "size": {
       "w": 1826,
