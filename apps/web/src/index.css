@@ -118,6 +118,13 @@
   --tone-meals: #e7c46a;
 }
 
+/* The root font size every rem scales from: the browser's default, multiplied by the text-size setting
+   (`--text-scale`, settings.ts). Past a 2048 x 1062 screen it grows with the viewport, so a big screen (a 4K monitor
+   at 100% zoom) shows the same composition as a smaller one instead of a huge board beside small text. */
+html {
+  font-size: calc(var(--text-scale, 1) * max(100%, min(100vw / 128, 100vh / 66.375)));
+}
+
 body {
   @apply bg-surface text-fg font-sans antialiased;
 }

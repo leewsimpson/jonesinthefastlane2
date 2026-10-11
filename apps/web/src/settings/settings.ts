@@ -72,13 +72,17 @@ function load(): Settings {
   }
 }
 
-/** Puts the settings on `<html>`: `data-theme`, `data-motion` and the root font size every rem scales from. */
+/**
+ * Puts the settings on `<html>`: `data-theme`, `data-motion`, and `--text-scale`, which multiplies the root font size
+ * every rem scales from (index.css, where big screens scale it too).
+ */
 export function applySettings(s: Settings, root: HTMLElement = document.documentElement): void {
   if (s.theme === 'system') delete root.dataset.theme;
   else root.dataset.theme = s.theme;
   if (s.motion === 'system') delete root.dataset.motion;
   else root.dataset.motion = s.motion;
-  root.style.fontSize = s.textSize === 100 ? '' : `${s.textSize}%`;
+  if (s.textSize === 100) root.style.removeProperty('--text-scale');
+  else root.style.setProperty('--text-scale', String(s.textSize / 100));
 }
 
 interface SettingsState extends Settings {
