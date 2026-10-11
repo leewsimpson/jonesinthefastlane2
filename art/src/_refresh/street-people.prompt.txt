@@ -1,0 +1,24 @@
+STYLE: Classic, Rebuilt: crisp hand-painted 2D illustration for a modern life-management
+game set in 2026. Sunny, welcoming ordinary town with the clarity and personality of classic
+computer-game illustration. Simplified believable architecture and natural expressive faces.
+Thin ink-blue silhouette contours, lighter interior lines, restrained painted shading with
+one or two shadow/highlight tones per material. Light comes from the upper left. Subtle
+material variation, clean edges, readable at small sizes. Full-body characters are
+approximately five heads tall. No toy buildings, floating plinths, photorealism, 3D renders,
+neon glow, heavy grain, blur, CRT effects, or artificial pixelation.
+Foundation palette: ink #263C53, cream #F9F3DF, butter #F3DEA0, sky #8AC8DE,
+teal #3E8B84, brick #B75E49, leaf #64865A, slate #78858B, lilac #8B7EAF,
+gold #D2A344, plus related shading tones and natural diverse skin and hair colours.
+Robots have restrained lilac accents. Satire appears in small everyday details.
+NO text, letters, numbers, logos, or brand marks. Signs and screens are blank panels
+or simple pictograms. Match the attached production style reference when supplied.
+SUBJECTS, left to right, top row then bottom row. Small groups of ordinary, diverse pedestrians for a town board, full bodies with feet visible, about five heads tall, seen from the elevated three-quarter view of the reference, natural skin and hair colours, everyday 2026 clothes:
+1. A woman walking a small dog.
+2. Two friends chatting, one holding a coffee cup.
+3. A man with a backpack walking.
+4. A parent and a child holding hands.
+5. A cyclist on a bicycle.
+6. Three people standing in a casual group, one looking at a blank phone.
+
+FRAMING: Sprite sheet, 3 columns by 2 rows of equal cells on a 1536x1024 canvas. One isolated subject per cell, centred, fully visible with clear margins, all at the same scale and camera as the attached town board reference: elevated three-quarter view from above, near-orthographic. No surrounding street, no ground plane, no cast shadow on the ground, no decorative frame. All figures at the same scale. No text on clothing.
+BACKGROUND: solid flat pure magenta #FF00FF everywhere, including between cells. No glow, no shadow, no ground on the background.

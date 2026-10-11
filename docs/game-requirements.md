@@ -376,7 +376,7 @@ platform are the owner's.
 | ID | Requirement | Pri |
 |---|---|---|
 | NFR-01 | Art direction: a bold, flat 2D or clean pixel-art city board. Expressive characters with emotion states. Consistent palette with light and dark themes. | M |
-| NFR-02 | Responsive: portrait mobile (board on top, action sheet at the bottom) and landscape desktop (board in the middle, side panels). | M |
+| NFR-02 | Responsive, as two dedicated layouts that each fill the screen with no page scroll: desktop at 1024 × 600 px and up (board left, location panel right, dashboard along the foot), mobile below that (status bar, board, location panel; the panel sits beside the board in landscape). | M |
 | NFR-03 | Fully playable by mouse, touch or keyboard. Every action has a keyboard shortcut. | M |
 | NFR-04 | Accessibility: WCAG 2.2 AA contrast, colour-blind-safe stat colours with icons, a reduced-motion setting, scalable text, screen-reader labels for UI panels. | M |
 | NFR-05 | Audio: a lo-fi adaptive soundtrack, SFX for every action, and separate volume sliders. | S |
@@ -424,7 +424,7 @@ platform are the owner's.
 ## 17. Decisions (formerly Open Questions)
 
 1. **Monetization:** opt-in rewarded video (watch an ad for extra credits). Details in Phase 6 (ENG-31).
-2. **Art style:** flat vector (art-direction §1).
+2. **Art style:** Classic, Rebuilt (art-direction §1).
 3. **Setting:** one fictional city for now, built as a data-driven city profile so more cities can be added later (FR-33).
 4. **Dialogue:** LLM-generated during development and committed as content (FR-84).
 5. **Long Life default for Career Mode:** yes (§12).

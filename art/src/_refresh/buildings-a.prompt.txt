@@ -1,0 +1,25 @@
+STYLE: Classic, Rebuilt: crisp hand-painted 2D illustration for a modern life-management
+game set in 2026. Sunny, welcoming ordinary town with the clarity and personality of classic
+computer-game illustration. Simplified believable architecture and natural expressive faces.
+Thin ink-blue silhouette contours, lighter interior lines, restrained painted shading with
+one or two shadow/highlight tones per material. Light comes from the upper left. Subtle
+material variation, clean edges, readable at small sizes. Full-body characters are
+approximately five heads tall. No toy buildings, floating plinths, photorealism, 3D renders,
+neon glow, heavy grain, blur, CRT effects, or artificial pixelation.
+Foundation palette: ink #263C53, cream #F9F3DF, butter #F3DEA0, sky #8AC8DE,
+teal #3E8B84, brick #B75E49, leaf #64865A, slate #78858B, lilac #8B7EAF,
+gold #D2A344, plus related shading tones and natural diverse skin and hair colours.
+Robots have restrained lilac accents. Satire appears in small everyday details.
+NO text, letters, numbers, logos, or brand marks. Signs and screens are blank panels
+or simple pictograms. Match the attached production style reference when supplied.
+
+SUBJECTS, left to right, top row then bottom row:
+1. Your Place, housing tier 1: a modest lived-in suburban family home with a visible basement window, small front garden, short path to the door, and understated mailbox. Warm brick and cream timber details, muted teal trim. A folded blanket and lamp are visible through the basement window.
+2. LeaseLord: a two-storey brick rental office with a gold crown-and-key pictogram above the door, blank listing panels in the windows, a small queue of hopeful applicants holding folders.
+3. JobLink Hub: a glass-fronted recruitment office with blank job-board panels, a briefcase pictogram, and a small friendly robot screener with lilac accents by the entrance.
+4. UpSkill U Online: a modest learning centre with large windows showing computer desks, a graduation-cap pictogram, potted plants by the door.
+5. Fulfillment Center: a low wide warehouse with two loading bays, stacked parcels, a small automated cart with lilac accents, a parcel pictogram.
+6. Burger Bot: a corner diner with a red-and-cream striped awning, a big burger pictogram on the roof, a small robot cooking arm visible in the window, two outdoor tables.
+
+FRAMING: Sprite sheet, 3 columns by 2 rows of equal cells on a 1536x1024 canvas. One isolated subject per cell, centred, fully visible with clear margins, all at the same scale and camera so they sit together on one town board. Elevated three-quarter front view, front facade dominant, left wall visible at about 20 degrees, near-orthographic. Each building's base ends at its pavement contact line: no surrounding street, no ground plane, no floating base or plinth, no exterior cast shadow, no decorative frame. Leave a clear blank sign panel on each storefront for a live label.
+BACKGROUND: genuinely transparent background (alpha) everywhere, including between cells. If transparency is impossible, use solid flat pure magenta #FF00FF instead. No glow, no shadow on the background.

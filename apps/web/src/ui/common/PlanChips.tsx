@@ -4,19 +4,60 @@
  */
 import type { StatKey } from '@fastlane/content/keys';
 import type { ChoicePlan, Plan } from '@fastlane/engine';
+import { cloneElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { placeLabel } from '../../game/copy.ts';
 import { duration, money, percent, signed, signedMoney } from '../../i18n/format.ts';
 import { STAT_ICON, STAT_TONE } from './stats.ts';
 
-function Chip({ children, tone = '' }: { children: React.ReactNode; tone?: string }) {
+/** Bare effects (action rows, art-direction §4): plain coloured text with its sign, no pill around each one. */
+const BARE_TONE: Record<string, string> = {
+  '': 'text-fg',
+  'chip-good': 'text-good',
+  'chip-bad': 'text-bad',
+  'chip-random': 'text-fg-muted italic',
+};
+
+function Chip({
+  children,
+  tone = '',
+  bare = false,
+}: {
+  children: React.ReactNode;
+  tone?: string;
+  bare?: boolean;
+}) {
+  if (bare)
+    return (
+      <span
+        className={`inline-flex items-center gap-0.5 font-bold text-sm wide:text-base ${BARE_TONE[tone]}`}
+      >
+        {children}
+      </span>
+    );
   return <span className={`chip ${tone}`}>{children}</span>;
 }
 
-export function PlanChips({ plan }: { plan: Plan | ChoicePlan }) {
+export function PlanChips({
+  plan,
+  bare = false,
+  labelled = false,
+  showTime = true,
+  align = 'start',
+}: {
+  plan: Plan | ChoicePlan;
+  /** Plain text instead of pills, for dense action rows. */
+  bare?: boolean;
+  /** Name each stat in words beside its icon ("+10 Energy"), where the row has room. */
+  labelled?: boolean;
+  /** Off where the time is shown beside the label. */
+  showTime?: boolean;
+  /** `end` right-aligns the effects, for a row's right-hand column. */
+  align?: 'start' | 'end';
+}) {
   const { t } = useTranslation();
   const chips: React.ReactNode[] = [];
-  if (plan.time > 0)
+  if (plan.time > 0 && showTime)
     chips.push(
       <Chip key="time">
         <span aria-hidden="true" className={STAT_TONE.time}>
@@ -27,7 +68,11 @@ export function PlanChips({ plan }: { plan: Plan | ChoicePlan }) {
       </Chip>,
     );
   if (plan.money > 0)
-    chips.push(<Chip key="money">{t('plan.cost', { money: money(plan.money) })}</Chip>);
+    chips.push(
+      <Chip key="money" tone={bare ? 'chip-bad' : ''}>
+        {t('plan.cost', { money: money(plan.money) })}
+      </Chip>,
+    );
   for (const e of plan.effects) {
     if (e.delta === 0) continue;
     chips.push(
@@ -38,10 +83,16 @@ export function PlanChips({ plan }: { plan: Plan | ChoicePlan }) {
       ) : (
         <Chip key={`e-${e.stat}`} tone={e.delta > 0 ? 'chip-good' : 'chip-bad'}>
           {signed(e.delta)}{' '}
-          <span aria-hidden="true" className={STAT_TONE[e.stat]}>
-            {STAT_ICON[e.stat]}
-          </span>
-          <span className="sr-only"> {t(`stat.${e.stat}`)}</span>
+          {labelled ? (
+            <span>{t(`stat.${e.stat}`)}</span>
+          ) : (
+            <>
+              <span aria-hidden="true" className={STAT_TONE[e.stat]}>
+                {STAT_ICON[e.stat]}
+              </span>
+              <span className="sr-only"> {t(`stat.${e.stat}`)}</span>
+            </>
+          )}
         </Chip>
       ),
     );
@@ -110,8 +161,24 @@ export function PlanChips({ plan }: { plan: Plan | ChoicePlan }) {
         </Chip>,
       );
   }
-  if (chips.length === 0) chips.push(<Chip key="free">{t('plan.free')}</Chip>);
-  return <span className="flex flex-wrap gap-1">{chips}</span>;
+  if (chips.length === 0 && (showTime || plan.time === 0))
+    chips.push(<Chip key="free">{t('plan.free')}</Chip>);
+  if (chips.length === 0) return null;
+  // Every chip takes the same `bare` flag.
+  const shown = bare ? chips.map((c) => (isChip(c) ? cloneElement(c, { bare: true }) : c)) : chips;
+  return (
+    <span
+      className={`flex ${labelled ? 'flex-col' : 'flex-wrap'} ${bare ? 'gap-x-3 gap-y-0.5' : 'gap-1'} ${
+        align === 'end' ? (labelled ? 'items-end' : 'justify-end') : ''
+      }`}
+    >
+      {shown}
+    </span>
+  );
+}
+
+function isChip(node: React.ReactNode): node is React.ReactElement<{ bare?: boolean }> {
+  return typeof node === 'object' && node !== null && 'type' in node && node.type === Chip;
 }
 
 /** What a home does to the player every week (FR-03): "+3 ⚡/wk". Nothing for a home without weekly effects. */

@@ -1,383 +1,326 @@
 # Art Direction — Fast Lane 2026
 
-This doc settles open question 2 in [game-requirements.md](game-requirements.md) §17 (flat vector or pixel art)
-and fills in the art direction for NFR-01. It sets out the visual language, the asset list, and the prompts we use to
-generate assets with the `codex-image` skill (ChatGPT image generation through Codex CLI).
+## 1. Concept: Classic, Rebuilt
 
----
+**Selected 10 October 2026.** This is the production visual standard for the refresh, superseding
+“Cheerful Dystopia”. The game screen has migrated (refresh slice R1); the remaining art, screens and the
+prompt generator migrate in later slices (implementation-plan.md, Visual refresh).
 
-## 1. Concept: "Cheerful Dystopia"
+[Selected concept](../design/concepts/classic-rebuilt.png) · [Exploration prompts](../design/concepts/prompts.md)
 
-> The city looks like the onboarding screens of a fintech app: bright, rounded, relentlessly optimistic.
-> The jokes are in the details.
+> A sunny, illustrated neighbourhood where an ordinary week becomes a small adventure.
 
-The game satirises a 2026 economy that sells itself with friendly pastel illustrations (bank apps, gig apps, landlord
-portals). We use that same look on purpose, and then we break it:
+Recall the original life-management game's town board, expressive portraits, recognisable shops,
+and compact dashboard. Refresh them with crisp illustration, modern spacing, accessible controls,
+and clear information hierarchy. Players should recognise where to go, what an action costs,
+and how their week is progressing at a glance.
 
-- Brand-new delivery robots that are blocking the bike lane.
-- A landlord office shaped like a giant phone, with a key on a chain.
-- A "smart" fridge with a lock on it and a subscription badge.
-- Jones always photographed from his good side.
+The signature is a connected town block surrounding a landscaped square: storefronts share streets,
+pavements, trees, and crossings. The 2026 setting and economic satire remain in small details:
+delivery robots, rental applications, subscription devices, and automated recruitment.
 
-**Not Corporate Memphis.** The startup-illustration style it borrows from has noodle limbs and blank faces. We keep the
-flat shapes and the palette, but we add three things the game needs:
+The concept establishes mood, composition, and illustration quality. Its invented slogans, generated
+labels, extra props, and example action effects are not production requirements. Use existing project
+names, content, and engine values. Create original artwork.
 
-1. **Thick, even ink outlines.** They make sprites read on light and dark themes and on small phone screens, and they
-   make clean background removal much easier (§6).
-2. **Real faces with emotion states** (FR-01 / NFR-01: "expressive characters with emotion states").
-3. **Chunky toy proportions.** Characters are about 3 heads tall. Buildings look like board-game pieces you could pick up.
+### Illustration rules
 
-### Why flat vector and not pixel art
-
-| | Flat vector (chosen) | Pixel art |
-|---|---|---|
-| Image-gen quality | Strong, consistent | Pixel grid drifts, fake "pixels" at mixed sizes, needs heavy cleanup |
-| Scaling (phone → 4K desktop) | Scales down cleanly from 1024 px sources | Needs integer scaling, awkward on mixed DPI |
-| Accessibility (NFR-04) | Clear shapes and icons, easy contrast control | Small details get lost at low resolution |
-| Character emotions | Easy to read faces | Limited to a few pixels |
-| Dark theme | Same sprites work on both themes thanks to the outline | Same |
-
----
+- Crisp hand-painted 2D illustration with simplified shapes and restrained shading inspired by
+  classic computer-game sprites. Smooth scaling; no compulsory pixel grid or simulated screen ageing.
+- Thin ink contours define silhouettes and important features; lighter interior lines.
+  Avoid the previous uniform heavy outlines.
+- Warm daylight from the upper left. Use a base colour and one or two shadow/highlight tones per
+  material. Subtle material variation is allowed; omit grain, blur, bloom, and photographic detail.
+- Recognisable brick, stucco, timber, glass, striped awnings, and useful front doors.
+  Distinct silhouettes and pictograms identify destinations before players read their names.
+- Natural, diverse characters with readable eyes, eyebrows, and mouths. Full bodies are approximately
+  five heads tall; portrait heads may be slightly enlarged for expression.
+- Town and scene art carry the visual richness. Controls stay clean and quiet.
+- Satire targets systems and the rival, never people struggling with work, health, or housing.
 
 ## 2. Palette
 
-The palette is restricted and named, and every prompt repeats the hex values. These are the **art** colours.
-UI theme tokens (Tailwind) derive from them.
+These are the foundations; the UI tokens in `apps/web/src/index.css` derive from them. Related shades are allowed
+for materials and shading. Repeat the foundation palette in production prompts.
 
-| Token | Hex | Used for |
+| Token | Hex | Role |
 |---|---|---|
-| `ink` | `#1F1B2E` | All outlines, dark text, shadows' base |
-| `cream` | `#FFF6E9` | Light-theme background, paper, highlights |
-| `coral` | `#FF5A4E` | Primary accent, "Fast Lane" brand colour, alerts |
-| `mustard` | `#FFC23D` | Money, gold, sunshine, warnings |
-| `teal` | `#1FB5A8` | Finance, tech, calm surfaces |
-| `sky` | `#5EB8FF` | Sky, glass, screens |
-| `lilac` | `#8E7CF0` | AI / robots / "the algorithm", night accents |
-| `mint` | `#7EE0A1` | Plants, health, growth |
-| `blush` | `#FFB3A7` | Soft fills, cheeks, warmth |
-| `slate` | `#5B5872` | Concrete, roads, secondary details |
-| `night` | `#17142A` | Dark-theme background (UI only, never in sprites) |
-| `key` | `#FF00FF` | Chroma-key background for sprites. Never used in art |
+| ink | #263C53 | Text, contours, borders, deep shadows |
+| cream | #F9F3DF | Main UI surface and sign panels |
+| butter | #F3DEA0 | Warm highlights and selected surfaces |
+| sky | #8AC8DE | Daylight sky, glass, light secondary controls |
+| teal | #3E8B84 | Interface framing and architectural accents |
+| brick | #B75E49 | Brickwork and prominent End week treatment |
+| leaf | #64865A | Trees, planted areas, grocery accents |
+| slate | #78858B | Roads, concrete, neutral metal |
+| lilac | #8B7EAF | Automation details and social accents |
+| gold | #D2A344 | Coins, achievements, rival accessories |
 
-**Skin tones** are not restricted to the palette. Use a natural, diverse range across the cast.
+Skin and hair colours use a natural range outside this palette. Robots have lilac accents with
+ordinary metal/plastic bodies. Jones keeps an ink outfit and gold accessories.
 
-**Rules**
+### Semantic colours and accessibility
 
-- Flat fills. At most **one** hard-edged shadow tone per surface (a darker shade of the same hue). No gradients, no
-  textures, no noise.
-- One light source: **top-left**. Cel shadows fall bottom-right.
-- **Robots and AI are always `lilac`.** Players learn quickly that lilac = automation risk.
-- **Money is always `mustard`.**
-- **Jones's signature is `mustard` + `ink`** (gold accessories, dark quarter-zip).
-
-### Player and stat colours (UI, colour-blind safe)
-
-Player colours never carry meaning on their own. Each one is paired with a shape (NFR-04).
-
-| Player | Colour | Shape |
+| Meaning | Target | Treatment |
 |---|---|---|
-| P1 | `#E69F00` orange | ● circle |
-| P2 | `#56B4E9` blue | ▲ triangle |
-| P3 | `#009E73` green | ■ square |
-| P4 | `#D55E00` vermillion | ◆ diamond |
-| Jones | `#CC79A7` purple-pink | ★ star |
+| Main text | #263C53 | On cream or other light surfaces |
+| Secondary text | #526373 | Keep essential costs and labels readable |
+| Positive / money text | #24644D | Pair with a plus sign or descriptive label |
+| Negative / warning text | #963F32 | Pair with a minus sign, icon, or explanation |
+| Focus | #263C53 | Visible 2 px outline, 2 px offset on light controls |
+| Selected destination | Butter fill + ink outline | Also show a marker and live location name |
 
-Stat colours (Cash, Energy, Health, Happiness, Social, Clout, Credit) always appear next to their icon. The icons are
-hand-made SVG or Lucide (per tech-stack §4), **not** generated images.
+Check actual UI combinations against WCAG AA: 4.5:1 for ordinary text and 3:1 for large text
+and essential non-text boundaries. Art colours are not automatically safe text colours.
+Validate button text and every interactive state before shipping.
 
----
+Player identities retain existing colour-and-shape pairs: P1 #E69F00 circle, P2 #56B4E9 triangle,
+P3 #009E73 square, P4 #D55E00 diamond, Jones #CC79A7 star.
+Stats always have labels and icons alongside colour. Functional icons are consistent code-native SVG,
+not generated illustrations.
 
-## 3. Typography
+## 3. Typography and live text
 
-| Role | Font | Notes |
+| Role | Typeface | Use |
 |---|---|---|
-| Display (titles, location names, big numbers) | **Bricolage Grotesque** (variable, 700–800) | Chunky and friendly, a good match for the outlines |
-| UI and body | **Atkinson Hyperlegible Next** | Built for legibility. Helps NFR-04 |
-| Numbers in the HUD | Atkinson, `font-variant-numeric: tabular-nums` | Counters don't jitter while they tick |
+| Town names and restrained display headings | Roboto Slab, 600–700 | Friendly slab-serif signage, self-hosted |
+| Body, controls, costs, status labels | Atkinson Hyperlegible Next, 400–700 | Retain the existing accessible UI family |
+| HUD values | Atkinson Hyperlegible Next, 700 | Tabular numerals prevent counter jitter |
 
-**No text is baked into images.** Signs, screens and posters in generated art are blank shapes or simple icons. The
-game draws names and labels on top. This keeps localisation possible (NFR-06), avoids image-gen spelling mistakes, and
-lets us rename locations without regenerating art.
+Starting desktop sizes: 16 px body, 16–18 px action labels, 12–14 px secondary labels,
+22–28 px panel headings, 24–32 px key values. Essential gameplay text must not shrink below
+14 px to squeeze in a layout.
 
----
+**Production art contains no text, numbers, logos, or brand marks**, with one exception: each building's
+name is painted on its sign, as the concept paints its storefronts (decided 11 October 2026; names
+lettered live over the blank panels looked pasted on). Everything else stays blank, including posters,
+screens, price tags, and clothing; gameplay values stay live. The cost: renaming a location, or
+translating its name, means regenerating its building art. The DOM keeps every name as live text
+(travel dialog, location panel), so the board's painted names are never the only place a name appears.
 
-## 4. Camera, framing and scale
+## 4. Camera, framing, scale, and interface
 
-| Asset type | View | Canvas | In-game size (1×) |
+| Asset | Camera / composition | Source target | Display starting point |
 |---|---|---|---|
-| Location buildings | Orthographic three-quarter front view: front facade, rotated ~20° to show the left side, camera slightly above. No perspective distortion | 1024 × 1024 | ~200 px |
-| Characters (full body) | Front three-quarter, standing, feet visible | 1024 × 1536 | ~240 px tall |
-| Character emotion sheets | Head and shoulders, 3 × 2 grid | 1536 × 1024 | ~96 px per bust |
-| Items | Single object, three-quarter view, same angle as buildings | 1024 × 1024 | ~64–128 px |
-| Event cards | Full-bleed scene, eye level | 1536 × 1024 | Card in a dialog |
-| Home interiors | Cutaway "dollhouse" room, front view | 1536 × 1024 | Your Place screen |
-| Board backdrop | Wide skyline panorama | 1536 × 1024 (tiles horizontally) | Behind the board |
+| Buildings | Elevated three-quarter front, front facade dominant, left wall visible at about 20°, near-orthographic | 1024 × 1024 | About 200 px wide |
+| Full-body characters | Front three-quarter, relaxed stance, feet visible | 1024 × 1536 | About 160 × 240 px |
+| Emotion portraits | Head and shoulders, consistent pose and scale, 3 × 2 grid | 1536 × 1024 | About 96 px per bust |
+| Items | Three-quarter from above, consistent lighting | 1024 × 1024 | 64–128 px |
+| Events | Eye level, focal action within central 70% | 1536 × 1024 | Responsive dialog |
+| Interiors | Eye-level room with open foreground and believable furniture scale | 1536 × 1024 | Location-panel scene |
+| Backdrop | Broad daylight skyline, low horizon, quieter than destinations | 1536 × 1024 | Behind town board |
 
-The **board itself** (ring road, tiles, paths, location pads) is drawn in code in Pixi from the palette tokens, not
-generated. It is data-driven (FR-30) and has to stay pixel-exact. Generated buildings sit on the pads.
+Buildings share a pavement baseline and compatible scale. Omit floating slabs, giant phone buildings,
+graduation-cap roofs, and coin-slot doors. Keep entrances, legible painted signs, and destination silhouettes
+clear at actual size.
 
-**Player tokens** on the board are a circular badge with the avatar's head, a player-colour ring and the player's
-shape symbol. They are composed in Pixi from the emotion-sheet busts.
+Roads, crossings, interaction geometry, routes, and destination positions remain code-driven in Pixi.
+Illustrated buildings and scenery sit on that geometry. Preserve content-defined location order and
+travel-distance semantics when replacing the current stadium loop with the town-block presentation.
+The park is decorative space, not an implied extra destination. Its paths meet the ring road at
+zebra crossings, as the concept's do. Roads are warm grey asphalt with butter centre dashes on the ring.
 
-**Motion** comes from Pixi tweens, not from frame-by-frame animation: idle bob, squash and stretch on arrival, emotion
-swaps, particles (coins, confetti, sweat drops). Image generation cannot keep a character consistent across animation
-frames. "Paper-puppet" motion avoids the problem and suits the board-game look. All of it respects reduced motion.
+Player markers combine portrait, identity colour, shape, and a pointer toward the current building.
+A marker rests on top of its building's sign, so the name stays readable beneath it.
+Selection remains clear without a large glowing outline around the artwork.
 
-**Dark theme:** sprites are the same in both themes. The outlines keep them readable. At night (or in dark theme) the
-board gets a Pixi colour-matrix tint. No overlay lights: the sprites' own windows carry the night look, and drawn-on panes didn't line up with the art. We don't regenerate art. The atlases are drawn at about half size, so the board loads them with mipmaps and linear filtering (no extra download).
+### Layout target
 
----
+Desktop: roughly 70% town board on the left and 30% location/action panel on the right, with
+a compact dashboard below the board. Money, time, energy, health, happiness, social, and credit
+remain visible. Provide clear space for goals, rival progress, meals, transport, commitments,
+and next-step guidance. Move the large central clock into the dashboard.
 
-## 5. Prompts
+Travel and End week stay pinned at the foot of the location panel, whose actions scroll above them.
+Prototype with real long labels, full action lists, warnings, and multiple players.
 
-Every prompt has three parts, in this order:
+Mobile is its own composition, not a shrunk desktop (breakpoint: NFR-02): a compact status bar
+(identity, week, score, money, and every stat as icon, number and thin bar), the board, then the
+location panel without its scene art, since the board already shows the place. In landscape the
+panel sits beside the board. Goals and rival progress live in Details, opened from the status bar.
 
-```
-[STYLE BLOCK]  +  [SUBJECT]  +  [FRAMING & BACKGROUND]
-```
+### UI treatments
 
-Copy the style block exactly, every time. Change only the subject. Small wording changes in the style block cause
-style drift across the set.
+- Cream panels, 1 px ink borders, 4–8 px corners, restrained teal framing.
+- Buttons have a modest raised edge or 2 px lower shadow. Pressing removes the shadow and shifts 1 px.
+  Travel uses light sky; End week uses brick, with contrast-checked text.
+- Action rows align icon, label, time, and effects. Group subscriptions separately.
+  Recommendation markers stay small; avoid wrapping every effect in a bordered pill.
+- Use an 8 px spacing rhythm, 16–24 px panel padding, and at least 44 px touch targets.
+- Hover changes fill or border. Selection adds a marker. Disabled labels remain legible and
+  unavailable actions explain why. Every control has visible keyboard focus.
+- Resource bars include icon, label, and number. Remaining time is also numeric.
 
-### 5.1 Style block (shared by every asset)
+### Motion and themes
 
-```text
-STYLE: Bold flat 2D vector illustration for a satirical life-sim board game set in 2026.
-Clean geometric shapes with soft rounded corners. Every shape has a uniform thick dark outline
-in #1F1B2E (about 6 px at 1024 px canvas width, same weight everywhere). Flat colour fills with
-at most one hard-edged cel-shadow tone per surface, light from the top-left. No gradients, no
-textures, no grain, no noise, no glow, no photorealism, no 3D render, no pixel art.
-Chunky, toy-like proportions: characters are about 3 heads tall with simple friendly faces
-(dot eyes, clear eyebrows, expressive mouths); buildings look like sturdy board-game pieces.
-Restricted palette: cream #FFF6E9, ink #1F1B2E, coral #FF5A4E, mustard #FFC23D, teal #1FB5A8,
-sky #5EB8FF, lilac #8E7CF0, mint #7EE0A1, blush #FFB3A7, slate #5B5872, plus natural diverse
-skin tones. Robots and AI devices are always lilac. Money and gold are always mustard.
-Tone: looks like a cheerful, optimistic fintech-app illustration, with small satirical details.
-ABSOLUTELY NO text, letters, numbers, logos or brand marks anywhere. Signs, screens and posters
-are blank coloured panels or simple pictograms.
-```
+Player travel follows the actual route. Use short selection/arrival feedback, roughly 150–250 ms,
+and occasional ambient activity. Avoid constant bouncing and widespread squash-and-stretch.
+Respect reduced motion; essential feedback remains visible without animation.
 
-### 5.2 Framing & background blocks
+Warm daylight is the reference presentation. Preserve light/dark settings and accessible contrast.
+Dark mode uses ink-based UI surfaces and cream text while keeping the town readable and recognisable.
+Do not automatically darken the whole board because the UI is dark. Validate any art tint during
+implementation; separate night artwork is outside the initial refresh.
 
-**Sprite (buildings, characters, items):**
+## 5. Production prompts
 
-```text
-FRAMING: Single isolated subject, centred, fully inside the frame with a clear margin on all
-sides. Nothing cropped.
-BACKGROUND: Solid flat pure magenta #FF00FF filling the entire canvas edge to edge. No floor,
-no ground plane, no cast shadow, no glow, no vignette, no other background elements.
-```
+Use the built-in image generation tool. Save exact prompts beside source assets and record reference
+images. The concept is a direction reference; a new production anchor will lock asset-level camera,
+shading, detail, and character consistency.
 
-**Scene (event cards, interiors, backdrop):**
-
-```text
-FRAMING: Full-bleed scene filling the whole canvas, no border, no frame, no rounded corners.
-Keep the important action in the central 70% so the card can be cropped for mobile.
-```
-
-**Character sheet (emotion grids):**
+Prompts combine **shared style + subject + framing**. Repeat this style block unchanged within a batch:
 
 ```text
-FRAMING: Character sheet. The SAME character drawn 6 times in a 3-column by 2-row grid of equal
-cells, head and shoulders, all facing the same direction at the same size and scale. Identical
-hair, clothes, colours and proportions in every cell; only the facial expression and small
-props change. Clear empty space between cells.
-BACKGROUND: Solid flat pure magenta #FF00FF everywhere, including between cells.
+STYLE: Classic, Rebuilt: crisp hand-painted 2D illustration for a modern life-management
+game set in 2026. Sunny, welcoming ordinary town with the clarity and personality of classic
+computer-game illustration. Simplified believable architecture and natural expressive faces.
+Thin ink-blue silhouette contours, lighter interior lines, restrained painted shading with
+one or two shadow/highlight tones per material. Light comes from the upper left. Subtle
+material variation, clean edges, readable at small sizes. Full-body characters are
+approximately five heads tall. No toy buildings, floating plinths, photorealism, 3D renders,
+neon glow, heavy grain, blur, CRT effects, or artificial pixelation.
+Foundation palette: ink #263C53, cream #F9F3DF, butter #F3DEA0, sky #8AC8DE,
+teal #3E8B84, brick #B75E49, leaf #64865A, slate #78858B, lilac #8B7EAF,
+gold #D2A344, plus related shading tones and natural diverse skin and hair colours.
+Robots have restrained lilac accents. Satire appears in small everyday details.
+NO text, letters, numbers, logos, or brand marks. Signs and screens are blank panels
+or simple pictograms. Match the attached production style reference when supplied.
 ```
 
-### 5.3 Subject templates
+**Building names:** for a building, swap the style block's no-text line for one allowing only its name,
+and ask for the name painted on the sign in bold slab-serif lettering, spelled out letter by letter
+(see `art/src/_refresh/named/*.prompt.txt`).
 
-**Location building**
+**Sprite framing:** one isolated subject, centred, fully visible with clear margins. Request a
+genuinely transparent background. No surrounding street, ground plane, exterior cast shadow,
+or decorative frame. Building base ends at its pavement contact line; code supplies ground shadows.
+
+**Emotion framing:** same character six times in a 3-column × 2-row grid, transparent gutters,
+identical clothing, hair, scale, and facing. Frame order: neutral, happy, stressed, exhausted,
+shocked, proud. Preserve Jones's existing order: neutral, happy, proud, stressed, shocked, exhausted.
+
+**Scene framing:** full bleed, no border, important subjects in central 70% for responsive crops.
+Interiors use daylight and practical warm lamps; possessions and space communicate housing tier.
+
+### Worked subject: Your Place
 
 ```text
-SUBJECT: A single standalone building for the "<NAME>" location: <ONE-LINE DESCRIPTION>.
-Visual gag: <GAG>. Main colours: <2–3 PALETTE COLOURS>.
-Orthographic three-quarter front view: the front facade faces the viewer, rotated about 20
-degrees so the left side wall is visible, camera slightly above. No perspective distortion.
-The building sits on a small rounded slab base, like a board-game piece.
+SUBJECT: Your Place, housing tier 1: a modest lived-in suburban family home with a visible
+basement window, small front garden, short path to the door, and understated mailbox.
+Warm brick and cream timber details, muted teal trim. A folded blanket and lamp are visible
+through the basement window, suggesting the player's room without mocking their situation.
+A small signboard in the front garden reads "Your Place". Elevated three-quarter front
+view, front facade dominant, left wall visible at about 20 degrees, near-orthographic.
+No floating base or surrounding street. Match the production anchor's camera and lighting.
 ```
 
-**Character (full body)**
+### Legacy prompt transition
 
-```text
-SUBJECT: Full-body character: <AGE/BUILD>, <SKIN TONE>, <HAIR>, wearing <OUTFIT>.
-Personality: <PERSONALITY>. Pose: <POSE>. Expression: <EXPRESSION>.
-Front three-quarter view, standing, feet visible.
-```
+`art/tools/make_prompts.py` reads style from `art/src/_anchor/style-anchor.prompt.txt` and still
+emits the old flat-vector, magenta-background prompts. Refresh art so far was generated from the hand-written
+prompts in `art/src/_refresh/`, which repeat the style block above. Subject descriptions also prescribe toy
+buildings and old proportions. Existing prompt files and art are legacy material; do not regenerate
+the refresh with them unchanged.
 
-**Emotion sheet** (cells left to right, top to bottom)
-
-```text
-SUBJECT: <SAME CHARACTER DESCRIPTION AS THE FULL-BODY PROMPT>.
-Expressions in order: 1 neutral, 2 happy/celebrating, 3 stressed (sweat drop), 4 exhausted/
-burnt out (bags under eyes, slumped), 5 shocked (wide eyes, open mouth), 6 proud/smug.
-```
-
-**Item**
-
-```text
-SUBJECT: A single <ITEM> as a game inventory item: <DETAIL>. Visual gag: <GAG>.
-Three-quarter view from slightly above, same angle as the buildings.
-```
-
-**Event card**
-
-```text
-SUBJECT: Event card illustration for "<EVENT TITLE>": <WHAT IS HAPPENING, WHO, WHERE>.
-Mood: <MOOD>. The player character is <DESCRIPTION or "a generic young adult in a coral hoodie">.
-```
-
-### 5.4 Worked example (complete prompt)
-
-```text
-STYLE: <style block 5.1, verbatim>
-
-SUBJECT: A single standalone building for the "Burger Bot" location: a small fast-food diner
-with a big rounded front window and a striped awning in coral and cream. Inside the window, a
-lilac robot arm flips burgers while one tired human cashier stands beside it. A giant burger
-pictogram sign on the roof, with a delivery drone parked next to it. Visual gag: a queue of
-lilac delivery robots waits at the takeaway hatch, and there are no human customers. Main
-colours: coral, mustard, cream, with lilac for the robots.
-Orthographic three-quarter front view: the front facade faces the viewer, rotated about 20
-degrees so the left side wall is visible, camera slightly above. No perspective distortion.
-The building sits on a small rounded slab base, like a board-game piece.
-
-FRAMING: <sprite framing block>
-BACKGROUND: <sprite background block>
-```
-
-### 5.5 Codex command
-
-From the skill ([.claude/skills/codex-image/SKILL.md](../.claude/skills/codex-image/SKILL.md)). Run one image per call,
-from the target folder, and attach the approved style anchor with `-i` once it exists (§7):
-
-```powershell
-Set-Location art/src/locations
-codex exec --skip-git-repo-check -s workspace-write -i ../_anchor/style-anchor.png `
-  "Use your built-in image generation tool (not the API/CLI fallback) to create the image described below. Match the illustration style of the attached reference image exactly (outline weight, palette, shading, proportions) but NOT its subject. Save the PNG in the current directory as burger-bot.png. Reply with the file path.
-
-<FULL PROMPT>"
-```
-
-Save the full prompt next to each image as `<id>.prompt.txt`, so any asset can be regenerated or tweaked later.
-
----
+Update the generator's style, subjects, and framing together, then regenerate prompts. Earlier source art
+is kept in `art/src/_legacy/` until replacements are reviewed.
 
 ## 6. Pipeline
 
-```
-prompt (.prompt.txt) ─► codex exec ─► art/src/<category>/<id>.png  (raw, 1024–1536 px)
-        ─► review against checklist (§8)
-        ─► pnpm sprites: key out #FF00FF, trim, resize to 2× display size, pack
-        ─► apps/web/public/assets/atlases/<atlas>.{webp,json}   (sprites, Pixi v8 spritesheets)
-            apps/web/public/assets/<events|backgrounds>/<id>.webp (scenes)
-```
+Saved prompt + references → built-in image generation → reviewed source PNG in
+`art/src/<category>/<id>.png` → alpha validation, trim, resize, pack →
+`apps/web/public/assets/atlases/<atlas>.{webp,json}`, or full-bleed scene WebP.
 
-- **Background removal:** image generation does not reliably return transparency, so sprites come back on flat
-  magenta. `pnpm sprites` (`apps/web/scripts/sprites/`, using `sharp`) scores each pixel by `min(R, B) − G`. That
-  score is 255 on the key and at most ~20 for every palette colour and skin tone. Edge pixels in between get partial
-  alpha, and the key colour is un-mixed out of them, which removes the magenta fringe. The thick ink outline means the
-  edge next to the key colour is always dark, which makes this clean.
-- **Atlases** (each stored at 2× display size, with `meta.scale: 2` so frames draw at 1×):
+The processor in `apps/web/scripts/sprites/` keys out magenta and leaves real source alpha untouched.
+Sprite sheets are first cut per cell with `art/src/_refresh/slice.py`, which keeps alpha, keys a flat
+magenta background with the same un-mixing as the build, and drops strays from neighbouring cells. Check
+painted shading after keying: lilac and pink tones near the key can lose opacity. Full-bleed scenes
+encode as WebP; the park keeps an alpha edge.
 
-  | Atlas | Frames | Fit (2×) | Anchor |
-  |---|---|---|---|
-  | `characters` | full bodies, by ID (`player-01`, `jones`) | 320 × 480 | bottom centre |
-  | `busts` | emotion-sheet cells, `<character>/<emotion>` | 192 × 192 | centre |
-  | `locations` | buildings, by ID | 400 × 400 | bottom centre |
-  | `items` | items and outfits, by ID | 256 × 256 | centre |
+Keep content IDs and frame names stable. Current atlas contracts:
 
-  Emotion names are `neutral`, `happy`, `stressed`, `exhausted`, `shocked`, `proud`. Jones's sheet maps onto them:
-  humble-brag → `proud`, rattled → `stressed`, "posting through it" → `exhausted`. Sheets are sliced at the emptiest
-  gutter near each grid line, so slightly uneven generations still split cleanly.
-- **Scenes** (event cards, backdrop, interiors) are full-bleed, so they are only re-encoded as WebP.
-- **File names match content IDs** (`burger-bot`, `item-air-fryer`, `npc-leaselord`, `event-rent-hike`), so the
-  content JSON can reference art by ID.
-- `art/src/` holds the raw generations and prompts (Git LFS). Only processed files ship. The processed files are
-  committed, so CI and builds don't need LFS or `sharp`. Re-run `pnpm sprites` and commit the output whenever art changes.
+| Atlas | Frames | Fit at 2× | Anchor |
+|---|---|---|---|
+| characters | Full bodies by ID | 320 × 480 | Bottom centre |
+| busts | character/emotion | 192 × 192 | Centre |
+| locations | Buildings by existing art ID | 400 × 400 | Bottom centre |
+| items | Inventory and outfits | 256 × 256 | Centre |
 
----
+Retain these starting contracts unless real-size review requires changes. Inspect sliced emotion
+busts, atlas crops, mipmaps, and linear filtering. Only processed assets ship; commit them so builds
+do not need image generation. Once the pipeline supports new inputs, run
+`pnpm --filter @fastlane/web sprites`.
 
-## 7. Generation order (style lock)
+## 7. Production order and style lock
 
-Image generation drifts unless every asset is anchored to one reference. Do it in this order:
+1. Create a production anchor containing Your Place, a default player portrait/full body,
+   and material/object samples. Review at actual board and portrait sizes.
+2. Build the Your Place exterior, tier-1 interior, portrait, HUD, and actions as one playable slice.
+   Establish camera, shading, typography, and contrast in the real game.
+3. Expand to remaining storefronts and housing tiers using the locked anchor.
+4. Complete cast and emotions, then items and interiors.
+5. Complete events, skyline, town decoration, and remaining interface screens.
 
-1. **Style anchor.** One 1536 × 1024 image: two characters (the default player and Jones) standing next to one
-   building (Burger Bot) and three items, on magenta. Iterate until it is right. **This image defines the game's look.**
-   Save it as `art/src/_anchor/style-anchor.png`.
-2. **Cast.** Default player avatars and Jones, full body and emotion sheets, each with `-i style-anchor.png`.
-3. **MVP locations** (§9.1), each with `-i style-anchor.png`.
-4. **Items, NPC owners, event cards.**
-5. **Backdrop and Your Place interiors.**
-
-Confirm batch sizes before generating. Each image uses about 18k tokens of the ChatGPT plan quota.
-
----
+The direction is already selected. Use normal review and iteration to maintain consistency,
+without a separate permission step for each asset batch.
 
 ## 8. Acceptance checklist
 
-A generated asset is accepted only if:
+- [ ] Warm town mood and rendering style match the concept and production anchor.
+- [ ] No baked text beyond building names (spelled exactly as in content), no logos or invented gameplay values.
+- [ ] Thin coherent contours, restrained shading, upper-left light; no floating toy base.
+- [ ] Palette, material treatment, character identity, and natural skin tones remain consistent.
+- [ ] Camera, baseline, scale, and crop match the category; no essential clipping.
+- [ ] Sprite alpha and processed edges are clean; atlas crops preserve the intended framing.
+- [ ] Silhouettes, expressions, and destinations read at actual size, including smaller screens.
+- [ ] Labels, resources, costs, goals, and guidance remain complete and legible.
+- [ ] Selection, focus, warnings, and player identity work without colour alone.
+- [ ] Themes, keyboard use, touch targets, reduced motion, and contrast are verified.
+- [ ] Satirical detail stays secondary to clear visual information.
 
-- [ ] There is no text, letters, numbers or logo anywhere (check signs, screens, clothing).
-- [ ] The outline is the same weight as the style anchor, and every shape has one.
-- [ ] Colours stay in the palette (allowing for skin tones). Robots are lilac, money is mustard.
-- [ ] There are no gradients, glow, texture or soft shadows.
-- [ ] Sprites: the background is flat magenta edge to edge, with no ground shadow and nothing cropped.
-- [ ] The camera angle matches the category (§4).
-- [ ] Characters: the same person as their reference (hair, outfit, skin tone, proportions).
-- [ ] It reads clearly at in-game size. Shrink it to 200 px and look again.
-- [ ] The satire punches up (at systems, landlords, apps, Jones), never down (NFR-07).
+## 9. Refresh asset inventory
 
----
+### Locations
 
-## 9. MVP asset list
-
-### 9.1 Locations
-
-| ID | Location | Description | Visual gag | Colours |
-|---|---|---|---|---|
-| `your-place-1`…`5` | Your Place | One exterior per housing tier: parents' suburban house (basement window lit), shared house, studio in a block, apartment, smart condo | Tier 1: a mattress visible through the basement window. Tier 5: everything is a touchscreen, including the door | Varies by tier, cosiest at the top |
-| `leaselord` | LeaseLord | A rental office built in the shape of a giant smartphone | A huge key on a chain and a queue of tenants holding application folders | Teal, slate, coral |
-| `joblink` | JobLink Hub | A glass recruitment office | A lilac robot "screener" at the door sorting CVs into a bin | Sky, cream, lilac |
-| `upskill-u` | UpSkill U Online* | A small campus building with a graduation-cap roof and a giant laptop in front | A diploma pinned to a ball and chain | Mustard, teal |
-| `fulfillment` | Fulfillment Center | A big warehouse with loading bays and conveyor belts | Lilac robots outnumber the one human picker, who wears a step-counter | Slate, coral, lilac |
-| `burger-bot` | Burger Bot | See §5.4 | Robot arm cooking, delivery robots queuing | Coral, mustard, lilac |
-| `freshmart` | FreshMart | A corner grocery store with fruit crates outside | The price tags on the crates are tiny pictograms of rising arrows | Mint, coral, cream |
-| `thriftup` | ThriftUp / FastFash | A split building: a cosy thrift shop on one side, a glossy fast-fashion shop on the other | A clothes rack spills from one side into the other | Blush, mustard |
-| `circuit-planet` | Circuit Planet | An electronics store with a planet-shaped dome roof | A shop window full of near-identical phones | Sky, lilac, ink |
-| `neobank` | NeoBank | A sleek bank pod with a huge coin-slot door | A vault door shaped like an app icon. Small crypto coins orbit the roof | Teal, mustard |
-| `gighub` | GigHub | A street kiosk with a phone on a pole | A scooter, an e-bike and a delivery bag piled up, with a surge-pricing lightning bolt | Coral, lilac |
-
-\* **IP check:** [README](../README.md) says "Hi-Tech U" is the original game's location name. Renamed to UpSkill U
-(art file, atlas frame and location ID `upskill-u`) in Phase 6.
-
-### 9.2 Characters
-
-| ID | Who | Description |
+| Existing art ID | Destination | New treatment |
 |---|---|---|
-| `player-01`…`06` | Default avatars | 6 diverse young adults (mixed genders, skin tones, body types) in casual 2026 clothes: hoodie, cardigan, work polo, overalls, puffer jacket, headscarf. Each has a full body and an emotion sheet |
-| `jones` | Jones | Late-20s man, too-perfect hair, gleaming teeth, dark `ink` quarter-zip over a crisp shirt, gold (`mustard`) smartwatch and wireless earbuds, oat-milk latte in one hand, phone held up for a selfie. Smug, always posing. Emotion sheet: neutral-smug, celebrating, humble-bragging, rattled, shocked, "posting through it" |
-| `jones-grinder` / `-crypto` / `-wellness` / `-influencer` | Jones variants (FR-81, v1.0) | Same face and build. Only the outfit and props change: blazer and two phones, laser-eye sunglasses and a gold coin, yoga set and green smoothie, ring light and gimbal |
-| `npc-<location>` | Location owners (FR-32) | One bust per location, for example an over-friendly landlord in a fleece vest holding a tablet, or a burger-bot manager who is half human, half robot (lilac) |
+| your-place-1…5 | Your Place | Family home, shared house, studio block, apartment, smart condo; increasing comfort |
+| leaselord | LeaseLord | Brick rental office, blank listings, key pictogram, small application queue |
+| joblink | JobLink Hub | Glass recruitment office, job-board panels, lilac-accent robot screener |
+| upskill-u | UpSkill U Online | Modest learning centre, computer desks, graduation/book pictogram |
+| fulfillment | Fulfillment Center | Low warehouse, loading bays, parcels, automated carts |
+| burger-bot | Burger Bot | Corner diner, brick-and-cream awning, burger pictogram, robot cooking arm |
+| freshmart | FreshMart | Neighbourhood grocery, produce crates, green trim, striped awning |
+| thriftup | ThriftUp / FastFash | Secondhand racks beside a polished clothing display |
+| circuit-planet | Circuit Planet | Electronics shop, blue trim, screen displays, small planet pictogram |
+| neobank | NeoBank | Recognisable neighbourhood bank, teal trim, broad entrance, coin pictogram |
+| gighub | GigHub | Street service kiosk, parked scooter, bike, delivery bags |
 
-### 9.3 Items (FR-60)
+Render names from live content. These descriptions do not change IDs or gameplay rules.
 
-`item-laptop`, `item-ai-assistant` (a lilac smart speaker with a subscription badge), `item-fridge`, `item-e-scooter`,
-`item-headphones`, `item-air-fryer`, `item-smart-lock`, `item-phone`, plus wardrobe tiers `outfit-casual`,
-`outfit-smart`, `outfit-business` and `outfit-founder-hoodie`.
+### Cast, items, and scenes
 
-### 9.4 Event cards (first batch)
+Keep `player-01`…`06`: diverse young adults with distinct silhouettes, clothing, hair, and body types;
+each has full-body art and six emotions. Keep `jones`: neat hair, ink quarter-zip, gold accessories,
+expressive confidence. Location-owner busts and existing Jones variants remain later scope.
 
-Generate one illustration per **category** first (FR-71). Individual events reuse category art until they get their own:
-`event-work` (a layoff meeting with a lilac robot taking notes), `event-money` (coins falling out of a cracked phone),
-`event-life` (a wedding invitation avalanche), `event-health` (a person asleep on their keyboard),
-`event-housing` (a landlord sliding a rent-hike note under the door), `event-viral` (a phone erupting with heart and fire
-pictograms), `event-climate` (a melting air conditioner in a heatwave).
+Keep inventory IDs: `item-laptop`, `item-ai-assistant`, `item-fridge`, `item-e-scooter`,
+`item-headphones`, `item-air-fryer`, `item-smart-lock`, `item-phone`, plus `outfit-casual`,
+`outfit-smart`, `outfit-business`, and `outfit-founder-hoodie`.
 
-### 9.5 Backgrounds
+Keep event categories `event-work`, `event-money`, `event-life`, `event-health`, `event-housing`,
+`event-viral`, and `event-climate`. Show everyday situations with expressive characters and clear focal action.
+Keep `backdrop-day` and `interior-tier-1`…`5`. Housing progression changes space, furniture, and comfort
+without making lower-tier homes or their occupants the joke.
 
-`backdrop-day` (a wide city skyline: modest rental blocks in the foreground, a glossy lilac AI-company tower dominating
-the skyline, cranes, a few delivery drones) and `interior-tier-1`…`5` (Your Place rooms).
+Add reusable trees, planters, benches, streetlamps, and park-detail sprites as needed (so far
+`decor-trees` and `decor-lamp` in the locations atlas, and the street atlas's trees, lamps, vehicles,
+passers-by and `fountain`). The town square is code-drawn (lawn, crossing paths, a brick-edged plaza and
+flower beds) with the fountain sprite at its centre; an earlier painted square is kept in
+`art/src/_legacy/backgrounds/`. Building names are painted on the art (§3); `art/src/_refresh/named/` regenerates a building with its name from the blank-sign original in
+`art/src/_legacy/locations-blank-sign/`.
+Roads, crossings, signs, icons, and interaction geometry remain code-native.
 
-**MVP total:** about 55 images (1 anchor + 7 cast × 2 + 15 buildings + 12 items + 7 events + 6 backgrounds), plus
-retries. NPC owner busts (FR-32) and the Jones variants are v1.0.
+Base replacement inventory: 55 images (1 anchor + 14 cast + 15 buildings + 12 items +
+7 events + 6 backgrounds), before decorations and retries. The first playable slice uses
+a small subset; full production follows its real-size review.

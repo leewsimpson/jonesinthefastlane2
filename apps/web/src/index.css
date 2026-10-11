@@ -1,20 +1,22 @@
 @import "tailwindcss";
-@import "@fontsource-variable/bricolage-grotesque/wght.css";
+@import "@fontsource-variable/roboto-slab/wght.css";
 @import "@fontsource-variable/atkinson-hyperlegible-next/wght.css";
 
-/* Palette from art-direction §2. UI theme tokens derive from these art colours. */
+/* Palette from art-direction §2 ("Classic, Rebuilt"). UI theme tokens derive from these art colours. */
 @theme {
-  --color-ink: #1f1b2e;
-  --color-cream: #fff6e9;
-  --color-coral: #ff5a4e;
-  --color-mustard: #ffc23d;
-  --color-teal: #1fb5a8;
-  --color-sky: #5eb8ff;
-  --color-lilac: #8e7cf0;
-  --color-mint: #7ee0a1;
-  --color-blush: #ffb3a7;
-  --color-slate: #5b5872;
-  --color-night: #17142a;
+  --color-ink: #263c53;
+  --color-cream: #f9f3df;
+  --color-butter: #f3dea0;
+  --color-sky: #8ac8de;
+  --color-teal: #3e8b84;
+  --color-brick: #b75e49;
+  --color-leaf: #64865a;
+  --color-slate: #78858b;
+  --color-lilac: #8b7eaf;
+  --color-gold: #d2a344;
+  /* Deeper shades for filled controls that carry text: cream on these passes WCAG AA (NFR-04). */
+  --color-brick-deep: #a4523f;
+  --color-teal-deep: #285560;
 
   /* Player colours (art-direction §2, colour-blind safe; always paired with a shape). */
   --color-p1: #e69f00;
@@ -26,13 +28,23 @@
   /* Semantic theme tokens, switched for dark mode below. */
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
+  --color-frame: var(--frame);
   --color-fg: var(--fg);
   --color-fg-muted: var(--fg-muted);
-  /* Text in the palette's good/bad colours, darkened on light surfaces for WCAG AA (NFR-04). */
+  --color-accent: var(--accent);
+  /* Positive and negative text, with a sign or label beside it (art-direction §2). */
   --color-good: var(--good);
   --color-bad: var(--bad);
+  /* Stat icons and bar fills: icons are 3:1 on the panel surface, bars sit in an ink-bordered track. */
+  --color-tone-time: var(--tone-time);
+  --color-tone-energy: var(--tone-energy);
+  --color-tone-health: var(--tone-health);
+  --color-tone-happiness: var(--tone-happiness);
+  --color-tone-social: var(--tone-social);
+  --color-tone-credit: var(--tone-credit);
+  --color-tone-meals: var(--tone-meals);
 
-  --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Roboto Slab Variable", ui-serif, Georgia, serif;
   --font-sans: "Atkinson Hyperlegible Next Variable", ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -49,32 +61,61 @@
 }
 
 :root {
-  --surface: #fff6e9;
-  --surface-raised: #ffffff;
-  --fg: #1f1b2e;
-  --fg-muted: #5b5872;
-  --good: #0f7d74;
-  --bad: #c7362c;
+  --surface: #f9f3df;
+  --surface-raised: #fffcf2;
+  /* The teal-ink frame the panels sit in. */
+  --frame: #2e5b66;
+  --fg: #263c53;
+  --fg-muted: #526373;
+  --accent: #2f6e68;
+  --good: #24644d;
+  --bad: #963f32;
+  --tone-time: #2f6a86;
+  --tone-energy: #4e6e45;
+  --tone-health: #a4523f;
+  --tone-happiness: #8e6a1c;
+  --tone-social: #6a5d92;
+  --tone-credit: #2f6e68;
+  --tone-meals: #8e6a1c;
 }
 
+/* Dark mode: ink-based surfaces and cream text (art-direction §4). The town keeps its daylight. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --surface: #17142a;
-    --surface-raised: #1f1b2e;
-    --fg: #fff6e9;
-    --fg-muted: #c9c4dc;
-    --good: #1fb5a8;
-    --bad: #ff5a4e;
+    --surface: #1a2836;
+    --surface-raised: #22344a;
+    --frame: #142029;
+    --fg: #f9f3df;
+    --fg-muted: #b9c3cc;
+    --accent: #7fc4bc;
+    --good: #86cda6;
+    --bad: #f2a08e;
+    --tone-time: #8ac8de;
+    --tone-energy: #9cc28f;
+    --tone-health: #f2a08e;
+    --tone-happiness: #e7c46a;
+    --tone-social: #b9aee0;
+    --tone-credit: #7fc4bc;
+    --tone-meals: #e7c46a;
   }
 }
 
 :root[data-theme="dark"] {
-  --surface: #17142a;
-  --surface-raised: #1f1b2e;
-  --fg: #fff6e9;
-  --fg-muted: #c9c4dc;
-  --good: #1fb5a8;
-  --bad: #ff5a4e;
+  --surface: #1a2836;
+  --surface-raised: #22344a;
+  --frame: #142029;
+  --fg: #f9f3df;
+  --fg-muted: #b9c3cc;
+  --accent: #7fc4bc;
+  --good: #86cda6;
+  --bad: #f2a08e;
+  --tone-time: #8ac8de;
+  --tone-energy: #9cc28f;
+  --tone-health: #f2a08e;
+  --tone-happiness: #e7c46a;
+  --tone-social: #b9aee0;
+  --tone-credit: #7fc4bc;
+  --tone-meals: #e7c46a;
 }
 
 body {
@@ -85,116 +126,91 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Landscape layout (NFR-02): board in the middle, side panels. The query is WIDE_LAYOUT in settings/hooks.ts. */
-@custom-variant wide (@media (orientation: landscape) and (min-width: 768px));
+/* Two game layouts (NFR-02), picked by one query: WIDE_LAYOUT in settings/hooks.ts, shared with this variant. Both
+   fill the screen exactly and never scroll the page; each pane scrolls on its own. */
+@custom-variant wide (@media (min-width: 1024px) and (min-height: 600px));
 
-/* Portrait (phones): one page that scrolls like any other, so a swipe anywhere moves it and Safari's toolbars can
-   collapse. The HUD's top bar sticks to the top, the Travel / End week dock sticks to the bottom, and between them
-   sit the rest of the HUD, the board and the action sheet. */
 .game-layout {
   position: relative;
+  display: grid;
+  height: 100dvh;
+  overflow: hidden;
+}
+.hud-area {
+  grid-area: hud;
+  min-width: 0;
+}
+.board-area {
+  grid-area: board;
+  min-height: 0;
+  /* The town board's ground: daylight sky over a warm pavement (art-direction §2), the same in both themes. */
+  background: linear-gradient(to bottom, #cfe8ef, #efe8cf 45%, #e9e1c4);
+}
+/* The location panel: the action sheet scrolls, Travel / End week stay pinned at its foot. */
+.panel {
+  grid-area: panel;
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  min-height: 0;
+  min-width: 0;
+  background: var(--surface-raised);
 }
-.board-backdrop {
-  background-image: url("/assets/backgrounds/backdrop-day.webp");
-  mask-image: linear-gradient(to bottom, black 40%, transparent);
+/* Positioned, so absolutely placed children (screen-reader text) stay inside the scroll pane. */
+.panel > .sheet {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
-.board-area {
-  flex: none;
-  /* The first screen is the top bar, the whole board and the dock. 100svh is the height with the browser's toolbars
-     showing, and 10.5rem covers the bar and the dock. The floor keeps buildings and names from overlapping. */
-  height: clamp(340px, 135vw, calc(100svh - 10.5rem));
-}
-/* Below the board: the rest of the HUD, then the action sheet, then the dock (which must stay last to stick). */
-.board-area {
-  order: 1;
-}
-.hud-more {
-  order: 2;
-}
-.sheet {
-  order: 3;
-}
-.dock {
-  order: 4;
-}
-/* Pixi sets touch-action: none on its canvas, which would trap the page's scroll over the board. Vertical swipes
-   scroll; a tap still picks a building. */
-.board-area canvas {
-  /* biome-ignore lint/complexity/noImportantStyles: beats the inline style Pixi sets */
-  touch-action: pan-y !important;
-}
-.dock {
-  position: sticky;
-  bottom: 0;
-  z-index: 30;
-  padding-bottom: env(safe-area-inset-bottom);
+/* A building's scene in the location panel: the same daylight ground as the board. */
+.scene-ground {
+  background: linear-gradient(to bottom, #cfe8ef, #efe8cf 70%, #e3dcc0);
 }
 .fx-layer {
-  /* Pops and banners stay in view wherever the page is scrolled: above the pinned bars and a dialog's backdrop
-     (z-40), so they're never dimmed, but under the dialog itself (z-50). */
-  position: fixed;
-  z-index: 45;
+  position: absolute;
+  z-index: 20;
 }
 
-@media (orientation: landscape) and (min-width: 768px) {
-  .game-layout {
-    display: grid;
-    overflow: hidden;
-    height: 100dvh;
-    /* Side columns are capped so wide screens give the extra width to the board, not to stretched panels. */
-    grid-template-columns: minmax(250px, min(26%, 22rem)) minmax(0, 1fr) minmax(
-        290px,
-        min(30%, 26rem)
-      );
-    grid-template-rows: minmax(0, 1fr) auto;
-    grid-template-areas: "hud board sheet" "hud board dock";
+/* Mobile (phones and small tablets): status bar, board, panel. Portrait stacks them; landscape puts the panel beside
+   the board. */
+.game-mobile {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(180px, 45%) minmax(0, 1fr);
+  grid-template-areas: "hud" "board" "panel";
+}
+.game-mobile .panel {
+  border-top: 1px solid var(--color-ink);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@media (orientation: landscape) {
+  .game-mobile {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 42%);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas: "hud hud" "board panel";
   }
-  .hud-area {
-    grid-area: hud;
-    background: var(--surface-raised);
-    border-right: 1px solid color-mix(in srgb, var(--fg) 18%, transparent);
-    box-shadow: 4px 0 16px rgb(0 0 0 / 0.12);
-    z-index: 1;
-  }
-  .board-area {
-    grid-area: board;
-    height: auto;
-    /* A soft pool of light in the loop, so the open ground reads as the city's centre rather than empty space. */
-    background: radial-gradient(
-      ellipse 70% 60% at 50% 55%,
-      color-mix(in srgb, var(--color-lilac) 14%, transparent),
-      transparent 70%
-    );
-  }
-  .board-backdrop {
-    height: 100%;
-    mask-image: linear-gradient(to bottom, black 55%, transparent 95%);
-  }
-  .sheet,
-  .dock {
+  .game-mobile .panel {
     border-top: 0;
-    border-left: 1px solid color-mix(in srgb, var(--fg) 18%, transparent);
-    box-shadow: -4px 0 16px rgb(0 0 0 / 0.12);
-    z-index: 1;
+    border-left: 1px solid var(--color-ink);
   }
-  .dock {
-    border-top: 1px solid color-mix(in srgb, var(--fg) 12%, transparent);
-    padding-top: 0.5rem;
-  }
-  .sheet {
-    grid-area: sheet;
-  }
-  .dock {
-    grid-area: dock;
-    position: static;
-  }
-  .fx-layer {
-    position: absolute;
-    z-index: 20;
-  }
+}
+
+/* Desktop (art-direction §4 layout target): the board on the left, the location panel on the right, and the
+   dashboard along the foot, all set in the teal-ink frame. The panel is capped so wide screens give the extra width
+   to the board. */
+.game-desktop {
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: var(--frame);
+  grid-template-columns: minmax(0, 1fr) clamp(340px, 28vw, 30rem);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas: "board panel" "hud hud";
+}
+.game-desktop .board-area,
+.game-desktop .panel {
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-ink);
+  overflow: hidden;
 }
 
 /* Phone-sized screens (NFR-04): every text step one notch up, so the smallest text is 14px. The text-size setting
@@ -224,32 +240,36 @@ body {
   }
 }
 
-/* Small UI primitives, so components stay readable. */
+/* Small UI primitives, so components stay readable (art-direction §4 UI treatments). */
 @layer components {
+  /* Cream controls, 1px ink border, a 2px lower edge that pressing removes. */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border-2 border-ink bg-surface-raised px-4 py-2 font-bold text-fg shadow-[0_3px_0_var(--color-ink)] transition-transform active:translate-y-0.5 active:shadow-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-cream/70;
+    @apply inline-flex items-center justify-center gap-2 rounded-md border border-ink bg-surface-raised px-4 py-2 font-bold text-fg shadow-[0_2px_0_var(--color-ink)] transition-[transform,background-color] hover:bg-butter/60 active:translate-y-px active:shadow-none disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-surface-raised dark:border-cream/70 dark:shadow-[0_2px_0_rgb(0_0_0/0.5)] dark:hover:bg-cream/10;
   }
-  .btn-primary {
-    @apply bg-coral text-ink;
-  }
+  /* The main call to action: End week and its kin (brick, art-direction §4). */
+  .btn-primary,
   .btn-danger {
-    @apply bg-coral text-ink;
+    @apply bg-brick-deep text-cream hover:bg-brick disabled:hover:bg-brick-deep dark:border-ink dark:hover:bg-brick;
+  }
+  /* Travel and other light secondary moves. */
+  .btn-sky {
+    @apply bg-sky text-ink hover:bg-[#a3d5e6] disabled:hover:bg-sky dark:border-ink dark:hover:bg-[#a3d5e6];
   }
   .btn-sm {
     @apply px-2 py-1 text-sm;
   }
   /* Secondary controls (Details, Settings, Quit): present but quieter than the game's own buttons. */
   .btn-ghost {
-    @apply border border-ink/25 bg-transparent font-semibold text-fg-muted shadow-none hover:border-ink hover:text-fg dark:border-cream/25 dark:hover:border-cream/70;
+    @apply border border-ink/30 bg-surface-raised/85 font-semibold text-fg-muted shadow-none hover:border-ink hover:bg-surface-raised hover:text-fg dark:border-cream/25 dark:hover:border-cream/70;
   }
   .section-label {
-    @apply font-bold text-fg-muted text-xs uppercase tracking-wide;
+    @apply font-bold text-accent text-xs uppercase tracking-wider;
   }
   .card {
-    @apply rounded-xl border-2 border-ink bg-surface-raised dark:border-cream/40;
+    @apply rounded-lg border border-ink bg-surface-raised dark:border-cream/30;
   }
   .input {
-    @apply rounded-lg border-2 border-ink bg-surface-raised px-2 py-1 dark:border-cream/50;
+    @apply rounded-md border border-ink bg-surface-raised px-2 py-1 dark:border-cream/50;
   }
   .chip {
     @apply inline-flex items-center gap-0.5 rounded-full border border-ink/25 bg-surface px-2 py-0.5 text-xs leading-tight dark:border-cream/25;
@@ -258,22 +278,27 @@ body {
     @apply border-teal bg-teal/15;
   }
   .chip-bad {
-    @apply border-coral bg-coral/15;
+    @apply border-brick bg-brick/15;
   }
   .chip-random {
     @apply border-lilac border-dashed bg-lilac/15;
   }
   .chip-toggle {
-    @apply cursor-pointer rounded-full border-2 border-ink px-3 py-1 has-checked:bg-mustard has-checked:text-ink has-focus-visible:outline-2 has-focus-visible:outline-coral dark:border-cream/60;
+    @apply cursor-pointer rounded-full border border-ink px-3 py-1 has-checked:bg-butter has-checked:text-ink has-focus-visible:outline-2 has-focus-visible:outline-ink dark:border-cream/60;
   }
+  /* An action: icon, label, time and effects aligned in one row. Hover changes the fill. */
   .action-row {
-    @apply flex w-full flex-col items-start gap-1 rounded-xl border-2 border-ink/30 bg-surface p-2 text-left hover:border-ink focus-visible:border-coral disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:border-ink/30 dark:border-cream/25 dark:hover:border-cream;
+    @apply flex w-full flex-col items-start gap-1 rounded-lg border border-ink/25 bg-surface p-2 text-left hover:border-ink hover:bg-butter/35 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:border-ink/25 disabled:hover:bg-surface dark:border-cream/20 dark:hover:border-cream/70 dark:hover:bg-cream/5;
+  }
+  /* A square tile behind an action's icon. */
+  .icon-tile {
+    @apply flex size-10 shrink-0 items-center justify-center rounded-md border border-ink/15 wide:size-14 dark:border-cream/15;
   }
   .dialog-overlay {
     @apply fixed inset-0 z-40 bg-ink/50;
   }
   .dialog-content {
-    @apply fixed inset-x-0 bottom-0 z-50 max-h-[90dvh] overflow-y-auto overscroll-contain rounded-t-2xl border-2 border-ink bg-surface-raised p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-xl sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:w-[min(36rem,92vw)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl dark:border-cream/40;
+    @apply fixed inset-x-0 bottom-0 z-50 max-h-[90dvh] overflow-y-auto overscroll-contain rounded-t-2xl border border-ink bg-surface-raised p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-xl sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:w-[min(36rem,92vw)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-lg dark:border-cream/40;
   }
   kbd {
     @apply inline-flex min-w-5 items-center justify-center rounded border border-current/40 px-1 font-mono text-[11px] leading-4 opacity-80;
@@ -295,9 +320,9 @@ body {
 :root[data-coach-step="actions"] [data-coach="actions"],
 :root[data-coach-step="quick"] [data-coach="quick"],
 :root[data-coach-step="end"] [data-coach="end"] {
-  outline: 3px solid var(--color-coral);
+  outline: 3px solid var(--color-brick);
   outline-offset: 3px;
-  border-radius: 0.75rem;
+  border-radius: 0.5rem;
 }
 @media (prefers-reduced-motion: no-preference) {
   :root[data-coach-step="go"]:not([data-motion="reduce"]) [data-coach="go"],
@@ -309,12 +334,13 @@ body {
 }
 @keyframes coach-pulse {
   50% {
-    outline-color: var(--color-mustard);
+    outline-color: var(--color-gold);
     outline-offset: 6px;
   }
 }
 
+/* Focus (art-direction §2): a 2px ink outline, 2px out; cream on dark surfaces. */
 :focus-visible {
-  outline: 3px solid var(--color-coral);
+  outline: 2px solid var(--fg);
   outline-offset: 2px;
 }

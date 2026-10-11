@@ -18,7 +18,7 @@ interface Atlas {
   frames: Record<string, Frame>;
 }
 
-export type AtlasName = 'locations' | 'items';
+export type AtlasName = 'locations' | 'items' | 'busts' | 'characters';
 
 const BASE = '/assets/atlases/';
 const atlases = new Map<AtlasName, Promise<Atlas>>();
@@ -91,6 +91,17 @@ export function AtlasArt({
 
 export function BuildingArt({ frame, width }: { frame: string; width: number }) {
   return <AtlasArt atlas="locations" frame={frame} width={width} />;
+}
+
+/** A character's head-and-shoulders portrait in one of their emotions (art-direction §4). */
+export function BustArt({ avatar, mood, size }: { avatar: string; mood: string; size: number }) {
+  return <AtlasArt atlas="busts" frame={`${avatar}/${mood}`} width={size} ratio={1} />;
+}
+
+/** A character's full body (art-direction §4), standing in a scene. */
+export function CharacterArt({ avatar, height }: { avatar: string; height: number }) {
+  // A square box: the figure is taller than wide, so its height sets the scale.
+  return <AtlasArt atlas="characters" frame={avatar} width={height} ratio={1} />;
 }
 
 /** Item and subscription art ids (art-direction §9.3); things without art get none. */

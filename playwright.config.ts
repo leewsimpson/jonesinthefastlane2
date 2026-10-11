@@ -5,6 +5,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const baseURL = process.env.E2E_BASE_URL;
+const origin = new URL(baseURL ?? 'http://localhost:4173').origin;
+// Every test starts with music and effects (NFR-05) at volume 0, so nothing plays (or is even fetched) during a run.
+const muted = JSON.stringify({ musicVolume: 0, sfxVolume: 0 });
 
 export default defineConfig({
   testDir: 'e2e',
@@ -16,6 +19,7 @@ export default defineConfig({
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: baseURL ?? 'http://localhost:4173',
+    storageState: { cookies: [], origins: [{ origin, localStorage: [{ name: 'fastlane.settings', value: muted }] }] },
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },

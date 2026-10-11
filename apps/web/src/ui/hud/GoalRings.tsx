@@ -12,9 +12,9 @@ export const GOAL_ICON: Record<GoalKey, string> = {
 };
 const GOAL_COLOUR: Record<GoalKey, string> = {
   wealth: 'var(--color-teal)',
-  wellbeing: 'var(--color-coral)',
+  wellbeing: 'var(--color-brick)',
   skills: 'var(--color-lilac)',
-  career: 'var(--color-mustard)',
+  career: 'var(--color-gold)',
 };
 
 export function Ring({
@@ -71,7 +71,7 @@ export function Ring({
 export function GoalRings({ progress, size = 44 }: { progress: GoalValues; size?: number }) {
   const { t } = useTranslation();
   return (
-    <span className="flex gap-1.5">
+    <span className="flex flex-wrap gap-1">
       {GOAL_KEYS.map((g) => (
         <span key={g} className="flex flex-col items-center">
           <Ring

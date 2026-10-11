@@ -1,0 +1,2 @@
+Cut from _refresh/fountain.png (prompt: _refresh/fountain.prompt.txt, style reference _refresh/park-square.png); magenta keyed
+from the edges and trimmed as in _refresh/named/install.py.

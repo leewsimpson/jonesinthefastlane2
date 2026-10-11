@@ -1,0 +1,1 @@
+Cell 4 of _refresh/buildings-b.png (3x2 sheet, prompt: _refresh/buildings-b.prompt.txt; references: _refresh/buildings-a.png, design/concepts/classic-rebuilt.png), sliced with _refresh/slice.py.

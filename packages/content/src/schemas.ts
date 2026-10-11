@@ -299,7 +299,7 @@ export const BoardSchema = z.object({
 
 export type Board = z.infer<typeof BoardSchema>;
 
-/** Something a player can do at a location (FR-03). Its label is the copy key `action.<id>`. */
+/** Something a player can do at a location (FR-03). Its label is the copy key `action.<id>`, its one-line description `actionInfo.<id>`. */
 export const LocationActionSchema = z.object({
   id: Id,
   /** A board location, or `*` for anywhere (GigHub, FR-44). */
@@ -706,6 +706,7 @@ export function contentStringKeys(content: GameContent): string[] {
     ...city.board.locations.map((l) => `location.${l.id}`),
     ...city.board.transportModes.map((m) => `transport.${m.id}`),
     ...city.actions.map((a) => `action.${a.id}`),
+    ...city.actions.map((a) => `actionInfo.${a.id}`),
     ...balance.wardrobeTiers.map((t) => `wardrobe.${t}`),
     ...balance.statModifiers.map((m) => `modifier.${m.id}`),
     ...city.jobs.map((j) => `job.${j.id}`),

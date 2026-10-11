@@ -37,7 +37,7 @@ export function Coach({
     <aside
       className={
         compact
-          ? 'mx-3 mt-2 flex flex-col gap-1 rounded-xl border-2 border-coral bg-surface p-2'
+          ? 'mx-3 mt-2 flex flex-col gap-1 rounded-lg border border-gold bg-butter/40 p-2 dark:bg-gold/15'
           : 'card flex w-full flex-col gap-1 p-3 text-sm shadow-[0_4px_0_var(--color-ink)]'
       }
       aria-labelledby="coach-heading"

@@ -3,6 +3,8 @@
  * shapes come from art-direction §2: a colour is never the only cue.
  */
 import type { StatKey } from '@fastlane/content/keys';
+import type { PlayerState } from '@fastlane/engine';
+import type { IconName } from './Icon.tsx';
 
 export const STAT_ICON: Record<StatKey | 'time' | 'meals', string> = {
   cash: '$',
@@ -16,17 +18,44 @@ export const STAT_ICON: Record<StatKey | 'time' | 'meals', string> = {
   meals: '🍔',
 };
 
-/** Tailwind text colour per stat, readable on cream and on night (WCAG AA for the bold icon glyphs). */
+/** Tailwind text colour per stat, 3:1 or better on the panel surface in both themes (NFR-04, art-direction §2). */
 export const STAT_TONE: Record<StatKey | 'time' | 'meals', string> = {
   cash: 'text-good',
-  energy: 'text-mustard',
-  health: 'text-bad',
-  happiness: 'text-lilac',
-  social: 'text-sky',
-  creditScore: 'text-slate dark:text-fg-muted',
-  wardrobe: 'text-slate dark:text-fg-muted',
-  time: 'text-sky',
-  meals: 'text-mustard',
+  energy: 'text-tone-energy',
+  health: 'text-tone-health',
+  happiness: 'text-tone-happiness',
+  social: 'text-tone-social',
+  creditScore: 'text-tone-credit',
+  wardrobe: 'text-fg-muted',
+  time: 'text-tone-time',
+  meals: 'text-tone-meals',
+};
+
+/** The dashboard's SVG icon per stat (art-direction §2: functional icons are code-native SVG). */
+export const STAT_SVG: Record<StatKey | 'time' | 'meals', IconName> = {
+  cash: 'cash',
+  energy: 'bolt',
+  health: 'heart',
+  happiness: 'smile',
+  social: 'users',
+  creditScore: 'card',
+  wardrobe: 'bag',
+  time: 'clock',
+  meals: 'meal',
+};
+
+/** Bar fills per stat, from the palette: each bar also shows its icon, label and number. */
+export const STAT_FILL: Record<
+  'energy' | 'health' | 'happiness' | 'social' | 'creditScore',
+  string
+> = {
+  // Brighter related shades of the palette (art-direction §2), as the concept's dashboard draws its bars. Each bar
+  // has an ink-bordered track, so the fill needs no contrast of its own.
+  energy: '#6aaa4f',
+  health: '#c0503c',
+  happiness: '#e9b02f',
+  social: 'var(--color-lilac)',
+  creditScore: '#3f78b5',
 };
 
 /** Seat colours and shapes. Humans take p1–p4 in seat order; AI rivals wear Jones's colour. */
@@ -54,5 +83,15 @@ export function seatOf(players: readonly { id: string; controller: string }[], i
     }
     if (p.controller === 'human') human++;
   }
-  return { colour: '#5b5872', shape: '●', avatar: 'player-01' };
+  return { colour: '#78858b', shape: '●', avatar: 'player-01' };
+}
+
+/** Which emotion a player's bust shows, from how their week is going. */
+export function emotion(
+  stats: Pick<PlayerState['stats'], 'energy' | 'happiness' | 'health'>,
+): string {
+  if (stats.energy < 20) return 'exhausted';
+  if (stats.happiness < 30 || stats.health < 30) return 'stressed';
+  if (stats.happiness >= 75) return 'happy';
+  return 'neutral';
 }

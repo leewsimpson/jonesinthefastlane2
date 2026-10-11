@@ -1,20 +1,22 @@
 /**
- * The game screen. Layout (NFR-02): portrait stacks HUD, board and action sheet in one scrolling page, with the HUD's
- * top bar and the Travel / End week dock pinned; landscape puts the HUD and the action sheet either side of the board. Keyboard (NFR-03): E ends the week, T travels, D opens details, and the
- * action rows take the number and letter keys shown on them.
+ * The game screen. Two layouts (NFR-02, art-direction §4), each filling the screen with no page scroll: mobile is a
+ * status bar over the board and the location panel (side by side in landscape); desktop puts the board on the left,
+ * the location panel on the right and the dashboard along the foot. The panel is the same in both: the action sheet
+ * scrolls, with Travel / End week pinned under it. Keyboard (NFR-03): E ends the week, T travels, D opens details,
+ * and the action rows take the number and letter keys shown on them.
  */
 import type { Action, Preview } from '@fastlane/engine';
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { startMusic } from '../../audio/audio.ts';
-import { boardLayout, feedbackPoint, innerRect } from '../../board/layout.ts';
+import { boardLayout, feedbackPoint } from '../../board/layout.ts';
 import { FxLayer } from '../../fx/FxLayer.tsx';
 import { coachStep, hasWorked } from '../../game/coach.ts';
 import { content, engine } from '../../game/engine.ts';
 import { defaultMode, nextHint, pickTrip, weekNeeds } from '../../game/guide.ts';
 import { activeHuman } from '../../game/report.ts';
 import { duration } from '../../i18n/format.ts';
-import { useReducedMotion, useWideLayout } from '../../settings/hooks.ts';
+import { useWideLayout } from '../../settings/hooks.ts';
 import { useSettings } from '../../settings/settings.ts';
 import { useApp } from '../../store/app.ts';
 import { gameStore, useGame } from '../../store/game.ts';
@@ -26,24 +28,21 @@ import {
   rowKey,
   useHotkeys,
 } from '../common/hotkeys.ts';
-import { Hud } from '../hud/Hud.tsx';
+import { seatOf } from '../common/stats.ts';
+import { Hud, HudToolbar, WeekSign } from '../hud/Hud.tsx';
 import { ActionDock, ActionSheet, groupActions } from '../panels/ActionSheet.tsx';
 import { Coach } from '../panels/Coach.tsx';
 import { DetailsDialog } from '../panels/DetailsDialog.tsx';
 import { EndWeekDialog, endWeekWarnings } from '../panels/EndWeekDialog.tsx';
 import { Ticker } from '../panels/Ticker.tsx';
 import { TravelDialog } from '../panels/TravelDialog.tsx';
-import { Clock, WeekPanel } from '../panels/WeekPanel.tsx';
+import { WeekPanel } from '../panels/WeekPanel.tsx';
 import { Handoff } from '../week/Handoff.tsx';
 import { WeekSequence } from '../week/WeekSequence.tsx';
 
 const Board = lazy(() => import('../../board/Board.tsx'));
 const Summary = lazy(() => import('./Summary.tsx'));
 
-/** The open ground in the loop is never taller than this; the clock in its middle is sized to fit. */
-const PANEL_MAX = { w: 320, h: 420 };
-/** The loop's middle shows the clock when it fits; the week panel lives in the sheet (portrait) or the left column. */
-const CLOCK_MIN = 96;
 const MODE_KEY = 'fastlane.travelMode';
 const DEFAULT_MODE = defaultMode(content);
 
@@ -59,7 +58,7 @@ function storedMode(): string {
   }
 }
 
-/** An element's size, for placing the week panel inside the loop. A callback ref, so it follows the element. */
+/** An element's size, for placing feedback over the board. A callback ref, so it follows the element. */
 function useSize(): [(el: HTMLElement | null) => void, { w: number; h: number }] {
   const [el, setEl] = useState<HTMLElement | null>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
@@ -72,25 +71,6 @@ function useSize(): [(el: HTMLElement | null) => void, { w: number; h: number }]
     return () => ro.disconnect();
   }, [el]);
   return [setEl, size];
-}
-
-/**
- * Portrait only: when the player arrives somewhere, bring that place's actions into view under the HUD's pinned bar,
- * since the board that was tapped sits above them.
- */
-function useScrollToSheet(location: string | undefined, player: string | undefined, wide: boolean) {
-  const reduced = useReducedMotion();
-  const last = useRef({ location, player });
-  useEffect(() => {
-    const prev = last.current;
-    last.current = { location, player };
-    if (wide || !location || prev.player !== player || prev.location === location) return;
-    const sheet = document.getElementById('sheet');
-    if (!sheet) return;
-    const bar = document.querySelector<HTMLElement>('.hud-bar');
-    const top = sheet.getBoundingClientRect().top + window.scrollY - (bar?.offsetHeight ?? 0);
-    window.scrollTo({ top, behavior: reduced ? 'auto' : 'smooth' });
-  }, [location, player, wide, reduced]);
 }
 
 /** Action kinds per action id, to tell whether a meal or study is on offer where the player stands. */
@@ -153,7 +133,6 @@ export function Game() {
     () => (state && meNow ? weekNeeds(content, state, meNow) : null),
     [state, meNow],
   );
-  useScrollToSheet(meNow?.location, meNow?.id, wide);
 
   /** One click on the board goes straight there (FR-02), like the original; the dialog only when no mode can. */
   const goTo = (dest: string) => {
@@ -224,11 +203,6 @@ export function Game() {
   const paid = hasWorked(me);
   const coach =
     tutorial && canAct && !coached.has(me.id) ? coachStep(content, state, me, paid) : null;
-  const inner = innerRect(
-    boardLayout(boardSize.w, boardSize.h, content.city.board.locations.length),
-    PANEL_MAX,
-  );
-  const clockSize = Math.min(inner.w, inner.h, 140);
   const panelProps = {
     state,
     me,
@@ -244,37 +218,11 @@ export function Game() {
   };
 
   return (
-    <div className="game-layout">
-      <div className="hud-area contents wide:flex wide:min-h-0 wide:flex-col wide:gap-3 wide:overflow-y-auto wide:pb-3">
-        <Hud state={state} me={me} onDetails={() => setDetails(true)} onQuit={quit} />
-        {wide && (
-          <>
-            {coach && (
-              <div className="px-3">
-                <Coach
-                  step={coach}
-                  canGo={!!coach.location && !!pickTrip(previews, coach.location, mode)}
-                  onGo={goTo}
-                  onSkip={() => setCoached(new Set([...coached, me.id]))}
-                />
-              </div>
-            )}
-            <div className="px-3">
-              <WeekPanel {...panelProps} side />
-            </div>
-            <div className="px-3">
-              <Ticker events={lastEvents} state={state} player={me.id} error={error} />
-            </div>
-            <p className="mt-auto px-3 text-fg-muted text-xs">{t('menu.help')}</p>
-          </>
-        )}
+    <div className={`game-layout ${wide ? 'game-desktop' : 'game-mobile'}`}>
+      <div className="hud-area">
+        <Hud state={state} me={me} wide={wide} onDetails={() => setDetails(true)} />
       </div>
       <div ref={boardRef} className="board-area relative min-h-0 overflow-hidden">
-        {/* The skyline backdrop (art-direction §9.5), faded so the board reads first; darker at night. */}
-        <div
-          aria-hidden="true"
-          className="board-backdrop pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-center bg-cover opacity-30 dark:opacity-20 dark:brightness-50"
-        />
         <div ref={setShakeEl} className="absolute inset-0">
           <Suspense fallback={null}>
             <Board
@@ -290,7 +238,6 @@ export function Game() {
           fx={fx}
           id={tick}
           shakeTarget={shakeEl}
-          boardEl={shakeEl}
           anchor={feedbackPoint(
             boardLayout(boardSize.w, boardSize.h, content.city.board.locations.length),
             Math.max(
@@ -299,51 +246,63 @@ export function Game() {
             ),
           )}
         />
-        {clockSize >= CLOCK_MIN && (
-          <div
-            className="pointer-events-none absolute z-10 flex items-center justify-center"
-            style={{ left: inner.x, top: inner.y, width: inner.w, height: inner.h }}
-          >
-            <div className="rounded-full bg-surface-raised/80 shadow-[0_3px_0_var(--color-ink)]">
-              <Clock left={me.timeLeft} total={content.balance.weekMinutes} size={clockSize} />
-            </div>
+        {wide && (
+          <div className="absolute top-2 left-2 z-10">
+            <WeekSign state={state} me={me} />
           </div>
         )}
-      </div>
-      <ActionSheet
-        location={me.location}
-        week={state.week}
-        housingTier={me.housing.tier}
-        world={state.world}
-        groups={groups}
-        smart={smart}
-        studyNote={(() => {
-          const course = content.city.courses.find((c) => c.id === me.enrollment?.course);
-          return course && me.enrollment
-            ? t('quick.studyProgress', {
-                course: t(`course.${course.id}`),
-                done: duration(me.enrollment.minutes),
-                needed: duration(course.studyMinutes),
-              })
-            : undefined;
-        })()}
-        canAct={canAct}
-        onPick={dispatch}
-      >
-        {coach && !wide && (
-          <Coach
-            step={coach}
-            compact
-            canGo={!!coach.location && !!pickTrip(previews, coach.location, mode)}
-            onGo={goTo}
-            onSkip={() => setCoached(new Set([...coached, me.id]))}
+        {wide && (
+          <HudToolbar
+            onDetails={() => setDetails(true)}
+            onQuit={quit}
+            className="absolute top-2 right-2 z-10 [&>*]:flex-none"
           />
         )}
-        {!wide && <WeekPanel {...panelProps} compact />}
-      </ActionSheet>
-      <ActionDock canAct={canAct} onTravel={() => setTravel({ dest: null })} onEndWeek={endWeek}>
-        {!wide && <Ticker events={lastEvents} state={state} player={me.id} error={error} />}
-      </ActionDock>
+      </div>
+      <div className="panel">
+        <ActionSheet
+          location={me.location}
+          week={state.week}
+          housingTier={me.housing.tier}
+          avatar={seatOf(state.players, me.id).avatar}
+          world={state.world}
+          groups={groups}
+          smart={smart}
+          studyNote={(() => {
+            const course = content.city.courses.find((c) => c.id === me.enrollment?.course);
+            return course && me.enrollment
+              ? t('quick.studyProgress', {
+                  course: t(`course.${course.id}`),
+                  done: duration(me.enrollment.minutes),
+                  needed: duration(course.studyMinutes),
+                })
+              : undefined;
+          })()}
+          canAct={canAct}
+          onPick={dispatch}
+          footer={
+            wide ? (
+              <p className="px-4 pb-3 text-fg-muted text-xs">{t('menu.help')}</p>
+            ) : (
+              <HudToolbar onDetails={() => setDetails(true)} onQuit={quit} className="px-4 pb-4" />
+            )
+          }
+        >
+          {coach && (
+            <Coach
+              step={coach}
+              compact
+              canGo={!!coach.location && !!pickTrip(previews, coach.location, mode)}
+              onGo={goTo}
+              onSkip={() => setCoached(new Set([...coached, me.id]))}
+            />
+          )}
+          <WeekPanel {...panelProps} compact />
+        </ActionSheet>
+        <ActionDock canAct={canAct} onTravel={() => setTravel({ dest: null })} onEndWeek={endWeek}>
+          <Ticker events={lastEvents} state={state} player={me.id} error={error} />
+        </ActionDock>
+      </div>
 
       <TravelDialog
         open={travel !== null}

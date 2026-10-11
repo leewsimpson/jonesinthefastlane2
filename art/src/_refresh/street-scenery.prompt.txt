@@ -1,0 +1,24 @@
+STYLE: Classic, Rebuilt: crisp hand-painted 2D illustration for a modern life-management
+game set in 2026. Sunny, welcoming ordinary town with the clarity and personality of classic
+computer-game illustration. Simplified believable architecture and natural expressive faces.
+Thin ink-blue silhouette contours, lighter interior lines, restrained painted shading with
+one or two shadow/highlight tones per material. Light comes from the upper left. Subtle
+material variation, clean edges, readable at small sizes. Full-body characters are
+approximately five heads tall. No toy buildings, floating plinths, photorealism, 3D renders,
+neon glow, heavy grain, blur, CRT effects, or artificial pixelation.
+Foundation palette: ink #263C53, cream #F9F3DF, butter #F3DEA0, sky #8AC8DE,
+teal #3E8B84, brick #B75E49, leaf #64865A, slate #78858B, lilac #8B7EAF,
+gold #D2A344, plus related shading tones and natural diverse skin and hair colours.
+Robots have restrained lilac accents. Satire appears in small everyday details.
+NO text, letters, numbers, logos, or brand marks. Signs and screens are blank panels
+or simple pictograms. Match the attached production style reference when supplied.
+SUBJECTS, left to right, top row then bottom row. Town scenery to plant along pavements, all matching the trees in the attached reference (softer rounded canopies in natural leaf greens with darker shadow tones, thin contours, not cartoon-bright):
+1. A single broad round street tree with a brown trunk.
+2. A single tall narrow street tree.
+3. A cluster of two medium trees of different heights.
+4. A low clipped hedge with small flowers.
+5. A wooden pavement planter box with flowers and a small shrub.
+6. A dark green Victorian street lamp post with a warm lantern, standing alone.
+
+FRAMING: Sprite sheet, 3 columns by 2 rows of equal cells on a 1536x1024 canvas. One isolated subject per cell, centred, fully visible with clear margins, all at the same scale and camera as the attached town board reference: elevated three-quarter view from above, near-orthographic. No surrounding street, no ground plane, no cast shadow on the ground, no decorative frame. Scale: trees about as tall as a two-storey shop front; the lamp about head-and-a-half above a person.
+BACKGROUND: solid flat pure magenta #FF00FF everywhere, including between cells. No glow, no shadow, no ground on the background.

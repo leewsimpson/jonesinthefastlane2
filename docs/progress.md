@@ -523,6 +523,13 @@ the open items are listed under "Left for the owner" below.
 - **Deviations:** none from the plan.
 - **Notes:** the free basement gave no rent pressure (by FR-14 design); the push above addresses it. Skill bonus counts partial course progress by design. `packages/sim/scripts/jones-profile.ts` is a tuning aid for Jones's scores.
 
+### Visual refresh R1b: town-block board — 2026-10-10
+
+- **Exit evidence:** web unit tests 90 passed (new `streets` test in `board/layout.test.ts`), typecheck and lint clean; E2E `phone-layout`, `play-a-week` and `a11y` (light and dark) pass on desktop-chromium and mobile-webkit. Checked by eye against `design/concepts/classic-rebuilt.png` at 1536×1024, 1366×768 (dark) and iPhone 15.
+- **Changes:** the board's cream field and stadium loop became a town block in a street grid (implementation-plan.md R1b). `streets()` in `board/layout.ts` extends each ring straight past its corners to the edge wherever no building stands; `Town` in `Board.tsx` draws lawn, pavements, kerbs, tarmac, dashes and crossings; each location has a paved plot with a code ground shadow in place of the floating ellipse; verge trees line the side streets. Location order, stops and travel distance are unchanged.
+- **Deviations:** the `decor-lamp` sprite is still unused (pre-refresh outline weight).
+- **Notes:** `e2e/visual.spec.ts` baselines need regenerating by the `visual` workflow. The concept's top-left week signboard was not added; week and hours stay in the dashboard (art-direction §4).
+
 ### M requirement audit (2026-10-08)
 
 Scope rule: game-requirements §16. An M row that asks for more than the MVP is Deferred to the phase that owns it.
@@ -596,7 +603,7 @@ Scope rule: game-requirements §16. An M row that asks for more than the MVP is 
 | ENG-31 | Met (spec) | game-requirements §13.4 MON-01…07; MVP ships without ads; provider is the owner's call |
 | ENG-32 | Met | guardrail review below: no real-time timers or countdowns |
 | ENG-33 | Met | guardrail review below: no notification or push code |
-| NFR-01 | Met | `art/` assets on board and busts with emotion states; light/dark (`index.css`, board night grade) |
+| NFR-01 | Met | `art/` assets on board and busts with emotion states; light/dark (`index.css`; since refresh R1 the board keeps its daylight in both themes) |
 | NFR-02 | Met | portrait/landscape layouts; `e2e/phone-layout.spec.ts` |
 | NFR-03 | Met | keys for every row, Shift+letter past 30 rows (`ui/common/hotkeys.test.ts`, stocked NeoBank) |
 | NFR-04 | Met | `e2e/a11y.spec.ts` axe WCAG 2.2 A/AA light+dark; `settings.ts` motion/text size; `STAT_ICON` |

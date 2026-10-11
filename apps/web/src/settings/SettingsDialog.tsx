@@ -60,7 +60,7 @@ function Volume({
         max={100}
         step={10}
         value={value}
-        className="w-full accent-coral"
+        className="w-full accent-teal"
         onChange={(e) => onChange(Number(e.target.value))}
       />
     </label>
@@ -116,7 +116,7 @@ export default function SettingsDialog({ open, onClose }: { open: boolean; onClo
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
-              className="size-5 accent-coral"
+              className="size-5 accent-teal"
               checked={s.tutorial}
               onChange={(e) => set({ tutorial: e.target.checked })}
             />
@@ -126,7 +126,7 @@ export default function SettingsDialog({ open, onClose }: { open: boolean; onClo
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
-                className="size-5 accent-coral"
+                className="size-5 accent-teal"
                 checked={s.shareData}
                 onChange={(e) => set({ shareData: e.target.checked })}
                 aria-describedby="share-data-hint"

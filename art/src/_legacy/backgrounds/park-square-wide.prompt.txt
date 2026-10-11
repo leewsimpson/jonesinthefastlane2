@@ -1,0 +1,3 @@
+Cut from _refresh/park-wide.png (prompt: _refresh/park-wide.prompt.txt, style reference: the earlier
+_legacy/backgrounds/park-square.png); the flat magenta outside the park keyed out from the edges with the
+pipeline's un-mixing, then trimmed.

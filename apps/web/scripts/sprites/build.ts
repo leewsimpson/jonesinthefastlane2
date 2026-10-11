@@ -75,6 +75,14 @@ const ATLASES: AtlasSpec[] = [
     anchor: BOTTOM_CENTRE,
   },
   { atlas: 'items', category: 'items', include: () => true, fit: [256, 256], anchor: CENTRE },
+  // Street life and scenery for the town board: vehicles, pedestrians, trees, lamps.
+  {
+    atlas: 'street',
+    category: 'street',
+    include: () => true,
+    fit: [320, 320],
+    anchor: BOTTOM_CENTRE,
+  },
 ];
 
 const SCENE_CATEGORIES = ['events', 'backgrounds'];

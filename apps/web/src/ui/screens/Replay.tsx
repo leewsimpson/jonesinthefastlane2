@@ -10,6 +10,7 @@ import { MotionRoot } from '../../fx/MotionRoot.tsx';
 import { engine } from '../../game/engine.ts';
 import { type ReplaySteps, replaySteps, stepOfWeek, viewer } from '../../game/replay.ts';
 import { ReplayFileSchema } from '../../persistence/schema.ts';
+import { useWideLayout } from '../../settings/hooks.ts';
 import { useApp } from '../../store/app.ts';
 import { Hud } from '../hud/Hud.tsx';
 
@@ -20,6 +21,7 @@ const PLAY_MS = 400;
 
 export default function Replay() {
   const { t } = useTranslation();
+  const wide = useWideLayout();
   const go = useApp((s) => s.go);
   const [steps, setSteps] = useState<ReplaySteps | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -110,8 +112,8 @@ export default function Replay() {
   return (
     <MotionRoot>
       <main className="flex h-dvh flex-col">
-        <div className="min-h-0 shrink-0">
-          <Hud state={state} me={me} onDetails={() => {}} onQuit={() => go({ name: 'title' })} />
+        <div className="min-h-0 shrink-0 wide:bg-frame wide:p-2">
+          <Hud state={state} me={me} wide={wide} onDetails={() => {}} />
         </div>
         <div className="relative min-h-0 flex-1 overflow-hidden">
           <Suspense fallback={null}>

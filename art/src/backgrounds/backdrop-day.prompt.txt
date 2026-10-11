@@ -1,18 +1,19 @@
-STYLE: Bold flat 2D vector illustration for a satirical life-sim board game set in 2026.
-Clean geometric shapes with soft rounded corners. Every shape has a uniform thick dark outline
-in #1F1B2E (about 6 px at 1024 px canvas width, same weight everywhere). Flat colour fills with
-at most one hard-edged cel-shadow tone per surface, light from the top-left. No gradients, no
-textures, no grain, no noise, no glow, no photorealism, no 3D render, no pixel art.
-Chunky, toy-like proportions: characters are about 3 heads tall with simple friendly faces
-(dot eyes, clear eyebrows, expressive mouths); buildings look like sturdy board-game pieces.
-Restricted palette: cream #FFF6E9, ink #1F1B2E, coral #FF5A4E, mustard #FFC23D, teal #1FB5A8,
-sky #5EB8FF, lilac #8E7CF0, mint #7EE0A1, blush #FFB3A7, slate #5B5872, plus natural diverse
-skin tones. Robots and AI devices are always lilac. Money and gold are always mustard.
-Tone: looks like a cheerful, optimistic fintech-app illustration, with small satirical details.
-ABSOLUTELY NO text, letters, numbers, logos or brand marks anywhere. Signs, screens and posters
-are blank coloured panels or simple pictograms.
+STYLE: Classic, Rebuilt: crisp hand-painted 2D illustration for a modern life-management
+game set in 2026. Sunny, welcoming ordinary town with the clarity and personality of classic
+computer-game illustration. Simplified believable architecture and natural expressive faces.
+Thin ink-blue silhouette contours, lighter interior lines, restrained painted shading with
+one or two shadow/highlight tones per material. Light comes from the upper left. Subtle
+material variation, clean edges, readable at small sizes. Full-body characters are
+approximately five heads tall. No toy buildings, floating plinths, photorealism, 3D renders,
+neon glow, heavy grain, blur, CRT effects, or artificial pixelation.
+Foundation palette: ink #263C53, cream #F9F3DF, butter #F3DEA0, sky #8AC8DE,
+teal #3E8B84, brick #B75E49, leaf #64865A, slate #78858B, lilac #8B7EAF,
+gold #D2A344, plus related shading tones and natural diverse skin and hair colours.
+Robots have restrained lilac accents. Satire appears in small everyday details.
+NO text, letters, numbers, logos, or brand marks. Signs and screens are blank panels
+or simple pictograms. Match the attached production style reference when supplied.
 
-SUBJECT: Wide daytime city skyline panorama to sit behind a board game: modest rental blocks in the foreground, a glossy lilac AI-company tower dominating the skyline, construction cranes, a few lilac delivery drones in a sky-blue sky with flat cream clouds. The left and right edges must line up so the image tiles seamlessly horizontally. Keep the lower third simple and low-contrast so game pieces read in front of it.
+SUBJECT: Broad daylight city skyline panorama to sit behind a town board: a river with low bridges across the middle distance, a city of mid-rise and tall towers beyond under a sky-blue sky with a few cream clouds, quieter and lower contrast than the destinations. Keep the lower half very simple and pale (soft hazy river bank and treeline) so game pieces read in front of it. The left and right edges must line up so the image tiles horizontally.
 
-FRAMING: Full-bleed scene filling the whole canvas, no border, no frame, no rounded corners.
-Keep the important action in the central 70% so the card can be cropped for mobile.
+FRAMING: Full-bleed scene filling the whole canvas, no border, no frame, low horizon.
+Match the attached production style reference: same contour weight, shading and palette.

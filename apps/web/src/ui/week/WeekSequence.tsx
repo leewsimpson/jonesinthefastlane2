@@ -370,8 +370,12 @@ function RivalPage({ report, state }: { report: WeekReport; state: GameState }) 
         return (
           // biome-ignore lint/suspicious/noArrayIndexKey: posts are an ordered log
           <article key={i} className="rounded-xl border-2 border-ink/20 p-3 dark:border-cream/20">
-            <div className="font-bold" style={{ color: seat.colour }}>
-              {seat.shape} {playerName(state, e.player)}
+            {/* The seat colour marks the shape only: as text it is too light on cream (NFR-04). */}
+            <div className="font-bold">
+              <span aria-hidden="true" style={{ color: seat.colour }}>
+                {seat.shape}
+              </span>{' '}
+              {playerName(state, e.player)}
             </div>
             <p>{feedLine(state, e.moment, e.params, report.week + i)}</p>
           </article>

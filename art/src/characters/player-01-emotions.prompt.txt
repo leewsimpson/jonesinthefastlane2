@@ -1,23 +1,21 @@
-STYLE: Bold flat 2D vector illustration for a satirical life-sim board game set in 2026.
-Clean geometric shapes with soft rounded corners. Every shape has a uniform thick dark outline
-in #1F1B2E (about 6 px at 1024 px canvas width, same weight everywhere). Flat colour fills with
-at most one hard-edged cel-shadow tone per surface, light from the top-left. No gradients, no
-textures, no grain, no noise, no glow, no photorealism, no 3D render, no pixel art.
-Chunky, toy-like proportions: characters are about 3 heads tall with simple friendly faces
-(dot eyes, clear eyebrows, expressive mouths); buildings look like sturdy board-game pieces.
-Restricted palette: cream #FFF6E9, ink #1F1B2E, coral #FF5A4E, mustard #FFC23D, teal #1FB5A8,
-sky #5EB8FF, lilac #8E7CF0, mint #7EE0A1, blush #FFB3A7, slate #5B5872, plus natural diverse
-skin tones. Robots and AI devices are always lilac. Money and gold are always mustard.
-Tone: looks like a cheerful, optimistic fintech-app illustration, with small satirical details.
-ABSOLUTELY NO text, letters, numbers, logos or brand marks anywhere. Signs, screens and posters
-are blank coloured panels or simple pictograms.
+STYLE: Classic, Rebuilt: crisp hand-painted 2D illustration for a modern life-management
+game set in 2026. Sunny, welcoming ordinary town with the clarity and personality of classic
+computer-game illustration. Simplified believable architecture and natural expressive faces.
+Thin ink-blue silhouette contours, lighter interior lines, restrained painted shading with
+one or two shadow/highlight tones per material. Light comes from the upper left. Subtle
+material variation, clean edges, readable at small sizes. Full-body characters are
+approximately five heads tall. No toy buildings, floating plinths, photorealism, 3D renders,
+neon glow, heavy grain, blur, CRT effects, or artificial pixelation.
+Foundation palette: ink #263C53, cream #F9F3DF, butter #F3DEA0, sky #8AC8DE,
+teal #3E8B84, brick #B75E49, leaf #64865A, slate #78858B, lilac #8B7EAF,
+gold #D2A344, plus related shading tones and natural diverse skin and hair colours.
+Robots have restrained lilac accents. Satire appears in small everyday details.
+NO text, letters, numbers, logos, or brand marks. Signs and screens are blank panels
+or simple pictograms. Match the attached production style reference when supplied.
 
-SUBJECT: a young adult around 24, medium-brown skin, short curly black hair, wearing a coral hoodie, slate jeans, white sneakers and a teal backpack. Personality: hopeful, slightly tired. This is the same character as the attached full-body reference image (player-01.png): match hair, skin tone, clothes and colours exactly.
-Expressions in order: 1 neutral, 2 happy/celebrating, 3 stressed (sweat drop), 4 exhausted/
-burnt out (bags under eyes, slumped), 5 shocked (wide eyes, open mouth), 6 proud/smug.
+SUBJECT: Player 1, a young adult around 24 with medium-brown skin and short curly black hair, wearing a brick-red hoodie over a grey T-shirt. Hopeful, a little tired, natural expressive face with readable eyes, eyebrows and mouth.
+Frame order: 1 neutral, 2 happy, 3 stressed (small sweat drop), 4 exhausted (tired eyes, slumped), 5 shocked (wide eyes, open mouth), 6 proud.
 
-FRAMING: Character sheet. The SAME character drawn 6 times in a 3-column by 2-row grid of equal
-cells, head and shoulders, all facing the same direction at the same size and scale. Identical
-hair, clothes, colours and proportions in every cell; only the facial expression and small
-props change. Clear empty space between cells.
-BACKGROUND: Solid flat pure magenta #FF00FF everywhere, including between cells.
+FRAMING: Emotion sheet. The same character six times in a 3-column by 2-row grid of equal cells on a 1536x1024 canvas, head and shoulders, identical clothing, hair, scale and facing (front three-quarter) in every cell; only the expression changes. Clear transparent gutters between cells.
+BACKGROUND: one solid flat pure magenta #FF00FF everywhere behind and between the busts, perfectly uniform: no transparency, no shadow, no vignette, no dark patches, no gradient. Never use pink or magenta in the character (the hoodie is brick red #B75E49 with darker red shading).
+Match the attached production style reference: same contour weight, shading and palette.

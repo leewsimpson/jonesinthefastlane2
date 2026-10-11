@@ -14,7 +14,18 @@ import { type Hint, pickTrip, tripOptions, type WeekNeeds } from '../../game/gui
 import { duration, money } from '../../i18n/format.ts';
 import { STAT_ICON } from '../common/stats.ts';
 
-export function Clock({ left, total, size }: { left: number; total: number; size: number }) {
+export function Clock({
+  left,
+  total,
+  size,
+  label = true,
+}: {
+  left: number;
+  total: number;
+  size: number;
+  /** Off where the hours are written beside the ring instead of inside it. */
+  label?: boolean;
+}) {
   const { t } = useTranslation();
   const r = size / 2 - 5;
   const c = 2 * Math.PI * r;
@@ -27,33 +38,35 @@ export function Clock({ left, total, size }: { left: number; total: number; size
           cx={size / 2}
           cy={size / 2}
           r={r}
-          className="fill-surface stroke-ink/15"
-          strokeWidth={8}
+          className="fill-surface stroke-ink/15 dark:stroke-cream/15"
+          strokeWidth={size < 56 ? 6 : 8}
         />
         <circle
           cx={size / 2}
           cy={size / 2}
           r={r}
           fill="none"
-          className={low ? 'stroke-coral' : 'stroke-sky'}
-          strokeWidth={8}
+          className={low ? 'stroke-brick' : 'stroke-sky'}
+          strokeWidth={size < 56 ? 6 : 8}
           strokeLinecap="round"
           strokeDasharray={`${c * frac} ${c}`}
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
           style={{ transition: 'stroke-dasharray 400ms ease' }}
         />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
-        <span
-          className="tabular whitespace-nowrap font-bold font-display"
-          style={{ fontSize: Math.round(size * 0.2) }}
-        >
-          {duration(left)}
-        </span>
-        <span className="text-fg-muted" style={{ fontSize: Math.round(size * 0.15) }}>
-          {t('week.left')}
-        </span>
-      </div>
+      {label && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
+          <span
+            className="tabular whitespace-nowrap font-bold font-display"
+            style={{ fontSize: Math.round(size * 0.2) }}
+          >
+            {duration(left)}
+          </span>
+          <span className="text-fg-muted" style={{ fontSize: Math.round(size * 0.15) }}>
+            {t('week.left')}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
@@ -219,7 +232,7 @@ export function WeekPanel({
   if (compact)
     return (
       <section
-        className="mx-3 mt-2 flex flex-col gap-2 rounded-xl border-2 border-mustard bg-mustard/15 p-2"
+        className="mx-3 mt-2 flex flex-col gap-2 rounded-lg border border-gold bg-butter/40 dark:bg-gold/15 p-2"
         aria-label={t('week.next')}
       >
         <ul className="flex flex-wrap gap-x-4 gap-y-1">
@@ -268,12 +281,12 @@ export function WeekPanel({
         ))}
       </ul>
       {hoverTrip ? (
-        <div className="rounded-xl border-2 border-sky bg-sky/10 p-2 text-sm" aria-live="polite">
+        <div className="rounded-lg border border-sky bg-sky/15 p-2 text-sm" aria-live="polite">
           <div className="font-bold">{t('week.hoverGo', { location: t(`location.${hover}`) })}</div>
           <div className="text-fg-muted text-xs">{tripText(hoverTrip)}</div>
         </div>
       ) : (
-        <div className="flex flex-col gap-1 rounded-xl border-2 border-mustard bg-mustard/15 p-2 text-sm">
+        <div className="flex flex-col gap-1 rounded-lg border border-gold bg-butter/40 dark:bg-gold/15 p-2 text-sm">
           <span className="font-bold text-fg-muted text-xs uppercase tracking-wide">
             {t('week.next')}
           </span>

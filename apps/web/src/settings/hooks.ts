@@ -1,6 +1,6 @@
 /** React hooks over the settings and the OS preferences they default to. */
 import { useEffect, useState } from 'react';
-import { darkTheme, mediaMatches, reducedMotion, useSettings } from './settings.ts';
+import { mediaMatches, reducedMotion, useSettings } from './settings.ts';
 
 function useMedia(q: string): boolean {
   const [now, setNow] = useState(() => mediaMatches(q).now);
@@ -18,16 +18,10 @@ export function useReducedMotion(): boolean {
   return reducedMotion(motion, useMedia('(prefers-reduced-motion: reduce)'));
 }
 
-/** True when the dark theme is showing. */
-export function useDarkTheme(): boolean {
-  const theme = useSettings((s) => s.theme);
-  return darkTheme(theme, useMedia('(prefers-color-scheme: dark)'));
-}
+/** The desktop layout's query (NFR-02), shared with the `wide` CSS variant in index.css. */
+export const WIDE_LAYOUT = '(min-width: 1024px) and (min-height: 600px)';
 
-/** The landscape layout's query (NFR-02), shared with the `wide` CSS variant in index.css. */
-export const WIDE_LAYOUT = '(orientation: landscape) and (min-width: 768px)';
-
-/** True on the landscape layout; false on phones, where the page scrolls (index.css). */
+/** True on the desktop layout; false on the mobile one (index.css). */
 export function useWideLayout(): boolean {
   return useMedia(WIDE_LAYOUT);
 }

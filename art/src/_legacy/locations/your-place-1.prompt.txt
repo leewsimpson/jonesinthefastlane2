@@ -1,0 +1,24 @@
+STYLE: Bold flat 2D vector illustration for a satirical life-sim board game set in 2026.
+Clean geometric shapes with soft rounded corners. Every shape has a uniform thick dark outline
+in #1F1B2E (about 6 px at 1024 px canvas width, same weight everywhere). Flat colour fills with
+at most one hard-edged cel-shadow tone per surface, light from the top-left. No gradients, no
+textures, no grain, no noise, no glow, no photorealism, no 3D render, no pixel art.
+Chunky, toy-like proportions: characters are about 3 heads tall with simple friendly faces
+(dot eyes, clear eyebrows, expressive mouths); buildings look like sturdy board-game pieces.
+Restricted palette: cream #FFF6E9, ink #1F1B2E, coral #FF5A4E, mustard #FFC23D, teal #1FB5A8,
+sky #5EB8FF, lilac #8E7CF0, mint #7EE0A1, blush #FFB3A7, slate #5B5872, plus natural diverse
+skin tones. Robots and AI devices are always lilac. Money and gold are always mustard.
+Tone: looks like a cheerful, optimistic fintech-app illustration, with small satirical details.
+ABSOLUTELY NO text, letters, numbers, logos or brand marks anywhere. Signs, screens and posters
+are blank coloured panels or simple pictograms.
+
+SUBJECT: A single standalone building for the "Your Place (tier 1: Parents' Basement)" location: a modest suburban family house with a small lawn, the half-sunk basement window lit up warmly.
+Visual gag: a bare mattress and a gaming chair visible through the basement window. Main colours: cream, mint, slate.
+Orthographic three-quarter front view: the front facade faces the viewer, rotated about 20
+degrees so the left side wall is visible, camera slightly above. No perspective distortion.
+The building sits on a small rounded slab base, like a board-game piece.
+
+FRAMING: Single isolated subject, centred, fully inside the frame with a clear margin on all
+sides. Nothing cropped.
+BACKGROUND: Solid flat pure magenta #FF00FF filling the entire canvas edge to edge. No floor,
+no ground plane, no cast shadow, no glow, no vignette, no other background elements.

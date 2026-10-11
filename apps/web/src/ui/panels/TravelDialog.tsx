@@ -117,7 +117,7 @@ export function TravelDialog({
                     if (el) rowRefs.current.set(id, el);
                     else rowRefs.current.delete(id);
                   }}
-                  className={`rounded-xl border-2 p-2 ${dest === id ? 'border-coral' : 'border-ink/20 dark:border-cream/20'}`}
+                  className={`rounded-xl border-2 p-2 ${dest === id ? 'border-ink bg-butter/50 dark:border-cream dark:bg-gold/15' : 'border-ink/20 dark:border-cream/20'}`}
                 >
                   <div className="mb-1 flex items-center gap-2 font-bold">
                     {i < 10 && <kbd>{rowKey(i)}</kbd>}

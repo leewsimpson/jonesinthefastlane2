@@ -1,6 +1,8 @@
 /**
- * The Pixi board (art-direction §4, NFR-04): a code-drawn ring road with location pads from the palette, the
- * generated buildings on the pads, and a token per player: a bust in a player-colour ring with the seat's shape.
+ * The Pixi board (art-direction §4, NFR-04): a code-drawn town block, a ring road round a landscaped square in a grid
+ * of side streets, with a paved plot per location, the generated buildings on the plots (names painted on their
+ * signs), and a token per player: a bust in a player-colour ring with the seat's shape. The town keeps its daylight
+ * in both themes.
  * Tokens glide along the road to where the engine says they are (FR-02); reduced motion jumps instead. Pixi owns
  * only the canvas: a click on a building travels there at once, and the DOM travel dialog is the accessible way to
  * move (tech-stack §2).
@@ -12,34 +14,57 @@ import 'pixi.js/unsafe-eval';
 import { Application, extend, useTick } from '@pixi/react';
 import {
   Assets,
-  ColorMatrixFilter,
   Container,
   Graphics,
   ParticleContainer,
+  Rectangle,
   Sprite,
   type Spritesheet,
-  Text,
-  type TextStyleOptions,
-  type Texture,
+  Texture,
 } from 'pixi.js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import type { Moment } from '../fx/map.ts';
 import { content } from '../game/engine.ts';
-import { useDarkTheme, useReducedMotion } from '../settings/hooks.ts';
-import { useSettings } from '../settings/settings.ts';
-import { seatOf } from '../ui/common/stats.ts';
+import { useReducedMotion } from '../settings/hooks.ts';
+import { emotion, seatOf } from '../ui/common/stats.ts';
 import { type Coin, spawn, step } from './coins.ts';
 import { buildingFrame } from './frames.ts';
-import { type BoardLayout, boardLayout, loopDelta, pointAt, stepToward } from './layout.ts';
+import {
+  type BoardLayout,
+  boardLayout,
+  type Crossing,
+  loopDelta,
+  markerPoint,
+  parkCrossings,
+  parkPlan,
+  pointAt,
+  siteAt,
+  stepToward,
+  type TownPlan,
+  townPlan,
+} from './layout.ts';
+import { type Prop, scenery } from './scenery.ts';
 
-extend({ Container, Graphics, ParticleContainer, Sprite, Text });
+extend({ Container, Graphics, ParticleContainer, Sprite });
 
-const INK = 0x1f1b2e;
-const CREAM = 0xfff6e9;
-const SLATE = 0x5b5872;
-const CORAL = 0xff5a4e;
-const MUSTARD = 0xffc23d;
+/** Palette (art-direction §2), with a few related shades for road, pavement and planting. */
+const INK = 0x263c53;
+const CREAM = 0xf9f3df;
+const BUTTER = 0xf3dea0;
+/** Warm grey asphalt, the concept's, a shade of slate (art-direction §2). */
+const ROAD = 0x8c8784;
+const PAVEMENT = 0xf0e4cc;
+const KERB = 0xbfae93;
+/** The ring road's centre dashes, butter as the concept paints its main street; side streets are dashed in cream. */
+const CENTRE_LINE = 0xf0d27a;
+const LEAF = 0x64865a;
+/** The town square's lawn and paving, matched to the painted buildings' grass and paths. */
+const PARK_LAWN = 0x93b43c;
+/** The plots' lawns: the painted grass, a shade quieter so the storefronts lead. */
+const GRASS = 0x8fae50;
+const PARK_PATH = 0xe8d5b9;
+const BRICK = 0xb75e49;
+const FLOWER = 0xe48aa4;
 
 /** Steps of the loop a token covers per second. */
 const TOKEN_SPEED = 5;
@@ -51,6 +76,10 @@ const TOKEN_GAP = 1.2;
 interface Sheets {
   locations: Spritesheet;
   busts: Spritesheet;
+  /** The skyline backdrop; the board area's daylight gradient stands in if it fails. */
+  skyline: Texture | null;
+  /** Trees, lamps, the fountain, vehicles and passers-by; the town is bare without them. */
+  street: Spritesheet | null;
 }
 
 let sheetsPromise: Promise<Sheets> | null = null;
@@ -58,10 +87,13 @@ function loadSheets(): Promise<Sheets> {
   sheetsPromise ??= Promise.all([
     Assets.load<Spritesheet>('/assets/atlases/locations.json'),
     Assets.load<Spritesheet>('/assets/atlases/busts.json'),
-  ]).then(([locations, busts]) => {
+    Assets.load<Texture>('/assets/backgrounds/backdrop-day.webp').catch(() => null),
+    Assets.load<Spritesheet>('/assets/atlases/street.json').catch(() => null),
+  ]).then(([locations, busts, skyline, street]) => {
     smooth(locations);
     smooth(busts);
-    return { locations, busts };
+    if (street) smooth(street);
+    return { locations, busts, skyline, street };
   });
   return sheetsPromise;
 }
@@ -95,45 +127,218 @@ export function momentFace(moment: Moment | null): string | null {
     : 'proud';
 }
 
-/** Which emotion a player's bust shows, from how their week is going. */
-function emotion(stats: GameState['players'][number]['stats']): string {
-  if (stats.energy < 20) return 'exhausted';
-  if (stats.happiness < 30 || stats.health < 30) return 'stressed';
-  if (stats.happiness >= 75) return 'happy';
-  return 'neutral';
+/**
+ * A zebra crossing (`Crossing`): stripes parallel to the traffic, side by side from kerb to kerb across a road
+ * `half` wide each way of its centre, each `walk` long.
+ */
+function zebra(g: Graphics, c: Crossing, half: number, walk: number) {
+  const span = half * 1.8;
+  const stripe = Math.max(2, half * 0.17);
+  const n = Math.max(2, Math.floor((span + stripe) / (stripe * 2)));
+  const start = -((n * 2 - 1) * stripe) / 2;
+  for (let k = 0; k < n; k++) {
+    const d = start + k * stripe * 2;
+    if (c.traffic === 'h') g.rect(c.x - walk / 2, c.y + d, walk, stripe);
+    else g.rect(c.x + d, c.y - walk / 2, stripe, walk);
+  }
+  g.fill({ color: CREAM, alpha: 0.95 });
 }
 
-const LABEL_STYLE: TextStyleOptions = {
-  fontFamily: 'Atkinson Hyperlegible Next Variable, system-ui, sans-serif',
-  fontSize: 13,
-  fontWeight: '700',
-  fill: INK,
-  stroke: { color: CREAM, width: 4, join: 'round' },
-  align: 'center',
-};
-
-function Road({ layout }: { layout: BoardLayout }) {
+/**
+ * The town's ground (art-direction §1, §4), as the concept draws it: tarmac everywhere below the skyline, and raised
+ * pavement blocks on it (`townPlan`), so the streets are what's left between them. Lane dashes run down the ring and
+ * every street, with zebra crossings where streets meet the ring. All code-drawn; the art stands on it.
+ */
+function Town({ layout, plan }: { layout: BoardLayout; plan: TownPlan }) {
   const draw = useCallback(
     (g: Graphics) => {
-      const { cx, cy, rx, ry, cell, count } = layout;
-      const w = Math.max(10, cell * 0.22);
-      const r = Math.min(rx, ry);
+      const { road, count, cell, width, height, sky, foot } = layout;
       g.clear();
-      g.roundRect(cx - rx, cy - ry, rx * 2, ry * 2, r).stroke({ color: INK, width: w + 6 });
-      g.roundRect(cx - rx, cy - ry, rx * 2, ry * 2, r).stroke({ color: SLATE, width: w });
-      // Lane markings: short cream dashes along the loop.
-      const dashes = 56;
+      g.rect(0, sky, width, height - sky).fill(ROAD);
+      // Blocks: a darker kerb face below each, the pavement on top, a thin ink edge (art-direction §1).
+      const r = Math.max(4, cell * 0.06);
+      const lip = Math.max(2, cell * 0.015);
+      for (const b of plan.blocks) g.roundRect(b.x, b.y + lip, b.w, b.h, r).fill(KERB);
+      for (const b of plan.blocks)
+        g.roundRect(b.x, b.y, b.w, b.h, r)
+          .fill(PAVEMENT)
+          .stroke({ color: INK, width: 1, alpha: 0.35 });
+      // Lawns inside the pavement: greens all over, plots behind their buildings, keeping a paved forecourt along
+      // the front edge where the doors and passers-by are.
+      const inset = Math.max(5, cell * 0.05);
+      const forecourt = cell * 0.13;
+      for (const b of plan.blocks) {
+        if (b.kind === 'park') continue;
+        // A plot's lawn is a planted patch inside a wide paved margin, as the concept's blocks are mostly paved.
+        const pad = b.kind === 'plot' ? inset * 2.2 : inset;
+        const front = b.kind === 'plot' ? forecourt : inset;
+        const h = b.h - pad - front;
+        if (b.w > pad * 3 && h > pad)
+          g.roundRect(b.x + pad, b.y + pad, b.w - pad * 2, h, r)
+            .fill(GRASS)
+            .stroke({ color: LEAF, width: 1.5 });
+      }
+
+      // Lane dashes: down the ring and each street, clear of the junctions; along the foot street.
+      const near = (x: number, y: number, d: number) =>
+        plan.streets.some((s) => Math.hypot(x - s.jx, y - s.jy) < d);
+      const crossings = parkCrossings(layout);
+      const dashes = 64;
       for (let i = 0; i < dashes; i++) {
         const a = pointAt(layout, (i / dashes) * count);
         const b = pointAt(layout, ((i + 0.4) / dashes) * count);
-        g.moveTo(a.x, a.y);
-        g.lineTo(b.x, b.y);
+        if (near(a.x, a.y, road * 2.2) || near(b.x, b.y, road * 2.2)) continue;
+        if (crossings.some((c) => Math.hypot(a.x - c.x, a.y - c.y) < road * 1.6)) continue;
+        g.moveTo(a.x, a.y).lineTo(b.x, b.y);
       }
-      g.stroke({ color: CREAM, width: 2, alpha: 0.8 });
+      g.stroke({ color: CENTRE_LINE, width: 2, alpha: 0.95 });
+      const dash = cell * 0.09;
+      for (const st of plan.streets) {
+        const across = st.dir === 'left' || st.dir === 'right';
+        const k = st.dir === 'left' || st.dir === 'top' ? -1 : 1;
+        const long = across ? st.w : st.h;
+        const mid = across ? st.y + st.h / 2 : st.x + st.w / 2;
+        for (let d = road * 3.2; d < long - dash; d += dash * 2.2) {
+          if (across) {
+            const x = st.jx + k * d;
+            g.moveTo(x, mid).lineTo(x + k * dash, mid);
+          } else {
+            const y = st.jy + k * d;
+            if (y < sky || y > foot - road * 0.5) continue;
+            g.moveTo(mid, y).lineTo(mid, y + k * dash);
+          }
+        }
+      }
+      if (foot < height)
+        for (let x = dash; x < width; x += dash * 2.2) {
+          const y = (foot + height) / 2;
+          if (plan.streets.some((s) => x + dash > s.x && x < s.x + s.w && s.dir === 'bottom'))
+            continue;
+          g.moveTo(x, y).lineTo(x + dash, y);
+        }
+      g.stroke({ color: CREAM, width: 2, alpha: 0.9 });
+
+      // Zebra crossings across each street's mouth, just off the ring, and where the park's paths meet the ring.
+      const walk = road * 0.9;
+      for (const st of plan.streets) {
+        const across = st.dir === 'left' || st.dir === 'right';
+        const k = st.dir === 'left' || st.dir === 'top' ? -1 : 1;
+        const d = road * 1.6 + walk / 2;
+        const half = (across ? st.h : st.w) / 2;
+        const mid = across ? st.y + half : st.x + half;
+        if (across) zebra(g, { x: st.jx + k * d, y: mid, traffic: 'h' }, half, walk);
+        else zebra(g, { x: mid, y: st.jy + k * d, traffic: 'v' }, half, walk);
+      }
+      for (const c of crossings) zebra(g, c, road, walk);
+    },
+    [layout, plan],
+  );
+  return <pixiGraphics draw={draw} />;
+}
+
+/**
+ * The skyline across the top of the board (art-direction §4: broad daylight skyline, quieter than the destinations):
+ * the backdrop's towers, bridges and river, cropped to the band above the town.
+ */
+function Skyline({ layout, texture }: { layout: BoardLayout; texture: Texture }) {
+  const { width, sky } = layout;
+  const cropped = useMemo(() => {
+    const k = width / texture.width;
+    // The band ends at the near bank of the river, a little below the bridges.
+    const bottom = texture.height * 0.47;
+    const h = Math.min(bottom, (sky + 4) / k);
+    const frame = new Rectangle(0, Math.max(0, bottom - h), texture.width, h);
+    return { texture: new Texture({ source: texture.source, frame }), scale: k };
+  }, [texture, width, sky]);
+  useEffect(() => () => cropped.texture.destroy(false), [cropped]);
+  if (sky < 8) return null;
+  return <pixiSprite texture={cropped.texture} scale={cropped.scale} />;
+}
+
+/**
+ * The town square inside the ring (art-direction §1, `parkPlan`): lawn inside the paved walk, two paths crossing it
+ * edge to edge, and a round brick-edged plaza where they meet, ringed by flower beds. The fountain, lamps and trees
+ * stand on it from the street atlas (`scenery.ts`). Decorative only: it is not a destination.
+ */
+function Park({ layout }: { layout: BoardLayout }) {
+  const draw = useCallback(
+    (g: Graphics) => {
+      g.clear();
+      const { bed, path, plaza } = parkPlan(layout);
+      if (bed.w < 20 || bed.h < 20) return;
+      g.roundRect(bed.x, bed.y, bed.w, bed.h, Math.min(bed.w, bed.h) * 0.06)
+        .fill(PARK_LAWN)
+        .stroke({ color: LEAF, width: 1.5 });
+      // The paths, edge to edge through the plaza.
+      g.rect(bed.x - 1, plaza.y - path / 2, bed.w + 2, path);
+      g.rect(plaza.x - path / 2, bed.y - 1, path, bed.h + 2);
+      g.fill(PARK_PATH);
+      g.moveTo(bed.x, plaza.y - path / 2).lineTo(bed.x + bed.w, plaza.y - path / 2);
+      g.moveTo(bed.x, plaza.y + path / 2).lineTo(bed.x + bed.w, plaza.y + path / 2);
+      g.moveTo(plaza.x - path / 2, bed.y).lineTo(plaza.x - path / 2, bed.y + bed.h);
+      g.moveTo(plaza.x + path / 2, bed.y).lineTo(plaza.x + path / 2, bed.y + bed.h);
+      g.stroke({ color: KERB, width: 1, alpha: 0.8 });
+      // Flower beds round the plaza, in the lawns' inner corners.
+      const bedR = Math.max(4, plaza.rx * 0.36);
+      for (const [dx, dy] of [
+        [-1, -1],
+        [1, -1],
+        [-1, 1],
+        [1, 1],
+      ] as const) {
+        const bx = plaza.x + dx * (plaza.rx * 0.78 + path * 0.5);
+        const by = plaza.y + dy * (plaza.ry * 0.78 + path * 0.5);
+        g.ellipse(bx, by, bedR * 1.5, bedR * 0.85)
+          .fill(LEAF)
+          .stroke({ color: INK, width: 0.75, alpha: 0.45 });
+        for (let k = 0; k < 18; k++) {
+          const t = k * 2.4;
+          const d = 0.15 + (k % 4) * 0.24;
+          g.circle(
+            bx + Math.cos(t) * bedR * 1.2 * d,
+            by + Math.sin(t) * bedR * 0.62 * d,
+            bedR * 0.17,
+          ).fill([BUTTER, FLOWER, CREAM][k % 3] ?? BUTTER);
+        }
+      }
+      // The plaza: paving with a brick edge.
+      g.ellipse(plaza.x, plaza.y, plaza.rx, plaza.ry)
+        .fill(PARK_PATH)
+        .stroke({ color: BRICK, width: Math.max(2, path * 0.22), alpha: 0.85 });
+      g.ellipse(plaza.x, plaza.y, plaza.rx * 0.86, plaza.ry * 0.86).stroke({
+        color: KERB,
+        width: 1,
+        alpha: 0.7,
+      });
     },
     [layout],
   );
   return <pixiGraphics draw={draw} />;
+}
+
+/** Scenery and street life from the street atlas (`scenery.ts`), nearest last. Decorative and not clickable. */
+function Props({ props, sheet }: { props: Prop[]; sheet: Spritesheet }) {
+  return (
+    <>
+      {[...props]
+        .sort((a, b) => a.y - b.y)
+        .map((p) => {
+          const texture = sheet.textures[p.frame];
+          if (!texture) return null;
+          const k = p.h / texture.height;
+          return (
+            <pixiSprite
+              key={`${p.frame}:${Math.round(p.x)}:${Math.round(p.y)}`}
+              texture={texture}
+              anchor={{ x: 0.5, y: 1 }}
+              x={p.x}
+              y={p.y}
+              scale={{ x: p.flip ? -k : k, y: k }}
+            />
+          );
+        })}
+    </>
+  );
 }
 
 function Pad({
@@ -151,17 +356,21 @@ function Pad({
   onSelect(): void;
   onHover(on: boolean): void;
 }) {
-  const { x, y } = pointAt(layout, index);
+  const { x, y } = siteAt(layout, index);
   const { cell } = layout;
+  // The building's ground shadow, cast down-right by the upper-left light (art-direction §5: code supplies ground
+  // shadows). Where the player stands, a butter forecourt with an ink outline (art-direction §2).
   const drawPad = useCallback(
     (g: Graphics) => {
       g.clear();
-      g.ellipse(0, 0, cell * 0.5, cell * 0.2)
-        .fill(here ? MUSTARD : CREAM)
-        .stroke({
-          color: here ? CORAL : INK,
-          width: here ? 5 : 3,
-        });
+      if (here)
+        g.roundRect(-cell * 0.52, -cell * 0.1, cell * 1.04, cell * 0.16, 4)
+          .fill(BUTTER)
+          .stroke({ color: INK, width: 2 });
+      g.ellipse(cell * 0.05, cell * 0.01, cell * 0.5, cell * 0.06).fill({
+        color: INK,
+        alpha: 0.16,
+      });
     },
     [cell, here],
   );
@@ -178,55 +387,16 @@ function Pad({
     >
       <pixiGraphics draw={drawPad} />
       {texture && (
-        <pixiSprite texture={texture} anchor={{ x: 0.5, y: 1 }} y={cell * 0.08} scale={scale} />
+        <pixiSprite texture={texture} anchor={{ x: 0.5, y: 1 }} y={cell * 0.03} scale={scale} />
       )}
     </pixiContainer>
-  );
-}
-
-/**
- * Building names, drawn above the night grade so they stay readable (NFR-04). They follow the text-size setting,
- * and a long name wraps to the building's width rather than running into its neighbours.
- */
-function Label({
-  layout,
-  index,
-  text,
-  dark,
-  scale,
-}: {
-  layout: BoardLayout;
-  index: number;
-  text: string;
-  dark: boolean;
-  /** The text-size setting, as a factor. */
-  scale: number;
-}) {
-  const { x, y } = pointAt(layout, index);
-  const { cell } = layout;
-  const fontSize = Math.round(Math.max(14, Math.min(17, cell * 0.16)) * scale);
-  return (
-    <pixiText
-      text={text}
-      x={x}
-      y={y + cell * 0.14}
-      style={{
-        ...LABEL_STYLE,
-        fontSize,
-        lineHeight: fontSize * 1.1,
-        wordWrap: true,
-        wordWrapWidth: Math.max(cell * 1.15, fontSize * 5),
-        ...(dark ? { fill: CREAM, stroke: { color: INK, width: 4, join: 'round' } } : {}),
-      }}
-      anchor={{ x: 0.5, y: 0 }}
-      resolution={2}
-    />
   );
 }
 
 function Token({
   layout,
   target,
+  perch,
   offset,
   colour,
   texture,
@@ -235,6 +405,9 @@ function Token({
 }: {
   layout: BoardLayout;
   target: number;
+  /** How tall the target building stands above its site, for the marker to rest on (`markerPoint`). */
+  perch: number | undefined;
+  /** Sideways shift when tokens share a stop. */
   offset: number;
   colour: string;
   texture: Texture | undefined;
@@ -242,6 +415,7 @@ function Token({
   reduced: boolean;
 }) {
   const ref = useRef<Container>(null);
+  const pointer = useRef<Graphics>(null);
   const mask = useRef<Graphics>(null);
   const sprite = useRef<Sprite>(null);
   const pos = useRef(target);
@@ -262,13 +436,23 @@ function Token({
     if (!c) return;
     const p = pointAt(layout, pos.current);
     const bob = reduced || !active ? 0 : Math.sin(clock.current * 3) * layout.token * 0.04;
-    // Tokens stand on the road in front of the building's left corner, clear of its label.
-    c.x = p.x - layout.cell * 0.42 + offset;
-    c.y = p.y - layout.cell * 0.12 + bob;
+    // Tokens travel along the road; nearing the stop they lift over the building's roof and hover there, side by side
+    // when they share it.
+    const left = Math.abs(loopDelta(pos.current, target, layout.count));
+    const f = Math.max(0, Math.min(1, 1 - left / 0.6));
+    const lift = f * f * (3 - 2 * f);
+    const m = markerPoint(layout, target, perch);
+    c.x = p.x + (m.x + offset - p.x) * lift;
+    c.y = p.y + (m.y - p.y) * lift + bob;
+    // The pointer turns toward the building the token is at or heading for (art-direction §4).
+    const site = siteAt(layout, target);
+    if (pointer.current)
+      pointer.current.rotation =
+        Math.atan2(site.y - layout.cell * 0.45 - c.y, site.x - c.x) + Math.PI / 2;
     const sq = Math.sin(squash.current * Math.PI) * 0.18;
     const pp = 1 + Math.sin(pop.current * Math.PI) * 0.15;
     c.scale.set((1 + sq) * pp, (1 - sq) * pp);
-  }, [layout, offset, reduced, active]);
+  }, [layout, offset, reduced, active, target, perch]);
 
   useTick(
     useCallback(
@@ -301,6 +485,16 @@ function Token({
     if (sprite.current && mask.current) sprite.current.mask = mask.current;
   });
 
+  const drawPointer = useCallback(
+    (g: Graphics) => {
+      g.clear();
+      const r = size / 2;
+      g.poly([-r * 0.36, -r * 0.78, r * 0.36, -r * 0.78, 0, -r - r * 0.42])
+        .fill(colour)
+        .stroke({ color: INK, width: 1.5, join: 'round' });
+    },
+    [size, colour],
+  );
   const drawRing = useCallback(
     (g: Graphics) => {
       g.clear();
@@ -320,6 +514,7 @@ function Token({
   const scale = texture ? (size * 1.05) / texture.height : 1;
   return (
     <pixiContainer ref={ref}>
+      <pixiGraphics ref={pointer} draw={drawPointer} />
       <pixiGraphics draw={drawRing} />
       <pixiGraphics ref={mask} draw={drawMask} />
       {texture && (
@@ -366,19 +561,6 @@ function Coins({ burst, x, y, scale }: { burst: BoardFx; x: number; y: number; s
   );
 }
 
-/** The night grade for the dark theme: darker, cooler, a little less saturated. One shared filter for the app. */
-let night: ColorMatrixFilter | null = null;
-function nightFilter(): ColorMatrixFilter {
-  if (night) return night;
-  night = new ColorMatrixFilter();
-  // Filters render at 1x by default, which blurs the whole board on a hi-dpi screen.
-  night.resolution = 'inherit';
-  night.brightness(0.62, false);
-  night.saturate(-0.15, true);
-  night.tint(0x9fa8ff, true);
-  return night;
-}
-
 /**
  * The scene measures its own container: `<Application>` renders the children it was given before its async init
  * finished, so a size passed down as a prop would stay at its first value.
@@ -398,11 +580,7 @@ function Scene({
   onSelect(location: string): void;
   onHover(location: string | null): void;
 }) {
-  const { t } = useTranslation();
   const reduced = useReducedMotion();
-  const dark = useDarkTheme();
-  const textScale = useSettings((s) => s.textSize) / 100;
-  const filters = useMemo(() => (dark ? [nightFilter()] : []), [dark]);
   // A moment's face shows for a while, then the token goes back to its mood.
   const [face, setFace] = useState<string | null>(null);
   useEffect(() => {
@@ -443,27 +621,42 @@ function Scene({
     () => boardLayout(size.w, size.h, locations.length),
     [size, locations.length],
   );
+  const plan = useMemo(() => townPlan(layout), [layout]);
+  const props = useMemo(() => {
+    const all = scenery(layout, plan);
+    return {
+      back: all.filter((p) => p.layer === 'back'),
+      front: all.filter((p) => p.layer === 'front'),
+    };
+  }, [layout, plan]);
   if (size.w === 0) return null;
+  const street = sheets?.street;
 
   const me = state.players.find((p) => p.id === active) ?? state.players[0];
   const frameFor = (id: string) => buildingFrame(id, me?.housing.tier);
 
   // Draw the far side of the loop first, so nearer buildings overlap it.
   const order = locations
-    .map((id, index) => ({ id, index, y: pointAt(layout, index).y }))
+    .map((id, index) => ({ id, index, y: siteAt(layout, index).y }))
     .sort((a, b) => a.y - b.y);
 
   const byLocation = new Map<string, string[]>();
   for (const p of state.players)
     byLocation.set(p.location, [...(byLocation.get(p.location) ?? []), p.id]);
 
+  // Markers rest on the roofline, clear of the name painted on the building's sign.
+  const perchOf = (id: string) =>
+    artHeight(sheets?.locations.textures[frameFor(id)], layout.cell) - layout.cell * 0.03;
   const meIndex = me ? Math.max(0, locations.indexOf(me.location)) : 0;
-  const mePoint = pointAt(layout, meIndex);
+  const mePoint = markerPoint(layout, meIndex, me && perchOf(me.location));
 
   return (
     <pixiContainer>
-      <pixiContainer filters={filters}>
-        <Road layout={layout} />
+      <pixiContainer>
+        {sheets?.skyline && <Skyline layout={layout} texture={sheets.skyline} />}
+        <Town layout={layout} plan={plan} />
+        <Park layout={layout} />
+        {street && <Props props={props.back} sheet={street} />}
         {order.map(({ id, index }) => (
           <Pad
             key={id}
@@ -475,6 +668,7 @@ function Scene({
             onHover={(on) => onHover(on ? id : null)}
           />
         ))}
+        {street && <Props props={props.front} sheet={street} />}
         {state.players
           .filter((p) => p.id !== active)
           .concat(state.players.filter((p) => p.id === active))
@@ -482,13 +676,14 @@ function Scene({
             const index = locations.indexOf(p.location);
             const here = byLocation.get(p.location) ?? [];
             const k = here.indexOf(p.id);
-            const offset = k * layout.token * TOKEN_GAP;
+            const offset = (k - (here.length - 1) / 2) * layout.token * TOKEN_GAP;
             const seat = seatOf(state.players, p.id);
             return (
               <Token
                 key={p.id}
                 layout={layout}
                 target={Math.max(0, index)}
+                perch={perchOf(p.location)}
                 offset={offset}
                 colour={seat.colour}
                 texture={
@@ -502,26 +697,21 @@ function Scene({
             );
           })}
       </pixiContainer>
-      {order.map(({ id, index }) => (
-        <Label
-          key={id}
-          layout={layout}
-          index={index}
-          text={t(`location.${id}`)}
-          dark={dark}
-          scale={textScale}
-        />
-      ))}
       {!reduced && (
         <Coins
           burst={fx}
-          x={mePoint.x - layout.cell * 0.42}
-          y={mePoint.y - layout.cell * 0.2}
+          x={mePoint.x}
+          y={mePoint.y - layout.token * 0.5}
           scale={Math.max(0.6, layout.token / 64)}
         />
       )}
     </pixiContainer>
   );
+}
+
+/** A building's drawn height at the board's building width. */
+function artHeight(texture: Texture | undefined, cell: number): number {
+  return texture ? (cell / texture.width) * texture.height : cell * 0.9;
 }
 
 const NO_BOARD_FX: BoardFx = { id: 0, coins: 0, moment: null };

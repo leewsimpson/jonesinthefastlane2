@@ -1,0 +1,17 @@
+STYLE: Classic, Rebuilt: crisp hand-painted 2D illustration for a modern life-management
+game set in 2026. Sunny, welcoming ordinary town with the clarity and personality of classic
+computer-game illustration. Simplified believable architecture and natural expressive faces.
+Thin ink-blue silhouette contours, lighter interior lines, restrained painted shading with
+one or two shadow/highlight tones per material. Light comes from the upper left. Subtle
+material variation, clean edges, readable at small sizes. Full-body characters are
+approximately five heads tall. No toy buildings, floating plinths, photorealism, 3D renders,
+neon glow, heavy grain, blur, CRT effects, or artificial pixelation.
+Foundation palette: ink #263C53, cream #F9F3DF, butter #F3DEA0, sky #8AC8DE,
+teal #3E8B84, brick #B75E49, leaf #64865A, slate #78858B, lilac #8B7EAF,
+gold #D2A344, plus related shading tones and natural diverse skin and hair colours.
+Robots have restrained lilac accents. Satire appears in small everyday details.
+The ONLY text in the image is the shop name described below; no other text, numbers or logos. Match the attached production style reference when supplied.
+
+SUBJECT: Redraw the attached building EXACTLY as it is: same architecture, proportions, camera, colours, pictogram, people, plants and details, at the same size and position in the frame. The one change: the shop name "Your Place" is painted on a small cream wooden signboard on two short posts standing in the front garden beside the path, wide enough for the name, in bold friendly slab-serif lettering (like Roboto Slab Bold), colour ink blue #263C53, centred, large enough to fill most of the panel and read clearly when the building is shown 200 pixels wide. Spell it exactly: Your Place (letters "Y" "o" "u" "r" "P" "l" "a" "c" "e"). Clean, crisp, evenly spaced letters with no other words, no tagline, no smaller text.
+
+FRAMING: One isolated building, centred, fully visible with clear margins, on a solid flat pure magenta #FF00FF background with no shadow, glow or gradient. The building's base ends at its pavement contact line: no street, ground plane, floating base or cast shadow. No magenta anywhere on the building.

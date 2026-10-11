@@ -39,18 +39,6 @@ export function momentText(m: Moment): string {
   }
 }
 
-/** Where the numbers appear in this layer's own coordinates: the anchor, shifted to the viewport when it is fixed. */
-function popPoint(
-  layer: HTMLElement | null,
-  board: HTMLElement | null | undefined,
-  anchor: { x: number; y: number } | undefined,
-): { x: number; y: number } | null {
-  if (!anchor) return null;
-  if (!layer || !board || getComputedStyle(layer).position !== 'fixed') return anchor;
-  const r = board.getBoundingClientRect();
-  return { x: anchor.x + r.left, y: anchor.y + r.top };
-}
-
 const good = (m: Moment) => m.kind !== 'laidOff' && m.kind !== 'letGo' && m.kind !== 'evicted';
 
 export function FxLayer({
@@ -58,7 +46,6 @@ export function FxLayer({
   id,
   shakeTarget,
   anchor,
-  boardEl,
 }: {
   fx: Fx;
   /** Changes once per batch. */
@@ -66,8 +53,6 @@ export function FxLayer({
   shakeTarget: HTMLElement | null;
   /** Where the acted building is, in board pixels: the numbers float up from there. */
   anchor?: { x: number; y: number };
-  /** The board, to place the anchor when this layer is fixed to the viewport (phone layout). */
-  boardEl?: HTMLElement | null;
 }) {
   const layer = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
@@ -82,7 +67,7 @@ export function FxLayer({
   // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on the batch id
   useEffect(() => {
     if (fx.pops.length === 0 && !fx.moment) return;
-    setShown({ id, fx, at: popPoint(layer.current, boardEl, anchor) });
+    setShown({ id, fx, at: anchor ?? null });
     if (fx.moment) setBanner({ id, moment: fx.moment });
     for (const name of sfxFor(fx)) playSfx(name);
     if (!reduced && shakeTarget && fx.shake !== 'none') {
@@ -121,7 +106,8 @@ export function FxLayer({
           {shown?.fx.pops.map((p, i) => (
             <m.span
               key={`${shown.id}-${p.key}`}
-              className={`chip font-bold text-base shadow ${p.tone === 'good' ? 'chip-good' : 'chip-bad'}`}
+              // Over the board, which keeps its daylight in both themes: cream and ink, so dark mode passes AA too.
+              className={`chip border-2 bg-cream font-bold text-base text-ink shadow ${p.tone === 'good' ? 'border-teal' : 'border-brick'}`}
               initial={reduced ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.8 }}
               animate={reduced ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
               exit={reduced ? { opacity: 0 } : { opacity: 0, y: -24 }}

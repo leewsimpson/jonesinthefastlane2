@@ -1,0 +1,1 @@
+Cut from _refresh/park-square.png (prompt: _refresh/park-square.prompt.txt); the cream outside the park keyed out by flood fill from the edges.

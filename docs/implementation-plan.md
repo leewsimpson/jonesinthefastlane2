@@ -57,7 +57,7 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
 | pnpm workspaces, Node LTS in `.nvmrc`, Corepack | tech-stack §7 |
 | Scaffold `apps/web` (Vite + React 19 + Tailwind v4), `apps/api` (Hono Worker stub with `/healthz`), `packages/engine`, `packages/content`, `packages/sim` | tech-stack §3 |
 | TypeScript strict, Biome, Vitest, fast-check, shared tsconfig | tech-stack §7 |
-| Palette tokens in Tailwind (light/dark), fonts self-hosted (Bricolage Grotesque, Atkinson Hyperlegible Next) | art-direction §2–3 |
+| Palette tokens in Tailwind (light/dark), fonts self-hosted (Roboto Slab, Atkinson Hyperlegible Next) | art-direction §2–3 |
 | `ci.yml`: install, lint, typecheck, test, build, bundle-size check | CI-01, CI-05 |
 | Security: CodeQL, `pnpm audit`, secret scanning, Renovate | CI-06 |
 | Branch protection / rulesets on `main`, actions pinned to SHAs, minimal permissions, concurrency groups | CI-07, OPS-02, OPS-03 |
@@ -185,7 +185,7 @@ Each phase is built with the `/buildaphase` skill. Each phase's **Notes** hold h
 | End-of-week sequence UI: event card with choices (only when there is one), then one recap page: Jones's feed first, goal progress, bills and stat changes, news (only when there is any), teaser; the Next / Start-week button stays pinned in place | FR-05, ENG-10 |
 | Hotseat: player handoff screen | FR-06 |
 | Persistence: Dexie save slots, autosave after every action and week end | NFR-13 |
-| Responsive layouts: portrait (board top, action sheet bottom), landscape (board centre, side panels) | NFR-02 |
+| Responsive layouts: mobile and desktop (see NFR-02) | NFR-02 |
 | Keyboard shortcuts for all actions, focus management | NFR-03 |
 | i18n plumbing (`i18next`) from the start; all strings in resources | NFR-06 |
 | Lazy-load NeoBank charts, summary screen and non-critical libs | NFR-10 |
@@ -420,6 +420,24 @@ Follows art-direction §7. Each step needs review against the §8 checklist befo
 
 ~55 images for the MVP plus retries; confirm batch sizes before generating (quota cost per image).
 
+### Visual refresh: Classic, Rebuilt
+
+Moves the shipped game to the selected style in slices, in the order of art-direction §7. Each slice is reviewed
+against the art-direction §8 checklist at real size, light and dark, desktop and phone.
+
+| Slice | Scope | Status |
+|---|---|---|
+| R1 | Game screen: palette and type tokens, landscape layout (board, dashboard, location panel), action rows with SVG icons, town-block board round the park, the ten storefronts and Your Place tier 1, park, skyline, tier-1 interior, Player 1 and Jones busts | Done (progress.md) |
+| R1b | Board as a town block (art-direction §1, §4): lawn ground, tight-cornered ring road whose straights carry on as side streets to the board's edges, zebra crossings at junctions, paved plots joined to the pavement (butter when selected), code ground shadows, verge trees | Done (progress.md) |
+| R2 | Remaining housing tiers 2–5 (buildings and interiors), players 2–6 busts and all full-body art, GigHub | Next |
+| R3 | Title, setup, week wrap-up, dialogs and summary screens in the new chrome; items and event cards | |
+| R4 | Port `art/tools/make_prompts.py` to the new style block and framing so prompts are regenerated, not hand-kept in `art/src/_refresh/` | |
+
+**Notes**
+- Codex image generation: `gpt-6.1-sol` (the local Codex config default) fails with a ChatGPT login; `art/src/_refresh/gen.sh` passes `-m gpt-5.5`. A request for a transparent background can come back with real alpha (sheet A, park), flat magenta (sheet B) or a mix with opaque dark patches (first bust sheets, regenerated); ask for flat `#FF00FF` for character sheets.
+- Sheets are cut with `art/src/_refresh/slice.py` (keeps real alpha, keys magenta like the build, drops strays from neighbouring cells). Sign panels for live labels are measured with `art/src/_refresh/signs.py` into `SIGN_PANELS` (`apps/web/src/board/frames.ts`); remeasure when a building is regenerated.
+- The pre-refresh source art is kept in `art/src/_legacy/` until R2 replaces the rest.
+
 ---
 
 ## Decisions (from game-requirements §17)
@@ -432,7 +450,7 @@ Follows art-direction §7. Each step needs review against the §8 checklist befo
 | Long Life as Career Mode default | Yes | Phase 8/9: meta-progression pacing assumes monthly turns |
 | Partners as co-op characters | No, partners are NPCs only | Phase 9: no change to the hotseat model |
 
-Art style (open question 2): flat vector (art-direction §1).
+Art style (open question 2): Classic, Rebuilt (art-direction §1), selected 10 October 2026; it supersedes the flat-vector style and the Phase 5 board night grade.
 
 ## Risks
 
