@@ -46,16 +46,19 @@ const PEOPLE = [
   'person-group',
 ] as const;
 /**
- * Each vehicle's length in road half-widths (a lane is one), and its art's height-to-width ratio. The side-on art
- * faces right; `car-front` drives toward the viewer, so its length is its width across the lane.
+ * Each vehicle's length in road half-widths (a lane is one), and its art's height-to-width ratio. Sized against the
+ * buildings as the concept draws them: a sedan about a third of a storefront long, the bus about 1.7 sedans. The
+ * side-on art is a level profile facing right, so it runs parallel to the road; `car-front` drives toward the viewer,
+ * so its length is its width across the lane.
  */
 const VEHICLES: Record<string, { length: number; aspect: number }> = {
-  'car-taxi': { length: 2, aspect: 294 / 480 },
-  'car-sedan': { length: 2.2, aspect: 281 / 525 },
-  'car-hatch': { length: 1.9, aspect: 289 / 448 },
-  'van-delivery': { length: 2.1, aspect: 386 / 495 },
-  bus: { length: 3.4, aspect: 409 / 692 },
-  'car-front': { length: 1.05, aspect: 346 / 272 },
+  'car-taxi': { length: 2.8, aspect: 223 / 447 },
+  'car-sedan': { length: 3.1, aspect: 201 / 525 },
+  'car-hatch': { length: 2.6, aspect: 210 / 401 },
+  'car-pickup': { length: 3, aspect: 195 / 428 },
+  'van-delivery': { length: 3, aspect: 225 / 432 },
+  bus: { length: 5.2, aspect: 260 / 621 },
+  'car-front': { length: 1.5, aspect: 346 / 272 },
 };
 
 /**
@@ -75,8 +78,10 @@ function trees(layout: BoardLayout, plan: TownPlan): Prop[] {
         const j = jitter(x, y);
         const px = x + (j - 0.5) * step * 0.5;
         const size = 0.3 + j * 0.24;
-        // Canopies may overlap the skyline a little, as the concept's do, but not stand in it.
+        // Canopies may overlap the skyline a little, as the concept's do, but not stand in it. Elsewhere a canopy only
+        // just overhangs its block, so it never hides the road (and the traffic) beyond.
         if (y - cell * size < sky - cell * 0.35) continue;
+        if (b.y > sky + 1 && y - cell * size * 0.9 < b.y - cell * 0.08) continue;
         if (
           placed.some((q) => Math.hypot(q.x - px, (q.y - y) * 1.3) < cell * (q.size + size) * 0.45)
         )
@@ -194,6 +199,12 @@ function lamps(layout: BoardLayout, plan: TownPlan): Prop[] {
   return corners.map(([x, y]) => ({ frame: 'lamp', x, y, h, flip: false, layer: 'front' }));
 }
 
+/** Offsets along a road, nearest first, to try when a vehicle's spot is taken. */
+const SHIFTS = [
+  0,
+  ...Array.from({ length: 18 }, (_, i) => (i % 2 ? -1 : 1) * 0.025 * (Math.floor(i / 2) + 1)),
+];
+
 /** A road vehicles drive along: its centre line from end to end, and which way its traffic runs. */
 interface Carriageway {
   traffic: 'h' | 'v';
@@ -289,14 +300,22 @@ function vehicles(layout: BoardLayout, plan: TownPlan): Prop[] {
           : { ...k, t: k.t - zebra + road, b: k.b + zebra - road };
       });
     const span = way.to - way.from;
-    for (const shift of [0, 0.1, -0.1, 0.2, -0.2, 0.3, -0.3, 0.4, -0.4]) {
+    // Nearest free spot to `t`, searched outward in small steps.
+    for (const shift of SHIFTS) {
       const c = way.from + span * (t + shift);
       let box: Box;
       let prop: Prop;
       if (way.traffic === 'h') {
-        // Wheels on the lane's near edge; the body rises over it, as the three-quarter view draws it.
-        const bottom = way.at + (forward ? road * 0.97 : -road * 0.05);
-        box = { l: c - len / 2, r: c + len / 2, t: bottom - road * 0.8, b: bottom };
+        // Wheels near the lane's lower edge; the level profile rises over it, as the board's elevated view sees it.
+        const bottom = way.at + (forward ? road * 0.92 : road * 0.08);
+        // It claims the lane it drives in; the body rising over the lane above stays free to overlap.
+        // The far lane's claim stops at the centre line, so side streets joining from the near side don't block it.
+        box = {
+          l: c - len / 2,
+          r: c + len / 2,
+          t: bottom - road * 0.8,
+          b: forward ? bottom : Math.min(bottom, way.at - 0.5),
+        };
         prop = { frame, x: c, y: bottom, h, flip: !forward, layer: 'front' };
       } else {
         const x = way.at - road * 0.5;
@@ -319,19 +338,20 @@ function vehicles(layout: BoardLayout, plan: TownPlan): Prop[] {
   const [top, bottom, left, right] = ring as [Carriageway, Carriageway, Carriageway, Carriageway];
   place(top, 'car-taxi', 0.3, true);
   place(top, 'car-sedan', 0.75, false);
-  place(bottom, 'van-delivery', 0.62, true);
+  // The bottom ring's near lane is all junctions and stops; its traffic keeps to the far lane.
+  place(bottom, 'van-delivery', 0.62, false);
   place(bottom, 'car-hatch', 0.22, false);
   place(left, 'car-front', 0.6, true);
   place(right, 'car-front', 0.3, true);
   if (footWay) {
     place(footWay, 'bus', 0.28, true);
-    place(footWay, 'car-sedan', 0.8, false);
+    place(footWay, 'car-pickup', 0.8, false);
     place(footWay, 'car-taxi', 0.55, false);
   }
   // A vehicle on every other side street.
   for (const [i, w] of streets.entries()) {
     if (i % 2 === 1) continue;
-    if (w.traffic === 'h') place(w, i % 4 === 0 ? 'car-hatch' : 'car-sedan', 0.5, i % 4 === 0);
+    if (w.traffic === 'h') place(w, i % 4 === 0 ? 'car-hatch' : 'car-pickup', 0.5, i % 4 === 0);
     else place(w, 'car-front', 0.5, true);
   }
   return out;

@@ -435,7 +435,7 @@ against the art-direction §8 checklist at real size, light and dark, desktop an
 
 **Notes**
 - Codex image generation: `gpt-6.1-sol` (the local Codex config default) fails with a ChatGPT login; `art/src/_refresh/gen.sh` passes `-m gpt-5.5`. A request for a transparent background can come back with real alpha (sheet A, park), flat magenta (sheet B) or a mix with opaque dark patches (first bust sheets, regenerated); ask for flat `#FF00FF` for character sheets.
-- Sheets are cut with `art/src/_refresh/slice.py` (keeps real alpha, keys magenta like the build, drops strays from neighbouring cells). Sign panels for live labels are measured with `art/src/_refresh/signs.py` into `SIGN_PANELS` (`apps/web/src/board/frames.ts`); remeasure when a building is regenerated.
+- Sheets are cut with `art/src/_refresh/slice.py` (keeps real alpha, keys magenta like the build, drops strays from neighbouring cells), or with `blobs.py` by connected shape when art strays across cells (the vehicle sheets).
 - The pre-refresh source art is kept in `art/src/_legacy/` until R2 replaces the rest.
 
 ---

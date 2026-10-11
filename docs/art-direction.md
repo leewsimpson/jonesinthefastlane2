@@ -313,9 +313,9 @@ Keep event categories `event-work`, `event-money`, `event-life`, `event-health`,
 Keep `backdrop-day` and `interior-tier-1`…`5`. Housing progression changes space, furniture, and comfort
 without making lower-tier homes or their occupants the joke.
 
-Add reusable trees, planters, benches, streetlamps, and park-detail sprites as needed (so far
-`decor-trees` and `decor-lamp` in the locations atlas, and the street atlas's trees, lamps, vehicles,
-passers-by and `fountain`). The town square is code-drawn (lawn, crossing paths, a brick-edged plaza and
+Add reusable trees, planters, benches, streetlamps, and park-detail sprites as needed (so far the street
+atlas's trees, lamp, vehicles, passers-by and `fountain`). Side-on vehicles are level profiles facing right, parallel
+to the road; `car-front` drives down the vertical streets. The town square is code-drawn (lawn, crossing paths, a brick-edged plaza and
 flower beds) with the fountain sprite at its centre; an earlier painted square is kept in
 `art/src/_legacy/backgrounds/`. Building names are painted on the art (§3); `art/src/_refresh/named/` regenerates a building with its name from the blank-sign original in
 `art/src/_legacy/locations-blank-sign/`.

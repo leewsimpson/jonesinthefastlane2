@@ -1,0 +1,24 @@
+STYLE: Classic, Rebuilt: crisp hand-painted 2D illustration for a modern life-management
+game set in 2026. Sunny, welcoming ordinary town with the clarity and personality of classic
+computer-game illustration. Simplified believable architecture and natural expressive faces.
+Thin ink-blue silhouette contours, lighter interior lines, restrained painted shading with
+one or two shadow/highlight tones per material. Light comes from the upper left. Subtle
+material variation, clean edges, readable at small sizes. Full-body characters are
+approximately five heads tall. No toy buildings, floating plinths, photorealism, 3D renders,
+neon glow, heavy grain, blur, CRT effects, or artificial pixelation.
+Foundation palette: ink #263C53, cream #F9F3DF, butter #F3DEA0, sky #8AC8DE,
+teal #3E8B84, brick #B75E49, leaf #64865A, slate #78858B, lilac #8B7EAF,
+gold #D2A344, plus related shading tones and natural diverse skin and hair colours.
+Robots have restrained lilac accents. Satire appears in small everyday details.
+NO text, letters, numbers, logos, or brand marks. Signs and screens are blank panels
+or simple pictograms. Match the attached production style reference when supplied.
+SUBJECTS, left to right, top row then bottom row. Small everyday vehicles for a town board whose roads run straight across the picture. Each vehicle is seen in a level side profile, driving to the right: its body perfectly horizontal and parallel to the bottom edge of the cell, both wheels on one level line, the camera only slightly above so a thin strip of roof shows. The front is NOT turned toward the viewer and the car is NOT angled or drawn in diagonal three-quarter perspective; the near side fills the view, like a car driving past on a straight street.
+1. A yellow taxi hatchback (no sign text).
+2. A blue family sedan.
+3. A red compact hatchback.
+4. A white delivery van with a small lilac parcel pictogram on its side (no text).
+5. A cream-and-teal city bus, long, with windows and a few passenger silhouettes.
+6. A green-and-cream small pickup or estate car, same level side profile.
+
+FRAMING: Sprite sheet, 3 columns by 2 rows of equal cells on a 1536x1024 canvas. One isolated subject per cell, centred, fully visible with clear margins, all at the same scale and the same level side-profile camera, near-orthographic, matching the illustration style of the attached reference. No surrounding street, no ground plane, no cast shadow on the ground, no decorative frame. Vehicles are scaled consistently with each other (the bus is about twice as long as the sedan).
+BACKGROUND: solid flat pure magenta #FF00FF everywhere, including between cells. No glow, no shadow, no ground on the background.

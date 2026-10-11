@@ -124,13 +124,15 @@ describe('innerRect', () => {
       [630, 800, 150, 250],
       [590, 720, 150, 250],
       [1060, 830, 400, 170],
-      [1920, 1080, 400, 400],
+      // A big board grows the buildings, not the park: the square stays about a building tall (art-direction §4).
+      [1920, 1080, 800, 200],
       [393, 330, 0, 0],
     ] as const) {
       const layout = boardLayout(w, h, 10);
       const r = innerRect(layout);
       expect(r.w).toBeGreaterThanOrEqual(minW);
       expect(r.h).toBeGreaterThanOrEqual(minH);
+      if (minH > 0) expect(r.h).toBeGreaterThanOrEqual(layout.cell * 0.78 - 1e-6);
       for (let i = 0; i < 10; i++) {
         const b = buildingBox(layout, i);
         const clear = b.r <= r.x || b.l >= r.x + r.w || b.b <= r.y || b.t >= r.y + r.h;

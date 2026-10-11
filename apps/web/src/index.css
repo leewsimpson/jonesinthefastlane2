@@ -196,15 +196,21 @@ body {
 }
 
 /* Desktop (art-direction §4 layout target): the board on the left, the location panel on the right, and the
-   dashboard along the foot, all set in the teal-ink frame. The panel is capped so wide screens give the extra width
-   to the board. */
+   dashboard along the foot, all set in the teal-ink frame. The panel takes about 30% of the width. Where the board is
+   wide enough to hold the dashboard on its own, the panel runs the full height beside both, as the concept draws it,
+   so Travel and End week sit level with the dashboard. */
 .game-desktop {
   gap: 0.5rem;
   padding: 0.5rem;
   background: var(--frame);
-  grid-template-columns: minmax(0, 1fr) clamp(340px, 28vw, 30rem);
+  grid-template-columns: minmax(0, 1fr) clamp(340px, 30vw, 44rem);
   grid-template-rows: minmax(0, 1fr) auto;
   grid-template-areas: "board panel" "hud hud";
+}
+@media (min-width: 1440px) {
+  .game-desktop {
+    grid-template-areas: "board panel" "hud panel";
+  }
 }
 .game-desktop .board-area,
 .game-desktop .panel {

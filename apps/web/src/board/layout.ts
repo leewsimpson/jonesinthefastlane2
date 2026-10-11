@@ -49,6 +49,8 @@ const TALL = 0.9;
 /** Space between the road's kerb and a building. */
 const PAVEMENT = 10;
 const MARGIN = 8;
+/** A building's plot reaches this share of its width past the art on either side. */
+const PLOT_PAD = 0.05;
 
 /** How many buildings go on each side, clockwise from the top. */
 function sideCounts(count: number, wide: boolean): Record<Side, number> {
@@ -102,12 +104,15 @@ function frameFor(
   const colW = n.left + n.right > 0 ? cell * 1.05 : 0;
   const left = MARGIN + colW + kerb;
   const right = width - MARGIN - colW - kerb;
-  const rowFits = (k: number) => k * cell * 1.04 <= width - 2 * MARGIN;
+  // A row holds its buildings on their plots (`PLOT_PAD` either side) with a side street between each pair (`townPlan`).
+  const rowFits = (k: number) =>
+    k * cell * (1 + 2 * PLOT_PAD) + (k - 1) * road * 2 <= width - 2 * MARGIN;
   const band = bottom - top - 2 * kerb;
   const colFits = (k: number) => k * cell * (TALL + 0.12) <= band + cell * TALL;
   const park = Math.min(right - left, bottom - top) - 2 * kerb;
   if (!rowFits(n.top) || !rowFits(n.bottom) || !colFits(n.left) || !colFits(n.right)) return null;
-  if (park < cell * 0.5) return null;
+  // The square stays big enough to read as a park, about as tall as a building, as the concept lays it out.
+  if (park < cell * 0.78) return null;
   return { cell, road, topBase, bottomBase, left, right, top, bottom, foot };
 }
 
@@ -174,7 +179,7 @@ export function boardLayout(width: number, height: number, count: number): Board
   const wide = width >= height;
   const n = sideCounts(count, wide);
   // The biggest building width that fits, up to a cap, shrinking from there.
-  let cell = Math.max(40, Math.min(205, width / 4.6, height / 3.2));
+  let cell = Math.max(40, Math.min(300, width / 4.4, height / 3.2));
   // A wide board shows a band of skyline and a street along its foot; a tall one keeps its height for buildings.
   const sky = wide ? Math.min(130, height * 0.13) : Math.min(40, height * 0.04);
   let f = frameFor(width, height, cell, n, sky, wide);
@@ -398,7 +403,7 @@ export function townPlan(layout: BoardLayout): TownPlan {
   const T = cy - ry;
   const B = cy + ry;
   const gap = road * 2;
-  const padX = cell * 0.08;
+  const padX = cell * PLOT_PAD;
   const sides: Record<Side, Span[]> = { top: [], right: [], bottom: [], left: [] };
   for (let i = 0; i < count; i++) {
     const s = siteAt(layout, i);
@@ -489,10 +494,17 @@ export function townPlan(layout: BoardLayout): TownPlan {
 }
 
 /**
+ * The board's corners that the DOM overlays cover on desktop (Game.tsx): the week sign at the top left and the menu
+ * at the top right, in px with their 8px inset. Markers keep clear of them.
+ */
+export const CORNER_OVERLAYS = { sign: { w: 245, h: 96 }, menu: { w: 290, h: 46 } };
+
+/**
  * Where a player's marker hovers once it has arrived: over the building's roofline, as the concept pins its player
- * (art-direction §4: a pointer toward the current building). Kept on the board for the top row. `perch`, when given,
- * is how far above the site the building's art reaches: the marker's pointer rests on its roofline, clear of the
- * name painted on its sign; where the skyline band leaves no room above the roof, it stands at the building's stop.
+ * (art-direction §4: a pointer toward the current building). `perch`, when given, is how far above the site the
+ * building's art reaches: the marker's pointer rests on its roofline, clear of the name painted on its sign. Over the
+ * top row that reaches into the skyline band, as the concept's pin does; it stays on the board and slides sideways
+ * off the week sign and the menu (`CORNER_OVERLAYS`), or drops below them where the building has no room beside them.
  */
 export function markerPoint(
   layout: BoardLayout,
@@ -500,19 +512,30 @@ export function markerPoint(
   perch?: number,
 ): { x: number; y: number } {
   const { x, y, side } = siteAt(layout, index);
-  const { token, sky } = layout;
+  const { token, sky, cell, width } = layout;
   if (perch !== undefined) {
     // The active marker's radius; its pointer reaches about 1.45 radii below its centre (Board.tsx).
     const r = token * 0.575;
-    const roof = y - perch - r * 1.45;
-    // Over the top row's roofs is the skyline band, under the week sign and the menu (Game.tsx): there the marker
-    // stands at the stop before the door instead, pointing up at the building.
-    if (roof - r < sky * 0.6) return pointAt(layout, index);
-    return { x, y: roof };
+    let m = { x, y: Math.max(r + 4, y - perch - r * 1.45) };
+    const { sign, menu } = CORNER_OVERLAYS;
+    const pad = 4;
+    const over = (w: number, h: number, left: boolean) =>
+      m.y - r < h && (left ? m.x - r < w : m.x + r > width - w);
+    for (const [box, left] of [
+      [sign, true],
+      [menu, false],
+    ] as const) {
+      if (!over(box.w, box.h, left)) continue;
+      // Beside the overlay, while still over the building; failing that, under it.
+      const sx = left ? box.w + r + pad : width - box.w - r - pad;
+      if (Math.abs(sx - x) <= cell * 0.45) m = { x: sx, y: m.y };
+      else m = { x, y: box.h + r + pad };
+    }
+    return m;
   }
   // The top row's markers sit below the week sign in the skyline band's corner (Game.tsx).
   const clear = side === 'top' ? sky * 0.6 + token : token * 0.75;
-  return { x, y: Math.max(clear, y - layout.cell * TALL + token * 0.3) };
+  return { x, y: Math.max(clear, y - cell * TALL + token * 0.3) };
 }
 
 /** Where a building's feedback (floating numbers) appears: above the marker over its roof, in board pixels. */

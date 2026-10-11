@@ -169,14 +169,14 @@ export function WeekSign({ state, me }: { state: GameState; me: PlayerState }) {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none flex flex-col gap-0.5 rounded-md border-2 border-ink bg-cream px-3 py-1 text-ink shadow-[0_3px_0_var(--color-ink)]"
+      className="pointer-events-none flex flex-col gap-1 rounded-md border-2 border-ink bg-cream px-4 py-2 text-ink shadow-[0_3px_0_var(--color-ink)]"
     >
-      <span className="flex items-center gap-2 font-bold font-display text-lg leading-tight">
-        <Icon name="calendar" size={20} className="text-brick" />
+      <span className="flex items-center gap-2 font-bold font-display text-2xl leading-tight">
+        <Icon name="calendar" size={26} className="text-brick" />
         {limit ? t('hud.weekOf', { week: state.week, limit }) : t('hud.week', { week: state.week })}
       </span>
-      <span className="flex items-center gap-2 font-display text-sm leading-tight">
-        <Icon name="clock" size={20} />
+      <span className="flex items-center gap-2 font-display text-base leading-tight">
+        <Icon name="clock" size={26} />
         {t('hud.leftThisWeek', { time: duration(me.timeLeft) })}
       </span>
     </div>
