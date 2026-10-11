@@ -44,6 +44,11 @@ export default defineConfig({
         ignoreURLParametersMatching: [/^utm_/, /^fbclid$/, /^v$/],
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
+        // A new release takes over at once; registerSW (pwa.ts) then reloads the page onto it. The plugin sets these
+        // itself only when it injects the registration, and ours is manual (injectRegister: false): without them a
+        // new worker waits until every tab is closed, and players keep the old build's art.
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
           {
             urlPattern: ({ url }) => url.pathname === '/config.json',
