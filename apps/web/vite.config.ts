@@ -44,6 +44,10 @@ export default defineConfig({
         ignoreURLParametersMatching: [/^utm_/, /^fbclid$/, /^v$/],
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
+        // Only Vite's own output (flat `assets/<name>-<hash>.<ext>`) is content-hashed. The plugin's default treats all
+        // of `assets/` as hashed, which covers our fixed-name art in `public/assets/` too: it was precached with no
+        // revision and never updated, so returning players kept old art after every regeneration.
+        dontCacheBustURLsMatching: /^assets\/[^/]+-[\w-]{8}\.\w+$/,
         // A new release takes over at once; registerSW (pwa.ts) then reloads the page onto it. The plugin sets these
         // itself only when it injects the registration, and ours is manual (injectRegister: false): without them a
         // new worker waits until every tab is closed, and players keep the old build's art.
