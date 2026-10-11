@@ -154,6 +154,21 @@ describe('feedbackPoint', () => {
   });
 });
 
+describe('big boards', () => {
+  it('grow the town with the board, so the park stays about a building tall', () => {
+    for (const [w, h] of [
+      [1410, 891],
+      [2340, 1420],
+      [2900, 1780],
+    ] as const) {
+      const layout = boardLayout(w, h, 10);
+      const r = innerRect(layout);
+      expect(r.h / h).toBeLessThan(0.27);
+      expect(r.h).toBeLessThan(layout.cell * 1.1);
+    }
+  });
+});
+
 describe('townPlan', () => {
   const sizes = [
     [1060, 830],

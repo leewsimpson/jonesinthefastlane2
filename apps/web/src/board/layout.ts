@@ -179,9 +179,10 @@ export function boardLayout(width: number, height: number, count: number): Board
   const wide = width >= height;
   const n = sideCounts(count, wide);
   // The biggest building width that fits, up to a cap, shrinking from there.
-  let cell = Math.max(40, Math.min(300, width / 4.4, height / 3.2));
+  // No small fixed cap: on a big screen the town grows with the board, so the park stays about a building tall.
+  let cell = Math.max(40, Math.min(480, width / 4.4, height / 3.2));
   // A wide board shows a band of skyline and a street along its foot; a tall one keeps its height for buildings.
-  const sky = wide ? Math.min(130, height * 0.13) : Math.min(40, height * 0.04);
+  const sky = wide ? Math.min(240, height * 0.13) : Math.min(40, height * 0.04);
   let f = frameFor(width, height, cell, n, sky, wide);
   while (!f && cell > 40) {
     cell = Math.max(40, cell * 0.95);
