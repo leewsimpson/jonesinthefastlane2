@@ -19,7 +19,10 @@ export default defineConfig({
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: baseURL ?? 'http://localhost:4173',
-    storageState: { cookies: [], origins: [{ origin, localStorage: [{ name: 'fastlane.settings', value: muted }] }] },
+    storageState: {
+      cookies: [],
+      origins: [{ origin, localStorage: [{ name: 'fastlane.settings', value: muted }] }],
+    },
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
