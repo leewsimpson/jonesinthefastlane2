@@ -195,6 +195,8 @@ export function valuation(
     stats.health += (deltas.health ?? 0) * weeks;
     stats.social += (deltas.social ?? 0) * weeks;
   };
+  // The weekly drift happens whatever the player does; without it a stat near 100 makes buffs look worthless.
+  addWeekly(balance.weeklyDrift);
   const home = city.housing.find((h) => h.id === player.housing.tier);
   if (home) addWeekly(home.weekly);
   for (const item of city.items) if (player.items.includes(item.id)) addWeekly(item.weekly);
